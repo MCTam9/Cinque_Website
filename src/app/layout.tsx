@@ -1,5 +1,19 @@
 import type { Metadata } from 'next';
+import localFont from 'next/font/local';
 import './globals.css';
+
+// Self-hosted licensed font (files in src/fonts). Exposes the CSS variable
+// `--font-letter-gothic`, which Tailwind's font-sans/mono reference.
+const letterGothic = localFont({
+  src: [
+    { path: '../fonts/LetterGothicStd.otf', weight: '400', style: 'normal' },
+    { path: '../fonts/LetterGothicStd-Bold.otf', weight: '700', style: 'normal' },
+    { path: '../fonts/LetterGothicStd-Slanted.otf', weight: '400', style: 'italic' },
+  ],
+  variable: '--font-letter-gothic',
+  display: 'swap',
+  fallback: ['ui-monospace', 'Courier New', 'monospace'],
+});
 
 // Decoupled from the full env schema (which requires Stripe/Sanity keys) so the
 // marketing shell can render even before those are configured locally.
@@ -29,7 +43,6 @@ export const metadata: Metadata = {
     description: 'Individually made, cast and hallmarked in London.',
   },
   robots: { index: true, follow: true },
-  icons: { icon: '/favicon.ico' },
 };
 
 export default function RootLayout({
@@ -38,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={letterGothic.variable}>
       <body>{children}</body>
     </html>
   );
