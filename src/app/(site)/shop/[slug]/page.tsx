@@ -146,6 +146,7 @@ export default async function ProductPage({
                   className="img-bw object-cover"
                 />
               </div>
+              {/* Desktop: vertical scrolling thumbnail column */}
               {hasThumbs && (
                 <div className="relative hidden md:block">
                   <div className="absolute inset-0 flex flex-col gap-[10px] overflow-y-auto">
@@ -154,16 +155,23 @@ export default async function ProductPage({
                         key={img.thumb}
                         className="group relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-cloud/30"
                       >
-                        <Image
-                          src={img.thumb}
-                          alt={img.alt}
-                          fill
-                          sizes="15vw"
-                          className="img-bw object-cover"
-                        />
+                        <Image src={img.thumb} alt={img.alt} fill sizes="15vw" className="img-bw object-cover" />
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+              {/* Mobile: horizontal thumbnail row below the main image */}
+              {hasThumbs && (
+                <div className="grid grid-cols-4 gap-[10px] md:hidden">
+                  {imageUrls.slice(0, 4).map((img) => (
+                    <div
+                      key={img.thumb}
+                      className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30"
+                    >
+                      <Image src={img.thumb} alt={img.alt} fill sizes="22vw" className="img-bw object-cover" />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

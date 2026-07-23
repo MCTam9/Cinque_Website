@@ -68,22 +68,22 @@ export default function ContactForm() {
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="type-p2 text-oslo">Name*</span>
+        <span className="type-p1 text-graphite">Name*</span>
         <input type="text" name="name" required maxLength={120} className={field} />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="type-p2 text-oslo">Email*</span>
+        <span className="type-p1 text-graphite">Email*</span>
         <input type="email" name="email" required maxLength={200} className={field} />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="type-p2 text-oslo">Phone</span>
+        <span className="type-p1 text-graphite">Phone</span>
         <input type="tel" name="phone" maxLength={40} className={field} />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="type-p2 text-oslo">Message*</span>
+        <span className="type-p1 text-graphite">Message*</span>
         <textarea name="message" required maxLength={5000} rows={5} className={field} />
       </label>
 

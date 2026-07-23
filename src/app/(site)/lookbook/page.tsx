@@ -51,10 +51,28 @@ export default async function LookbookPage({
         <P1 className="hidden text-right text-oslo md:block">
           Individually made, cast and hallmarked in London.
         </P1>
+        {/* Mobile: SHOW ALL reveals the drop list (the sidebar is desktop-only) */}
+        <details className="md:hidden">
+          <summary className="type-h3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            SHOW ALL
+          </summary>
+          <ul className="mt-[10px] flex flex-col gap-[10px]">
+            {DROPS.map((d) => (
+              <li key={d}>
+                <Link
+                  href={`/lookbook?drop=${d}`}
+                  className={`type-h3 ${d === active ? 'text-redcurrent underline underline-offset-4' : 'text-graphite'}`}
+                >
+                  {formatLabel(d)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
       </header>
 
-      {/* Drop sidebar */}
-      <aside className="mb-[30px] pt-[10px] md:col-start-1 md:row-start-2 md:mb-0 md:pr-4">
+      {/* Drop sidebar (desktop only) */}
+      <aside className="hidden pt-[10px] md:col-start-1 md:row-start-2 md:block md:pr-4">
         <P2 className="mb-[10px] text-oslo">DROP</P2>
         <ul className="flex flex-col gap-[10px]">
           {DROPS.map((d) => (
@@ -104,7 +122,10 @@ export default async function LookbookPage({
               <LbImage src={BENCH} alt="Cinque studio bench" />
             </div>
           </div>
-          <LbImage src={HAND} alt="Cinque piece worn on the hand" />
+          {/* tall image — shown first on mobile, right column on desktop */}
+          <div className="order-first md:order-none">
+            <LbImage src={HAND} alt="Cinque piece worn on the hand" />
+          </div>
         </div>
 
         {/* Row 2: three images */}
