@@ -101,6 +101,9 @@ async function main() {
     collection: { _type: 'reference', _ref: COLLECTION_ID },
     images: [
       { _type: 'image', _key: 'img1', alt: 'Lace Fork Pendant', asset: { _type: 'reference', _ref: assetId } },
+      { _type: 'image', _key: 'img2', alt: 'Lace Fork Pendant detail', asset: { _type: 'reference', _ref: assetId } },
+      { _type: 'image', _key: 'img3', alt: 'Lace Fork Pendant worn', asset: { _type: 'reference', _ref: assetId } },
+      { _type: 'image', _key: 'img4', alt: 'Lace Fork Pendant macro', asset: { _type: 'reference', _ref: assetId } },
     ],
     description: [
       {

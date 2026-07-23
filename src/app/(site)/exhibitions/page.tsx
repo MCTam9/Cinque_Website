@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Container from '@/components/Container';
 import { H1, H2, P1 } from '@/components/typography';
+import { formatLabel } from '@/lib/products';
 
 export const metadata: Metadata = {
   title: 'Exhibition',
@@ -43,7 +44,7 @@ function Entry({
     <article className={last ? '' : 'mb-[60px]'}>
       {/* Header row — title + publication bottom-aligned over a shared grey rule */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
-        <H2 className="border-b border-oslo pb-[10px] md:col-span-2">{title}</H2>
+        <H2 className="border-b border-oslo pb-[10px] md:col-span-2">{formatLabel(title)}</H2>
         <P1 className="border-b border-oslo pb-[10px] text-right text-oslo">{publication}</P1>
       </div>
 

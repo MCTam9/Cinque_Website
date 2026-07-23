@@ -132,10 +132,10 @@ export default async function ProductPage({
         </H2>
         <div className="mb-[10px] hidden border-b border-oslo md:col-start-3 md:block" />
 
-        {/* Gallery */}
+        {/* Gallery: main image (3fr) + vertical scrolling thumbnails (1fr) */}
         <div className="md:col-span-2 md:row-start-2">
           {imageUrls.length > 0 ? (
-            <div className={`grid gap-[10px] ${hasThumbs ? 'grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
+            <div className={`grid gap-[10px] ${hasThumbs ? 'md:grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
               <div className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30">
                 <Image
                   src={imageUrls[0].url}
@@ -147,21 +147,23 @@ export default async function ProductPage({
                 />
               </div>
               {hasThumbs && (
-                <div className="flex flex-col gap-[10px]">
-                  {imageUrls.slice(1, 5).map((img) => (
-                    <div
-                      key={img.thumb}
-                      className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30"
-                    >
-                      <Image
-                        src={img.thumb}
-                        alt={img.alt}
-                        fill
-                        sizes="15vw"
-                        className="img-bw object-cover"
-                      />
-                    </div>
-                  ))}
+                <div className="relative hidden md:block">
+                  <div className="absolute inset-0 flex flex-col gap-[10px] overflow-y-auto">
+                    {imageUrls.map((img) => (
+                      <div
+                        key={img.thumb}
+                        className="group relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-cloud/30"
+                      >
+                        <Image
+                          src={img.thumb}
+                          alt={img.alt}
+                          fill
+                          sizes="15vw"
+                          className="img-bw object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -198,8 +200,8 @@ export default async function ProductPage({
 
           {product.careInstructions && (
             <div className="border-t border-oslo/50 pt-5">
-              <P2 className="mb-2 font-bold">After Care</P2>
-              <P2 className="whitespace-pre-line text-graphite">{product.careInstructions}</P2>
+              <P1 className="mb-[10px] font-bold">After Care</P1>
+              <P1 className="whitespace-pre-line text-graphite">{product.careInstructions}</P1>
             </div>
           )}
         </div>
