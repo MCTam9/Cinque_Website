@@ -53,7 +53,9 @@ export default function ContactForm() {
     );
   }
 
-  const field = 'w-full border border-oslo bg-cararra px-3 py-2 type-p1 outline-none focus:border-graphite';
+  // Underline-style inputs (bottom border only), matching the Figma Contact form.
+  const field =
+    'w-full border-0 border-b border-oslo bg-transparent px-0 py-2 type-p1 outline-none focus:border-graphite';
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
