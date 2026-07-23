@@ -21,7 +21,7 @@ export default function CartPage() {
   if (!mounted) {
     return (
       <Container className="py-12 md:py-16">
-        <H1 className="font-bold">CART</H1>
+        <H1>CART</H1>
       </Container>
     );
   }
@@ -29,7 +29,7 @@ export default function CartPage() {
   if (lines.length === 0) {
     return (
       <Container className="py-12 md:py-16">
-        <H1 className="mb-4 font-bold">CART</H1>
+        <H1 className="mb-4">CART</H1>
         <P1 className="mb-6 text-oslo">Your cart is empty.</P1>
         <Link
           href="/shop"
@@ -43,7 +43,7 @@ export default function CartPage() {
 
   return (
     <Container className="py-12 md:py-16">
-      <H1 className="mb-8 font-bold">CART</H1>
+      <H1 className="mb-8">CART</H1>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_320px]">
         {/* Line items */}

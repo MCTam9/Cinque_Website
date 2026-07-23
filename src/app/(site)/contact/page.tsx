@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <Container className="py-12 md:py-16">
-      <H1 className="mb-8 font-bold">CONTACT</H1>
+      <H1 className="mb-8">CONTACT</H1>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_1fr]">
         <div className="flex flex-col gap-4">

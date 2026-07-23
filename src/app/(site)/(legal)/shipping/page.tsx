@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function ShippingPage() {
   return (
     <>
-      <H1 className="font-bold">Shipping &amp; Returns</H1>
+      <H1>Shipping &amp; Returns</H1>
       <P2 className="text-oslo">Last updated: July 2026</P2>
 
       <H2 className="font-bold">Processing &amp; lead times</H2>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function AccessibilityPage() {
   return (
     <>
-      <H1 className="font-bold">Accessibility Statement</H1>
+      <H1>Accessibility Statement</H1>
       <P2 className="text-oslo">Last updated: July 2026</P2>
 
       <P1>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <>
-      <H1 className="font-bold">Terms &amp; Conditions</H1>
+      <H1>Terms &amp; Conditions</H1>
       <P2 className="text-oslo">Last updated: July 2026</P2>
 
       <P1>

@@ -58,7 +58,7 @@ export default async function GenericPage({
 
   return (
     <Container className="py-12 md:py-16">
-      <H1 className="mb-8 font-bold">{doc.title}</H1>
+      <H1 className="mb-8">{doc.title}</H1>
       <PageBuilder blocks={doc.content} />
     </Container>
   );
