@@ -207,7 +207,7 @@ export default async function ProductPage({
           )}
 
           {product.careInstructions && (
-            <div className="border-t border-oslo/50 pt-5">
+            <div>
               <P1 className="mb-[10px] font-bold">After Care</P1>
               <P1 className="whitespace-pre-line text-graphite">{product.careInstructions}</P1>
             </div>
