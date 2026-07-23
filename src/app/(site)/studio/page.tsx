@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Container from '@/components/Container';
 import ContactForm from '@/components/ContactForm';
-import { H1, H2, P1 } from '@/components/typography';
+import { H1, H2, P1, P2 } from '@/components/typography';
 
 export const metadata: Metadata = {
   title: 'Studio',
@@ -61,8 +61,8 @@ export default function StudioPage() {
         </div>
       </section>
 
-      {/* Full-width studio flatlay band */}
-      <div className="group relative mb-[60px] aspect-[16/9] w-full overflow-hidden bg-cloud/30">
+      {/* Full-width studio flatlay band (desktop only) */}
+      <div className="group relative mb-[60px] hidden aspect-[16/9] w-full overflow-hidden bg-cloud/30 md:block">
         <Image
           src="/figma/home-studio.png"
           alt="Cinque studio flatlay"
@@ -78,25 +78,25 @@ export default function StudioPage() {
         <div className="md:col-span-2">
           <ContactForm />
         </div>
-        <div className="flex flex-col gap-[20px]">
-          <P1 className="text-oslo">
+        <div className="flex flex-col gap-[20px] text-graphite">
+          <P1 className="text-graphite">
             For bespoke commissions, custom variations, or general enquiries, please email:
           </P1>
           <a
             href="mailto:cindy@cinque.studio"
-            className="type-p1 w-fit underline underline-offset-4 hover:text-redcurrent"
+            className="type-p1 w-fit text-graphite underline underline-offset-4 hover:text-redcurrent"
           >
             cindy@cinque.studio
           </a>
           <div className="type-p1 text-graphite">
-            <P1 className="text-oslo">For bespoke commissions,</P1>
-            <P1 className="mb-[10px] text-oslo">kindly include:</P1>
-            <P1>Desired timeline</P1>
-            <P1>Budget range (if known)</P1>
-            <P1>Any existing stone or piece to incorporate</P1>
+            <P1 className="text-graphite">For bespoke commissions,</P1>
+            <P1 className="mb-[10px] text-graphite">kindly include:</P1>
+            <P1 className="text-graphite">Desired timeline</P1>
+            <P1 className="text-graphite">Budget range (if known)</P1>
+            <P1 className="text-graphite">Any existing stone or piece to incorporate</P1>
           </div>
-          <P1 className="text-oslo">We aim to respond within 2–3 working days.</P1>
-          <P1 className="text-oslo">
+          <P1 className="text-graphite">We aim to respond within 2–3 working days.</P1>
+          <P1 className="text-graphite">
             Cinque® Studio
             <br />
             London, W2
