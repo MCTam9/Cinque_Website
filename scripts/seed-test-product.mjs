@@ -97,6 +97,7 @@ async function main() {
     slug: { _type: 'slug', current: 'lace-fork-pendant' },
     status: 'active',
     category: 'necklaces',
+    edition: 'Edition of 5',
     collection: { _type: 'reference', _ref: COLLECTION_ID },
     images: [
       { _type: 'image', _key: 'img1', alt: 'Lace Fork Pendant', asset: { _type: 'reference', _ref: assetId } },

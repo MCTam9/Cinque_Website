@@ -58,12 +58,12 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
           <div className="flex flex-col gap-0.5 text-oslo">
             <dt>Drop</dt>
             <dt>Material</dt>
-            <dt>Size</dt>
+            <dt>Edition</dt>
           </div>
           <div className="flex flex-col gap-0.5 text-right text-graphite">
             <dd>{product.drop || '—'}</dd>
             <dd>{product.material || '—'}</dd>
-            <dd>{product.size || '—'}</dd>
+            <dd>{product.edition || '—'}</dd>
           </div>
         </dl>
 

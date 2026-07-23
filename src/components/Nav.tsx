@@ -34,18 +34,21 @@ export default function Nav() {
   const cartLabel = `CART (${mounted ? count : 0})`;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-graphite bg-cararra">
-      <nav className="mx-auto grid h-[70px] max-w-frame grid-cols-[1fr_auto_1fr] items-center px-5">
-        {/* Logo (left) */}
-        <Link href="/" aria-label="Cinque home" className="justify-self-start">
+    <header className="sticky top-0 z-50 bg-cararra">
+      <div className="relative mx-auto h-[70px] max-w-frame px-5">
+        {/* Rule line — inset to the 20px padding, at the link baseline. */}
+        <div className="pointer-events-none absolute inset-x-5 top-[48px] border-b border-graphite" />
+
+        {/* Logo — overlaps the line (reads as written on it). */}
+        <Link href="/" aria-label="Cinque home" className="absolute left-5 top-[13px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[38px] w-auto" />
+          <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[42px] w-auto" />
         </Link>
 
-        {/* Links (centre, desktop) */}
-        <ul className="hidden items-center gap-[30px] justify-self-center md:flex">
+        {/* Links — centred, baseline on the line (desktop). */}
+        <ul className="absolute left-1/2 top-[32px] hidden -translate-x-1/2 md:flex">
           {LINKS.map((l) => (
-            <li key={l.href}>
+            <li key={l.href} className="w-[150px]">
               <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                 {l.label}
               </Link>
@@ -53,27 +56,30 @@ export default function Nav() {
           ))}
         </ul>
 
-        {/* Cart (right, desktop) */}
-        <Link href="/cart" className="type-h3 hidden justify-self-end text-graphite hover:text-redcurrent md:block">
+        {/* Cart — right, aligned to the 20px padding (desktop). */}
+        <Link
+          href="/cart"
+          className="type-h3 absolute right-5 top-[32px] hidden text-graphite hover:text-redcurrent md:block"
+        >
           {cartLabel}
         </Link>
 
-        {/* Hamburger (mobile) */}
+        {/* Hamburger (mobile). */}
         <button
           type="button"
-          className="type-h3 justify-self-end text-graphite md:hidden"
+          className="type-h3 absolute right-5 top-[32px] text-graphite md:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? 'CLOSE' : 'MENU'}
         </button>
-      </nav>
+      </div>
 
       {/* Mobile panel */}
       {open && (
         <div id="mobile-menu" className="border-t border-graphite bg-cararra md:hidden">
-          <ul className="flex flex-col gap-5 px-5 py-4">
+          <ul className="flex flex-col gap-[20px] px-5 py-4">
             {LINKS.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>

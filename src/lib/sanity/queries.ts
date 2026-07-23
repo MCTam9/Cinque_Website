@@ -13,6 +13,7 @@ export const activeProductsQuery = groq`
     "slug": slug.current,
     status,
     category,
+    edition,
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     "images": images[]{ alt, asset },
     variants[]{
@@ -38,6 +39,7 @@ export const productBySlugQuery = groq`
     title,
     "slug": slug.current,
     status,
+    edition,
     description,
     careInstructions,
     "images": images[]{ alt, asset },

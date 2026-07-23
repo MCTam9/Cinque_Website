@@ -21,7 +21,7 @@ export default function Container({
 }) {
   return (
     <Tag
-      className={`mx-auto w-full max-w-frame grid grid-cols-1 px-5 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 ${className}`.trim()}
+      className={`mx-auto w-full max-w-frame grid grid-cols-1 px-5 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] ${className}`.trim()}
     >
       <div className="min-w-0 md:col-start-2">{children}</div>
     </Tag>

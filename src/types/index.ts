@@ -55,6 +55,7 @@ export interface Product {
   slug: string;
   status: 'draft' | 'active' | 'sold_out' | 'archived';
   category?: ProductCategory;
+  edition?: string;
   collection?: CollectionRef;
   images?: SanityImageRef[];
   variants: Variant[];
@@ -70,6 +71,7 @@ export interface ProductCardData {
   priceGBP: number; // pence — the default variant's price
   material?: string; // display label, e.g. "Sterling_Silver"
   drop?: string; // e.g. "01_Metal_Veil"
+  edition?: string;
   size?: string;
   variantKey?: string;
   sku?: string;
