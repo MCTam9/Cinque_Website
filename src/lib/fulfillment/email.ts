@@ -157,14 +157,19 @@ export interface ContactMessageInput {
   name: string;
   email: string;
   message: string;
+  phone?: string;
 }
 
 export async function sendContactMessage(
   input: ContactMessageInput
 ): Promise<SendEmailResult> {
+  const phoneLine = input.phone
+    ? `<p><strong>Phone:</strong> ${escapeHtml(input.phone)}</p>`
+    : '';
   const html = shell(
     'New enquiry via cinque.studio',
     `<p><strong>From:</strong> ${escapeHtml(input.name)} &lt;${escapeHtml(input.email)}&gt;</p>
+     ${phoneLine}
      <p style="white-space:pre-wrap;">${escapeHtml(input.message)}</p>`
   );
   // reply-to the visitor so Cindy can respond directly from her inbox.

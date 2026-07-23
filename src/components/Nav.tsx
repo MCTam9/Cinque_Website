@@ -16,56 +16,52 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+const linkClass = (active: boolean) =>
+  `type-h3 transition-colors ${
+    active
+      ? 'text-redcurrent font-bold underline underline-offset-4'
+      : 'text-graphite hover:text-redcurrent'
+  }`;
+
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-
-  // Cart count is client-only (persisted in localStorage) — defer to after
-  // mount to avoid an SSR/hydration mismatch.
   const [mounted, setMounted] = useState(false);
   const count = useCart((s) => s.itemCount());
   useEffect(() => setMounted(true), []);
-
-  // Close the mobile panel on route change.
   useEffect(() => setOpen(false), [pathname]);
 
   const cartLabel = `CART (${mounted ? count : 0})`;
 
   return (
-    <header className="sticky top-0 z-50 bg-cararra border-b border-oslo/40">
-      <nav className="mx-auto max-w-frame px-5 md:px-6 h-[70px] flex items-center justify-between">
-        {/* Wordmark → home */}
-        <Link href="/" className="type-h3 font-bold tracking-tight" aria-label="Cinque home">
-          Cinque®
+    <header className="sticky top-0 z-50 border-b border-graphite bg-cararra">
+      <nav className="mx-auto grid h-[70px] max-w-frame grid-cols-[1fr_auto_1fr] items-center px-5">
+        {/* Logo (left) */}
+        <Link href="/" aria-label="Cinque home" className="justify-self-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[38px] w-auto" />
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden md:flex items-center gap-8">
+        {/* Links (centre, desktop) */}
+        <ul className="hidden items-center gap-8 justify-self-center md:flex">
           {LINKS.map((l) => (
             <li key={l.href}>
-              <Link
-                href={l.href}
-                className={`type-h3 transition-colors ${
-                  isActive(pathname, l.href)
-                    ? 'text-redcurrent font-bold underline underline-offset-4'
-                    : 'text-graphite hover:text-redcurrent'
-                }`}
-              >
+              <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                 {l.label}
               </Link>
             </li>
           ))}
-          <li>
-            <Link href="/cart" className="type-h3 text-graphite hover:text-redcurrent">
-              {cartLabel}
-            </Link>
-          </li>
         </ul>
 
-        {/* Mobile: hamburger */}
+        {/* Cart (right, desktop) */}
+        <Link href="/cart" className="type-h3 hidden justify-self-end text-graphite hover:text-redcurrent md:block">
+          {cartLabel}
+        </Link>
+
+        {/* Hamburger (mobile) */}
         <button
           type="button"
-          className="md:hidden type-h3 text-graphite"
+          className="type-h3 justify-self-end text-graphite md:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
@@ -74,20 +70,13 @@ export default function Nav() {
         </button>
       </nav>
 
-      {/* Mobile expanded panel */}
+      {/* Mobile panel */}
       {open && (
-        <div id="mobile-menu" className="md:hidden border-t border-oslo/40 bg-cararra">
-          <ul className="px-5 py-4 flex flex-col gap-4">
+        <div id="mobile-menu" className="border-t border-graphite bg-cararra md:hidden">
+          <ul className="flex flex-col gap-4 px-5 py-4">
             {LINKS.map((l) => (
               <li key={l.href}>
-                <Link
-                  href={l.href}
-                  className={`type-h3 ${
-                    isActive(pathname, l.href)
-                      ? 'text-redcurrent font-bold underline underline-offset-4'
-                      : 'text-graphite'
-                  }`}
-                >
+                <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                   {l.label}
                 </Link>
               </li>

@@ -5,8 +5,7 @@ import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
-import { metalLabel, formatGBP } from '@/lib/products';
-import { PortableText } from '@/components/PortableText';
+import { metalLabel } from '@/lib/products';
 import Container from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
 import { H2, P1, P2 } from '@/components/typography';
@@ -23,7 +22,6 @@ interface PDPProduct {
   title: string;
   slug: string;
   status: string;
-  description?: unknown;
   careInstructions?: string;
   images?: SanityImageRef[];
   collection?: CollectionRef;
@@ -58,14 +56,14 @@ export async function generateMetadata({
   const first = product.images?.[0];
   const ogImage = first?.asset ? urlFor(first as never).width(1200).height(1200).url() : undefined;
   return {
-    title: product.title,
+    title: product.title.replace(/_/g, ' '),
     description: `${product.title} — Cinque®. Individually made, cast and hallmarked in London.`,
     openGraph: ogImage ? { images: [{ url: ogImage }] } : undefined,
   };
 }
 
-function variantLabel(v: Variant): string {
-  return [metalLabel(v.metalType), v.size].filter(Boolean).join(' · ') || v.sku;
+function variantSwatch(v: Variant): string {
+  return v.size || metalLabel(v.metalType)?.replace(/_/g, ' ') || v.sku;
 }
 
 export default async function ProductPage({
@@ -80,16 +78,16 @@ export default async function ProductPage({
   const images = (product.images ?? []).filter((i) => i.asset);
   const imageUrls = images.map((img) => ({
     url: urlFor(img as never).width(900).height(1200).fit('crop').url(),
+    thumb: urlFor(img as never).width(300).height(400).fit('crop').url(),
     alt: img.alt || product.title,
   }));
-  const thumbUrl = images[0]?.asset
-    ? urlFor(images[0] as never).width(200).url()
-    : undefined;
+  const thumbUrl = images[0]?.asset ? urlFor(images[0] as never).width(200).url() : undefined;
 
   const purchaseVariants: PurchaseVariant[] = (product.variants ?? []).map((v) => ({
     key: v._key,
     sku: v.sku,
-    label: variantLabel(v),
+    swatch: variantSwatch(v),
+    label: [metalLabel(v.metalType), v.size].filter(Boolean).join(' · ') || v.sku,
     priceGBP: v.priceGBP,
     inStock: v.stockQuantity > 0 || Boolean(v.allowBackorder),
   }));
@@ -99,12 +97,12 @@ export default async function ProductPage({
     (typeof product.collection.dropNumber === 'number'
       ? `${String(product.collection.dropNumber).padStart(2, '0')}_${product.collection.title.replace(/\s+/g, '_')}`
       : product.collection.title);
-  const defaultMaterial = metalLabel(product.variants?.[0]?.metalType);
+  const material = metalLabel(product.variants?.[0]?.metalType);
   const minPrice = product.variants?.length
     ? Math.min(...product.variants.map((v) => v.priceGBP))
     : 0;
-
   const anyInStock = purchaseVariants.some((v) => v.inStock);
+  const hasThumbs = imageUrls.length > 1;
 
   return (
     <Container className="py-10 md:py-14">
@@ -112,7 +110,7 @@ export default async function ProductPage({
         data={{
           '@context': 'https://schema.org',
           '@type': 'Product',
-          name: product.title,
+          name: product.title.replace(/_/g, ' '),
           image: imageUrls.map((i) => i.url),
           description: `${product.title} — Cinque®. Individually made, cast and hallmarked in London.`,
           brand: { '@type': 'Brand', name: 'Cinque' },
@@ -120,39 +118,58 @@ export default async function ProductPage({
             '@type': 'Offer',
             priceCurrency: 'GBP',
             price: (minPrice / 100).toFixed(2),
-            availability: anyInStock
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+            availability: anyInStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             url: `${siteUrl}/shop/${product.slug}`,
           },
         }}
       />
-      <nav aria-label="Breadcrumb" className="mb-6 type-p2 text-oslo">
+
+      <nav aria-label="Breadcrumb" className="mb-4 type-p2 text-oslo">
         <Link href="/shop" className="hover:text-graphite">
           Shop
         </Link>{' '}
-        / <span className="text-graphite">{product.title}</span>
+        / <span className="text-graphite">{product.title.replace(/_/g, ' ')}</span>
       </nav>
 
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+      {/* Product layout: title over gallery (2/3) + info (1/3) */}
+      <div className="grid grid-cols-1 gap-x-[10px] md:grid-cols-3">
+        {/* Title row */}
+        <H2 className="mb-[10px] border-b border-graphite pb-3 md:col-span-2">{product.title}</H2>
+        <div className="mb-[10px] hidden border-b border-graphite md:col-start-3 md:block" />
+
         {/* Gallery */}
-        <div className="flex flex-col gap-[10px]">
+        <div className="md:col-span-2 md:row-start-2">
           {imageUrls.length > 0 ? (
-            imageUrls.map((img, i) => (
-              <div
-                key={img.url}
-                className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30"
-              >
+            <div className={`grid gap-[10px] ${hasThumbs ? 'grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
+              <div className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30">
                 <Image
-                  src={img.url}
-                  alt={img.alt}
+                  src={imageUrls[0].url}
+                  alt={imageUrls[0].alt}
                   fill
-                  priority={i === 0}
+                  priority
                   sizes="(max-width: 768px) 100vw, 45vw"
                   className="img-bw object-cover"
                 />
               </div>
-            ))
+              {hasThumbs && (
+                <div className="flex flex-col gap-[10px]">
+                  {imageUrls.slice(1, 5).map((img) => (
+                    <div
+                      key={img.thumb}
+                      className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30"
+                    >
+                      <Image
+                        src={img.thumb}
+                        alt={img.alt}
+                        fill
+                        sizes="15vw"
+                        className="img-bw object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="flex aspect-[3/4] items-center justify-center bg-cloud/30 type-p2 text-oslo">
               No image
@@ -161,47 +178,39 @@ export default async function ProductPage({
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-6">
-          <header className="flex flex-col gap-2">
-            <H2>{product.title}</H2>
-            <dl className="flex gap-4 type-p2 text-oslo">
-              <div className="flex flex-col gap-1">
-                {drop && <dt>Drop</dt>}
-                {defaultMaterial && <dt>Material</dt>}
-              </div>
-              <div className="flex flex-col gap-1 text-graphite">
-                {drop && <dd>{drop}</dd>}
-                {defaultMaterial && <dd>{defaultMaterial}</dd>}
-              </div>
-            </dl>
-          </header>
+        <div className="mt-8 flex flex-col gap-6 md:col-start-3 md:row-start-2 md:mt-0">
+          <dl className="flex justify-between type-p1">
+            <div className="flex flex-col gap-0.5 text-oslo">
+              {drop && <dt>Drop</dt>}
+              {material && <dt>Material</dt>}
+            </div>
+            <div className="flex flex-col gap-0.5 text-right text-graphite">
+              {drop && <dd>{drop}</dd>}
+              {material && <dd>{material}</dd>}
+            </div>
+          </dl>
 
-          {purchaseVariants.length > 0 ? (
+          {purchaseVariants.length > 0 && (
             <ProductPurchase
               productId={product._id}
               title={product.title}
               variants={purchaseVariants}
               imageUrl={thumbUrl}
             />
-          ) : (
-            <P1 className="text-oslo">{formatGBP(minPrice)}</P1>
-          )}
-
-          {Boolean(product.description) && (
-            <div className="type-p1 flex flex-col gap-3 border-t border-oslo/50 pt-4">
-              <PortableText value={product.description as never} />
-            </div>
           )}
 
           {product.careInstructions && (
             <div className="border-t border-oslo/50 pt-4">
-              <P2 className="mb-2 text-oslo">After Care</P2>
+              <P2 className="mb-2 font-bold">After Care</P2>
               <P2 className="whitespace-pre-line text-graphite">{product.careInstructions}</P2>
             </div>
           )}
-
-          <RingSizeChart />
         </div>
+      </div>
+
+      {/* Ring size chart — full centre width */}
+      <div className="mt-12">
+        <RingSizeChart />
       </div>
     </Container>
   );

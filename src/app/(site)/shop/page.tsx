@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Container from '@/components/Container';
 import ProductGrid from '@/components/ProductGrid';
-import { H1, P1 } from '@/components/typography';
+import RingSizeChart from '@/components/RingSizeChart';
+import { H1, P1, P2 } from '@/components/typography';
 import { sanityClient } from '@/lib/sanity/client';
 import { activeProductsQuery } from '@/lib/sanity/queries';
 import type { Product } from '@/types';
@@ -23,6 +23,29 @@ const CATEGORIES = [
   { label: 'Objects', value: 'objects' },
 ] as const;
 
+function CategoryList({ active }: { active: string }) {
+  return (
+    <ul className="flex flex-col gap-1">
+      {CATEGORIES.map((c) => {
+        const isActive = c.value === active;
+        const href = c.value === 'all' ? '/shop' : `/shop?category=${c.value}`;
+        return (
+          <li key={c.value}>
+            <Link
+              href={href}
+              className={`type-h3 transition-colors ${
+                isActive ? 'text-redcurrent underline underline-offset-4' : 'text-graphite hover:text-redcurrent'
+              }`}
+            >
+              {c.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default async function ShopPage({
   searchParams,
 }: {
@@ -37,39 +60,38 @@ export default async function ShopPage({
   } catch {
     products = [];
   }
-
-  const filtered =
-    active === 'all' ? products : products.filter((p) => p.category === active);
+  const filtered = active === 'all' ? products : products.filter((p) => p.category === active);
 
   return (
-    <Container className="py-12 md:py-16">
-      <header className="mb-8 flex flex-col gap-2">
+    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-10 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-14">
+      {/* Header — centre column */}
+      <header className="mb-6 flex items-end justify-between border-b border-graphite pb-3 md:col-start-2 md:row-start-1">
         <H1 className="font-bold">SHOP</H1>
-        <P1 className="text-oslo">Contact us if you would like a bespoke commission.</P1>
+        <P1 className="hidden text-right text-oslo md:block">
+          Contact us if you would like a bespoke commission.
+        </P1>
+        {/* Mobile filter */}
+        <details className="md:hidden">
+          <summary className="type-h3 cursor-pointer list-none">FILTER</summary>
+          <div className="mt-3">
+            <CategoryList active={active} />
+          </div>
+        </details>
       </header>
 
-      {/* Category filter */}
-      <nav aria-label="Categories" className="mb-8 flex flex-wrap gap-x-5 gap-y-2">
-        {CATEGORIES.map((c) => {
-          const isActive = c.value === active;
-          const href = c.value === 'all' ? '/shop' : `/shop?category=${c.value}`;
-          return (
-            <Link
-              key={c.value}
-              href={href}
-              className={`type-p1 transition-colors ${
-                isActive
-                  ? 'text-redcurrent underline underline-offset-4'
-                  : 'text-oslo hover:text-graphite'
-              }`}
-            >
-              {c.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Category sidebar — left gutter (desktop) */}
+      <aside className="hidden md:col-start-1 md:row-start-2 md:block md:pr-4">
+        <P2 className="mb-2 text-oslo">SHOP_CATEGORY</P2>
+        <CategoryList active={active} />
+      </aside>
 
-      <ProductGrid products={filtered} />
-    </Container>
+      {/* Product grid + ring-size chart — centre column */}
+      <div className="md:col-start-2 md:row-start-2">
+        <ProductGrid products={filtered} />
+        <div className="mt-12">
+          <RingSizeChart />
+        </div>
+      </div>
+    </div>
   );
 }
