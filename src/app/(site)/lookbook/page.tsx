@@ -25,9 +25,9 @@ function LbImage({ src, alt }: { src: string; alt: string }) {
 
 export default function LookbookPage() {
   return (
-    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-10 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-14">
+    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-[60px]">
       {/* Header — centre column */}
-      <header className="mb-6 flex items-end justify-between md:col-start-2 md:row-start-1">
+      <header className="mb-5 flex items-end justify-between md:col-start-2 md:row-start-1">
         <H1>LOOKBOOK</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Individually made, cast and hallmarked in London.
@@ -35,7 +35,7 @@ export default function LookbookPage() {
       </header>
 
       {/* Drop sidebar — left gutter (desktop) */}
-      <aside className="mb-6 md:col-start-1 md:row-start-2 md:mb-0 md:pr-4">
+      <aside className="mb-5 md:col-start-1 md:row-start-2 md:mb-0 md:pr-4">
         <P2 className="mb-2 text-oslo">LOOKBOOK_DROP</P2>
         <ul className="flex flex-col gap-1">
           {DROPS.map((d) => (
@@ -48,12 +48,12 @@ export default function LookbookPage() {
 
       {/* Editorial content — centre column */}
       <div className="md:col-start-2 md:row-start-2">
-        <H2 className="mb-3 border-b border-graphite pb-3">Drop_00_Archive</H2>
+        <H2 className="mb-[10px] border-b border-graphite pb-[10px]">Drop_00_Archive</H2>
 
         {/* Row 1: copy + two small images | tall image */}
         <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
           <div className="flex flex-col gap-[10px]">
-            <div className="flex flex-col gap-4 type-p1">
+            <div className="flex flex-col gap-5 type-p1">
               <P1>
                 Pieces held within the cloud of Cinque’s studio archive—one-of-a-kind and limited
                 objects not assigned to any formal collection.
@@ -87,13 +87,13 @@ export default function LookbookPage() {
         </div>
 
         {/* Row 3: two images */}
-        <div className="mb-8 grid grid-cols-1 gap-[10px] md:grid-cols-2">
+        <div className="mb-[30px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
           <LbImage src={HAND} alt="Cinque piece" />
           <LbImage src={MACRO} alt="Cinque piece — macro detail" />
         </div>
 
         {/* Pagination */}
-        <nav className="flex items-center justify-between border-t border-graphite pt-4">
+        <nav className="flex items-center justify-between border-t border-graphite pt-5">
           <span className="type-h3 text-oslo">&lt;</span>
           <H3 className="font-bold">01_Metal_Veil &gt;</H3>
         </nav>

@@ -52,8 +52,8 @@ export default async function CollectionPage({
   if (!doc) notFound();
 
   return (
-    <Container className="py-12 md:py-16">
-      <header className="mb-8 flex flex-col gap-1">
+    <Container className="py-[40px] md:py-[60px]">
+      <header className="mb-[30px] flex flex-col gap-1">
         {typeof doc.dropNumber === 'number' && (
           <P2 className="text-oslo">Drop {String(doc.dropNumber).padStart(2, '0')}</P2>
         )}

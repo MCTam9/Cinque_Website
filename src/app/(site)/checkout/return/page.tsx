@@ -32,8 +32,8 @@ export default async function CheckoutReturnPage({
   }
 
   return (
-    <Container className="py-16 md:py-24">
-      <H1 className="mb-4">Thank you</H1>
+    <Container className="py-[60px] md:py-[80px]">
+      <H1 className="mb-5">Thank you</H1>
       <P1>Your order is confirmed{data.customerEmail ? `, ${data.customerEmail}` : ''}.</P1>
       <P1 className="text-oslo">A confirmation email will follow shortly.</P1>
     </Container>

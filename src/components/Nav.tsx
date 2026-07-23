@@ -43,7 +43,7 @@ export default function Nav() {
         </Link>
 
         {/* Links (centre, desktop) */}
-        <ul className="hidden items-center gap-8 justify-self-center md:flex">
+        <ul className="hidden items-center gap-[30px] justify-self-center md:flex">
           {LINKS.map((l) => (
             <li key={l.href}>
               <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
@@ -73,7 +73,7 @@ export default function Nav() {
       {/* Mobile panel */}
       {open && (
         <div id="mobile-menu" className="border-t border-graphite bg-cararra md:hidden">
-          <ul className="flex flex-col gap-4 px-5 py-4">
+          <ul className="flex flex-col gap-5 px-5 py-4">
             {LINKS.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>

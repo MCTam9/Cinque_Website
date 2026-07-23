@@ -18,7 +18,7 @@ export default function RingSizeChart() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-t border-oslo/50 pt-4">
+    <div className="border-t border-oslo/50 pt-5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -30,7 +30,7 @@ export default function RingSizeChart() {
       </button>
 
       {open && (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-5 overflow-x-auto">
           <table className="w-full type-p2 text-left">
             <thead className="text-oslo">
               <tr>

@@ -56,7 +56,7 @@ export default function ContactForm() {
   const field = 'w-full border border-oslo bg-cararra px-3 py-2 type-p1 outline-none focus:border-graphite';
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       {/* Honeypot: visually hidden, off the tab order */}
       <div aria-hidden className="hidden">
         <label>

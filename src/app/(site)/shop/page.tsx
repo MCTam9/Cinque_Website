@@ -63,9 +63,9 @@ export default async function ShopPage({
   const filtered = active === 'all' ? products : products.filter((p) => p.category === active);
 
   return (
-    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-10 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-14">
+    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-[60px]">
       {/* Header — centre column */}
-      <header className="mb-6 flex items-end justify-between border-b border-graphite pb-3 md:col-start-2 md:row-start-1">
+      <header className="mb-5 flex items-end justify-between border-b border-graphite pb-[10px] md:col-start-2 md:row-start-1">
         <H1>SHOP</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Contact us if you would like a bespoke commission.
@@ -73,7 +73,7 @@ export default async function ShopPage({
         {/* Mobile filter */}
         <details className="md:hidden">
           <summary className="type-h3 cursor-pointer list-none">FILTER</summary>
-          <div className="mt-3">
+          <div className="mt-[10px]">
             <CategoryList active={active} />
           </div>
         </details>
@@ -88,7 +88,7 @@ export default async function ShopPage({
       {/* Product grid + ring-size chart — centre column */}
       <div className="md:col-start-2 md:row-start-2">
         <ProductGrid products={filtered} />
-        <div className="mt-12">
+        <div className="mt-[40px]">
           <RingSizeChart />
         </div>
       </div>
