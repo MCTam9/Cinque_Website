@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import { metalLabel } from '@/lib/products';
-import Container from '@/components/Container';
+import ShopLayout from '@/components/ShopLayout';
 import JsonLd from '@/components/JsonLd';
 import { H2, P1, P2 } from '@/components/typography';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
@@ -105,7 +104,7 @@ export default async function ProductPage({
   const hasThumbs = imageUrls.length > 1;
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <ShopLayout active="all">
       <JsonLd
         data={{
           '@context': 'https://schema.org',
@@ -123,13 +122,6 @@ export default async function ProductPage({
           },
         }}
       />
-
-      <nav aria-label="Breadcrumb" className="mb-5 type-p2 text-oslo">
-        <Link href="/shop" className="hover:text-graphite">
-          Shop
-        </Link>{' '}
-        / <span className="text-graphite">{product.title.replace(/_/g, ' ')}</span>
-      </nav>
 
       {/* Product layout: title over gallery (2/3) + info (1/3) */}
       <div className="grid grid-cols-1 gap-x-[10px] md:grid-cols-3">
@@ -209,9 +201,9 @@ export default async function ProductPage({
       </div>
 
       {/* Ring size chart — full centre width */}
-      <div className="mt-[40px]">
+      <div className="mt-[60px]">
         <RingSizeChart />
       </div>
-    </Container>
+    </ShopLayout>
   );
 }

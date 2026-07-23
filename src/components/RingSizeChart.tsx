@@ -18,12 +18,12 @@ export default function RingSizeChart() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-t border-oslo/50 pt-5">
+    <div>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="type-p1 flex w-full items-center justify-between text-left"
+        className="type-h3 flex w-full items-center justify-between border-b border-graphite pb-[10px] text-left"
       >
         <span>Ring size chart</span>
         <span className="text-oslo">{open ? '−' : '+'}</span>
