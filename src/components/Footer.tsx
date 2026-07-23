@@ -17,7 +17,7 @@ const LINKS: { label: string; href: string; external?: boolean }[] = [
 export default function Footer() {
   return (
     <footer className="mt-[80px] bg-cararra">
-      <div className="mx-auto max-w-frame px-5">
+      <div className="px-5">
         <div className="border-t border-graphite pt-[30px] pb-[30px]">
           <ul className="grid grid-cols-2 gap-x-[10px] gap-y-[20px] md:grid-cols-6">
             {LINKS.map((l) => (

@@ -40,7 +40,7 @@ export default async function LookbookPage({
   const next = idx < DROPS.length - 1 ? DROPS[idx + 1] : null;
 
   return (
-    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
+    <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
       {/* Rule above sidebar */}
       <div className="hidden border-b border-graphite md:col-start-1 md:row-start-1 md:block" />
 
