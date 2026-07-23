@@ -1,27 +1,29 @@
 import type { ElementType, ReactNode } from 'react';
 
 /**
- * Single source of page width. Reproduces the canon layout: a centred content
- * column (900px, matching the Figma grid) with side gutters on desktop, and
- * full-width with comfortable padding on mobile.
+ * Canonical page shell. Reproduces the Figma Shop-page grid:
+ *   grid-template-columns: minmax(0,0.25fr) minmax(0,1fr) minmax(0,0.25fr)
+ * — a fluid centre column with 0.25fr side gutters — capped at the 1440 frame
+ * so it aligns with the nav. On mobile it collapses to a single full-width
+ * column with comfortable padding.
  *
- * `width="frame"` opts into the full 1440 desktop frame for edge-to-edge rows.
+ * Content is placed in the centre column. `bleed` lets a child opt out and use
+ * the full frame width (edge-to-edge rows) by rendering it outside the grid.
  */
 export default function Container({
   children,
   className = '',
-  width = 'content',
   as: Tag = 'div',
 }: {
   children: ReactNode;
   className?: string;
-  width?: 'content' | 'frame';
   as?: ElementType;
 }) {
-  const max = width === 'frame' ? 'max-w-frame' : 'max-w-content';
   return (
-    <Tag className={`mx-auto w-full ${max} px-5 md:px-6 ${className}`.trim()}>
-      {children}
+    <Tag
+      className={`mx-auto w-full max-w-frame grid grid-cols-1 px-5 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 ${className}`.trim()}
+    >
+      <div className="min-w-0 md:col-start-2">{children}</div>
     </Tag>
   );
 }
