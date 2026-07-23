@@ -38,23 +38,23 @@ export default function RingSizeChart() {
 
       {open && (
         <div className="mt-[10px] overflow-x-auto">
-          <table className="w-full type-p1 text-left">
+          <table className="type-p1 text-left">
             <thead className="text-oslo">
               <tr>
-                <th className="py-[10px] pr-4 font-normal">UK</th>
-                <th className="py-[10px] pr-4 font-normal">US</th>
-                <th className="py-[10px] pr-4 font-normal">EU</th>
-                <th className="py-[10px] pr-4 font-normal">Circumference (mm)</th>
+                <th className="py-[10px] pr-8 md:pr-6 font-normal">UK</th>
+                <th className="py-[10px] pr-8 md:pr-6 font-normal">US</th>
+                <th className="py-[10px] pr-8 md:pr-6 font-normal">EU</th>
+                <th className="py-[10px] pr-8 md:pr-6 font-normal">Circumference (mm)</th>
                 <th className="py-[10px] font-normal">Diameter (mm)</th>
               </tr>
             </thead>
             <tbody>
               {ROWS.map((r) => (
                 <tr key={r.uk} className="border-t border-oslo/30">
-                  <td className="py-[10px] pr-4">{r.uk}</td>
-                  <td className="py-[10px] pr-4">{r.us}</td>
-                  <td className="py-[10px] pr-4">{r.eu}</td>
-                  <td className="py-[10px] pr-4">{r.circ}</td>
+                  <td className="py-[10px] pr-8 md:pr-6">{r.uk}</td>
+                  <td className="py-[10px] pr-8 md:pr-6">{r.us}</td>
+                  <td className="py-[10px] pr-8 md:pr-6">{r.eu}</td>
+                  <td className="py-[10px] pr-8 md:pr-6">{r.circ}</td>
                   <td className="py-[10px]">{r.dia}</td>
                 </tr>
               ))}
