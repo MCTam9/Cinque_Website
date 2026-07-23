@@ -11,8 +11,15 @@ const nextConfig = {
       },
     ],
   },
+  // Catalog moved from /products to /shop (matches nav wording).
+  async redirects() {
+    return [
+      { source: '/products', destination: '/shop', permanent: true },
+      { source: '/products/:slug', destination: '/shop/:slug', permanent: true },
+    ];
+  },
   // NOTE: The Content-Security-Policy is intentionally NOT set here.
-  // It is applied per-request (with a nonce, and path-scoped for /studio)
+  // It is applied per-request (with a nonce, and path-scoped for /admin)
   // in middleware.ts. Non-nonce security headers live here as a baseline.
   async headers() {
     return [

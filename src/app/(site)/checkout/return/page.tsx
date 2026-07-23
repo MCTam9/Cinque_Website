@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { publicEnv } from '@/lib/env';
+import Container from '@/components/Container';
+import { H1, P1 } from '@/components/typography';
 
 /**
  * Post-checkout return page. Stripe redirects here with ?session_id=...
@@ -30,10 +32,10 @@ export default async function CheckoutReturnPage({
   }
 
   return (
-    <main>
-      <h1>Thank you</h1>
-      <p>Your order is confirmed{data.customerEmail ? `, ${data.customerEmail}` : ''}.</p>
-      <p>A confirmation email will follow shortly.</p>
-    </main>
+    <Container className="py-16 md:py-24">
+      <H1 className="mb-4 font-bold">Thank you</H1>
+      <P1>Your order is confirmed{data.customerEmail ? `, ${data.customerEmail}` : ''}.</P1>
+      <P1 className="text-oslo">A confirmation email will follow shortly.</P1>
+    </Container>
   );
 }

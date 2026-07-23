@@ -13,8 +13,9 @@ const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET!;
 export default defineConfig({
   name: 'cinque',
   title: 'Cinque',
-  // Studio is served from /studio inside the Next.js app.
-  basePath: '/studio',
+  // Studio is served from /admin inside the Next.js app (/studio is the
+  // public brand page).
+  basePath: '/admin',
   projectId,
   dataset,
   schema: { types: schemaTypes },

@@ -1,6 +1,7 @@
 /**
- * Embedded Sanity Studio, served at /studio.
+ * Embedded Sanity Studio, served at /admin.
  * This route runs the full Studio inside the Next.js app — one deploy, one repo.
+ * (Moved from /studio so the public brand page can own /studio.)
  */
 import { NextStudio } from 'next-sanity/studio';
 import config from '../../../../sanity.config';

@@ -56,6 +56,7 @@ async function send(args: {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
 }): Promise<SendEmailResult> {
   const r = resend();
   const from = serverEnv.RESEND_FROM_EMAIL;
@@ -72,6 +73,7 @@ async function send(args: {
       to: args.to,
       subject: args.subject,
       html: args.html,
+      replyTo: args.replyTo,
     });
     if (error) {
       console.error('[email] send failed', error);
@@ -145,6 +147,33 @@ export async function sendShippingConfirmation(
     `<p>Order <strong>${escapeHtml(input.orderNumber)}</strong> has shipped.</p>${tracking}`
   );
   return send({ to: input.to, subject: `Your Cinque order has shipped`, html });
+}
+
+// ── Contact form ──────────────────────────────────────────────
+/** Where public contact-form enquiries are delivered. */
+export const CONTACT_RECIPIENT = 'cindy@cinque.studio';
+
+export interface ContactMessageInput {
+  name: string;
+  email: string;
+  message: string;
+}
+
+export async function sendContactMessage(
+  input: ContactMessageInput
+): Promise<SendEmailResult> {
+  const html = shell(
+    'New enquiry via cinque.studio',
+    `<p><strong>From:</strong> ${escapeHtml(input.name)} &lt;${escapeHtml(input.email)}&gt;</p>
+     <p style="white-space:pre-wrap;">${escapeHtml(input.message)}</p>`
+  );
+  // reply-to the visitor so Cindy can respond directly from her inbox.
+  return send({
+    to: CONTACT_RECIPIENT,
+    subject: `Cinque enquiry from ${input.name}`,
+    html,
+    replyTo: input.email,
+  });
 }
 
 // ── Internal low-stock alert ──────────────────────────────────
