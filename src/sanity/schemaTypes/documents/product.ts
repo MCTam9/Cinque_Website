@@ -33,6 +33,22 @@ export const product = defineType({
       group: 'content',
     }),
     defineField({
+      name: 'category',
+      title: 'Category',
+      type: 'string',
+      group: 'content',
+      description: 'Drives the Shop page filter.',
+      options: {
+        list: [
+          { title: 'Rings', value: 'rings' },
+          { title: 'Earrings', value: 'earrings' },
+          { title: 'Necklaces', value: 'necklaces' },
+          { title: 'Objects', value: 'objects' },
+        ],
+        layout: 'radio',
+      },
+    }),
+    defineField({
       name: 'status',
       title: 'Status',
       type: 'string',

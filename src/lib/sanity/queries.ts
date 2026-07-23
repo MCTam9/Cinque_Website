@@ -12,12 +12,22 @@ export const activeProductsQuery = groq`
     title,
     "slug": slug.current,
     status,
+    category,
+    "collection": collection->{ title, "slug": slug.current, dropNumber },
     "images": images[]{ alt, asset },
     variants[]{
       _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
       stockQuantity, allowBackorder,
       stone
     }
+  }
+`;
+
+// All collections / drops, newest drop first (Lookbook listing).
+export const collectionsQuery = groq`
+  *[_type == "collection" && defined(slug.current)] | order(dropNumber desc) {
+    _id, title, "slug": slug.current, dropNumber, releaseDate,
+    heroImage{ alt, asset }
   }
 `;
 
