@@ -21,6 +21,7 @@ interface PDPProduct {
   title: string;
   slug: string;
   status: string;
+  edition?: string;
   careInstructions?: string;
   images?: SanityImageRef[];
   collection?: CollectionRef;
@@ -175,10 +176,12 @@ export default async function ProductPage({
             <div className="flex flex-col gap-0.5 text-oslo">
               {drop && <dt>Drop</dt>}
               {material && <dt>Material</dt>}
+              {product.edition && <dt>Edition</dt>}
             </div>
             <div className="flex flex-col gap-0.5 text-right text-graphite">
               {drop && <dd>{drop}</dd>}
               {material && <dd>{material}</dd>}
+              {product.edition && <dd>{product.edition}</dd>}
             </div>
           </dl>
 

@@ -65,6 +65,7 @@ export function toCardData(product: Product): ProductCardData {
     priceGBP: minPrice,
     material: metalLabel(defaultVariant?.metalType),
     drop: dropLabel(product.collection),
+    edition: product.edition,
     size: defaultVariant?.size,
     variantKey: defaultVariant?._key,
     sku: defaultVariant?.sku,

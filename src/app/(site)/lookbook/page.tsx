@@ -12,9 +12,14 @@ const HAND = '/figma/lookbook-1-hand.png';
 const BENCH = '/figma/lookbook-2-bench-flatlay.png';
 const MACRO = '/figma/lookbook-3-macro-hallmark-bead.png';
 
-const DROPS = ['00_Archive 01_Metal_Veil', '02_Shell_Relic', '03_Hastata', '04_Lost_Garden'];
+const DROPS = [
+  '00_Archive',
+  '01_Metal_Veil',
+  '02_Shell_Relic',
+  '03_Hastata',
+  '04_Lost_Garden',
+] as const;
 
-/** B&W → colour-on-hover editorial image at a fixed 2:3 ratio. */
 function LbImage({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
@@ -23,37 +28,59 @@ function LbImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-export default function LookbookPage() {
+export default async function LookbookPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ drop?: string }>;
+}) {
+  const { drop } = await searchParams;
+  const active = DROPS.includes(drop as (typeof DROPS)[number]) ? (drop as string) : DROPS[0];
+  const idx = DROPS.indexOf(active as (typeof DROPS)[number]);
+  const prev = idx > 0 ? DROPS[idx - 1] : null;
+  const next = idx < DROPS.length - 1 ? DROPS[idx + 1] : null;
+
   return (
-    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-[60px]">
-      {/* Header — centre column */}
-      <header className="mb-5 flex items-end justify-between md:col-start-2 md:row-start-1">
+    <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
+      {/* Rule above sidebar */}
+      <div className="hidden border-b border-graphite md:col-start-1 md:row-start-1 md:block" />
+
+      {/* Header + rule */}
+      <header className="mb-[30px] flex items-end justify-between border-b border-graphite pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
         <H1>LOOKBOOK</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Individually made, cast and hallmarked in London.
         </P1>
       </header>
 
-      {/* Drop sidebar — left gutter (desktop) */}
-      <aside className="mb-5 md:col-start-1 md:row-start-2 md:mb-0 md:pr-4">
-        <P2 className="mb-2 text-oslo">LOOKBOOK_DROP</P2>
-        <ul className="flex flex-col gap-1">
+      {/* Drop sidebar */}
+      <aside className="mb-[30px] pt-[10px] md:col-start-1 md:row-start-2 md:mb-0 md:pr-4">
+        <P2 className="mb-[10px] text-oslo">LOOKBOOK_DROP</P2>
+        <ul className="flex flex-col gap-[10px]">
           {DROPS.map((d) => (
             <li key={d}>
-              <span className="type-h3">{d}</span>
+              <Link
+                href={`/lookbook?drop=${d}`}
+                className={`type-h3 transition-colors ${
+                  d === active
+                    ? 'text-redcurrent underline underline-offset-4'
+                    : 'text-graphite hover:text-redcurrent'
+                }`}
+              >
+                {d}
+              </Link>
             </li>
           ))}
         </ul>
       </aside>
 
-      {/* Editorial content — centre column */}
-      <div className="md:col-start-2 md:row-start-2">
-        <H2 className="mb-[10px] border-b border-graphite pb-[10px]">Drop_00_Archive</H2>
+      {/* Editorial content */}
+      <div className="pt-[10px] md:col-start-2 md:row-start-2">
+        <H2 className="mb-[10px] border-b border-graphite pb-[10px]">Drop_{active}</H2>
 
         {/* Row 1: copy + two small images | tall image */}
         <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
           <div className="flex flex-col gap-[10px]">
-            <div className="flex flex-col gap-5 type-p1">
+            <div className="flex flex-col gap-[20px] type-p1">
               <P1>
                 Pieces held within the cloud of Cinque’s studio archive—one-of-a-kind and limited
                 objects not assigned to any formal collection.
@@ -92,10 +119,22 @@ export default function LookbookPage() {
           <LbImage src={MACRO} alt="Cinque piece — macro detail" />
         </div>
 
-        {/* Pagination */}
-        <nav className="flex items-center justify-between border-t border-graphite pt-5">
-          <span className="type-h3 text-oslo">&lt;</span>
-          <H3 className="font-bold">01_Metal_Veil &gt;</H3>
+        {/* Pagination between drops */}
+        <nav className="flex items-center justify-between border-t border-graphite pt-[20px]">
+          {prev ? (
+            <Link href={`/lookbook?drop=${prev}`} className="type-h3 hover:text-redcurrent">
+              &lt;
+            </Link>
+          ) : (
+            <span className="type-h3 text-oslo">&lt;</span>
+          )}
+          {next ? (
+            <Link href={`/lookbook?drop=${next}`}>
+              <H3 className="font-bold hover:text-redcurrent">{next} &gt;</H3>
+            </Link>
+          ) : (
+            <span />
+          )}
         </nav>
       </div>
     </div>

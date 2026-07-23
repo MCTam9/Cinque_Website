@@ -49,6 +49,13 @@ export const product = defineType({
       },
     }),
     defineField({
+      name: 'edition',
+      title: 'Edition',
+      type: 'string',
+      group: 'content',
+      description: 'Edition label shown on the card / product page (e.g. "Edition of 5", "Open Edition").',
+    }),
+    defineField({
       name: 'status',
       title: 'Status',
       type: 'string',
