@@ -76,22 +76,26 @@ export default function Nav() {
         </button>
       </div>
 
-      {/* Mobile panel */}
+      {/* Mobile panel — links stacked left, CART right on the last row,
+          bottom rule inset to the 20px padding. */}
       {open && (
-        <div id="mobile-menu" className="border-t border-graphite bg-cararra md:hidden">
-          <ul className="flex flex-col gap-[20px] px-5 py-4">
-            {LINKS.map((l) => (
-              <li key={l.href}>
+        <div id="mobile-menu" className="bg-cararra px-5 md:hidden">
+          <ul className="flex flex-col gap-[20px] border-b border-graphite pb-[20px]">
+            {LINKS.map((l, i) => (
+              <li
+                key={l.href}
+                className={i === LINKS.length - 1 ? 'flex items-center justify-between' : ''}
+              >
                 <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                   {l.label}
                 </Link>
+                {i === LINKS.length - 1 && (
+                  <Link href="/cart" className="type-h3 text-graphite hover:text-redcurrent">
+                    {cartLabel}
+                  </Link>
+                )}
               </li>
             ))}
-            <li>
-              <Link href="/cart" className="type-h3 text-graphite">
-                {cartLabel}
-              </Link>
-            </li>
           </ul>
         </div>
       )}

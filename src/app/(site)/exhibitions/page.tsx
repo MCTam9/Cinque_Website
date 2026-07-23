@@ -59,9 +59,22 @@ function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
       : STANDINS;
   const date = [formatMonth(ex.startDate), formatMonth(ex.endDate)].filter(Boolean).join(' – ');
 
+  const meta = (
+    <dl className="flex justify-between gap-4 type-p1">
+      <div className="flex flex-col text-oslo">
+        {date && <dt>Date</dt>}
+        {ex.location && <dt>Location</dt>}
+      </div>
+      <div className="flex flex-col text-right text-graphite">
+        {date && <dd>{date}</dd>}
+        {ex.location && <dd>{ex.location}</dd>}
+      </div>
+    </dl>
+  );
+
   return (
     <article className={last ? '' : 'mb-[60px]'}>
-      {/* Header — title + venue bottom-aligned over a shared grey rule */}
+      {/* Header — title (+ venue: right over a shared rule on desktop, left below on mobile) */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
         <H2 className="border-b border-oslo pb-[10px] md:col-span-2">
           {ex.slug ? (
@@ -72,11 +85,18 @@ function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
             formatLabel(ex.title)
           )}
         </H2>
-        <P1 className="border-b border-oslo pb-[10px] text-right text-oslo">{ex.venue || ''}</P1>
+        {ex.venue && (
+          <P1 className="text-oslo md:border-b md:border-oslo md:pb-[10px] md:text-right">
+            {ex.venue}
+          </P1>
+        )}
       </div>
 
-      {/* Body — description | Date/Location, then the image columns */}
-      <div className="grid grid-cols-1 gap-x-[10px] gap-y-[30px] md:grid-cols-3">
+      {/* Date / Location — before the copy on mobile */}
+      <div className="mb-[20px] md:hidden">{meta}</div>
+
+      <div className="grid grid-cols-1 gap-x-[10px] gap-y-[20px] md:grid-cols-3 md:gap-y-[30px]">
+        {/* Description (cols 1–2) */}
         <div className="flex flex-col gap-[20px] md:col-span-2">
           {Boolean(ex.description) && (
             <div className="type-p1 flex flex-col gap-[10px]">
@@ -96,19 +116,21 @@ function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
             </P1>
           )}
         </div>
-        <dl className="flex h-fit justify-between gap-4 type-p1">
-          <div className="flex flex-col text-oslo">
-            {date && <dt>Date</dt>}
-            {ex.location && <dt>Location</dt>}
-          </div>
-          <div className="flex flex-col text-right text-graphite">
-            {date && <dd>{date}</dd>}
-            {ex.location && <dd>{ex.location}</dd>}
-          </div>
-        </dl>
-        {images.map((src, i) => (
-          <ExhImage key={`${src}-${i}`} src={src} hideOnMobile={i === 2} />
-        ))}
+
+        {/* Date / Location — col 3 on desktop */}
+        <div className="hidden h-fit md:block">{meta}</div>
+
+        {/* Images: mobile = first full + rest 2-up; desktop = 3 columns */}
+        <div className="grid grid-cols-2 gap-[10px] md:contents">
+          {images.map((src, i) => (
+            <div
+              key={`${src}-${i}`}
+              className={i === 0 ? 'col-span-2 md:col-span-1' : ''}
+            >
+              <ExhImage src={src} />
+            </div>
+          ))}
+        </div>
       </div>
     </article>
   );
