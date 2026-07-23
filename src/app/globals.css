@@ -17,6 +17,14 @@
   body {
     @apply bg-cararra text-graphite font-sans antialiased;
   }
+  /* Custom cursor (public/cursor.png, 64×64). The `0 0` hotspot makes the
+     image's top-left corner the actual click point. Applied to everything so
+     links/buttons keep the same cursor instead of the UA pointer. */
+  *,
+  *::before,
+  *::after {
+    cursor: url('/cursor.png') 0 0, auto;
+  }
   /* Long underscore-joined titles (e.g. Jewellery_Shaped_by_Architecture…)
      must wrap instead of overflowing narrow phones. */
   h1, h2, h3, h4 {
