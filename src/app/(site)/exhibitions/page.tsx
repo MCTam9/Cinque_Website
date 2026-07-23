@@ -1,92 +1,86 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
 import Container from '@/components/Container';
-import { H1, H3, P1, P2 } from '@/components/typography';
-import { sanityClient } from '@/lib/sanity/client';
-import { exhibitionsQuery } from '@/lib/sanity/queries';
-import { urlFor } from '@/lib/sanity/image';
-import type { SanityImageRef } from '@/types';
-
-export const revalidate = 60;
+import { H1, H2, P1, P2 } from '@/components/typography';
 
 export const metadata: Metadata = {
   title: 'Exhibition',
   description: 'Cinque® exhibitions, shows and installations.',
 };
 
-interface ExhibitionListItem {
-  _id: string;
-  title: string;
-  slug?: string;
-  venue?: string;
-  location?: string;
-  startDate?: string;
-  images?: SanityImageRef[];
-  externalUrl?: string;
-}
+const ENTRIES = [
+  {
+    title: 'The_Invisible_Made_Visible',
+    date: '2026-09',
+    location: 'Blackdot Gallery, London',
+    publication: 'London Craft Week',
+    image: '/figma/home-exhibition.png',
+    imageRatio: '900/652',
+    body: 'Jewellery becomes an intimate archive, where reclaimed materials and antique textiles preserve traces of everyday histories. The Invisible Made Visible at @londoncraftweek explores the hidden forces that shape making — from unseen labour and material transformation to the quiet gestures embedded in process. Bringing together practices across jewellery, ceramics, sculpture, installation, furniture, wearable works, glass, textile and embroidery, the exhibition reveals what often remains unnoticed: the time, care and experimentation behind each piece, highlighting the stories and processes that usually remain invisible.',
+  },
+] as const;
 
-function formatDate(iso?: string): string {
-  if (!iso) return '';
-  // Keep the brand's YYYY-MM style.
-  return iso.slice(0, 7);
-}
-
-export default async function ExhibitionsPage() {
-  let items: ExhibitionListItem[] = [];
-  try {
-    items = await sanityClient.fetch<ExhibitionListItem[]>(exhibitionsQuery);
-  } catch {
-    items = [];
-  }
-
+export default function ExhibitionsPage() {
   return (
-    <Container className="py-12 md:py-16">
+    <Container className="py-10 md:py-14">
       <H1 className="mb-8 font-bold">EXHIBITION</H1>
 
-      {items.length === 0 ? (
-        <P1 className="text-oslo">No exhibitions listed yet. Please check back soon.</P1>
-      ) : (
-        <ul className="flex flex-col divide-y divide-oslo/40 border-y border-oslo/40">
-          {items.map((ex) => {
-            const img = ex.images?.[0]?.asset
-              ? urlFor(ex.images[0] as never).width(600).height(450).fit('crop').url()
-              : undefined;
-            const inner = (
-              <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:gap-8">
-                <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-cloud/30 sm:w-64">
-                  {img && (
-                    <Image
-                      src={img}
-                      alt={ex.images?.[0]?.alt || ex.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 256px"
-                      className="img-bw object-cover"
-                    />
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <H3 className="font-bold">{ex.title}</H3>
-                  <P2 className="text-oslo">
-                    {[formatDate(ex.startDate), ex.venue, ex.location].filter(Boolean).join(' · ')}
-                  </P2>
-                </div>
+      {ENTRIES.map((ex) => (
+        <article key={ex.title} className="mb-16 border-t border-graphite pt-6">
+          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <H2 className="max-w-xl">{ex.title}</H2>
+            <dl className="flex shrink-0 gap-4 type-p2">
+              <div className="flex flex-col gap-0.5 text-oslo">
+                <dt>Date</dt>
+                <dt>Location</dt>
               </div>
-            );
-            return (
-              <li key={ex._id}>
-                {ex.slug ? (
-                  <Link href={`/exhibitions/${ex.slug}`} className="group block">
-                    {inner}
-                  </Link>
-                ) : (
-                  inner
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              <div className="flex flex-col gap-0.5 text-graphite">
+                <dd>{ex.date}</dd>
+                <dd>{ex.location}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="group relative mb-4 w-full overflow-hidden bg-cloud/30" style={{ aspectRatio: ex.imageRatio }}>
+            <Image src={ex.image} alt={ex.title} fill sizes="(max-width: 768px) 100vw, 900px" className="img-bw object-cover" />
+          </div>
+
+          <P1 className="max-w-2xl">{ex.body}</P1>
+          {ex.publication && <P2 className="mt-2 text-oslo">{ex.publication}</P2>}
+        </article>
+      ))}
+
+      {/* Press feature — Scura Magazine */}
+      <article className="border-t border-graphite pt-6">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <H2 className="max-w-xl">Jewellery_Shaped_by_Architecture_History_and_the_Human_Hand</H2>
+          <dl className="flex shrink-0 gap-4 type-p2">
+            <div className="flex flex-col gap-0.5 text-oslo">
+              <dt>Date</dt>
+              <dt>Location</dt>
+            </div>
+            <div className="flex flex-col gap-0.5 text-graphite">
+              <dd>2026-05</dd>
+              <dd>Blackdot Gallery, London</dd>
+            </div>
+          </dl>
+        </div>
+        <P2 className="mb-1 text-oslo">Scura Magazine</P2>
+        <P1>
+          Read Our Story on{' '}
+          <a
+            href="https://scura.co.uk/cinque/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-redcurrent"
+          >
+            Scura Magazine
+          </a>
+          .
+          <br />
+          Words by Charlie Monaghan, Photography by Ashley Law.
+        </P1>
+      </article>
     </Container>
   );
 }

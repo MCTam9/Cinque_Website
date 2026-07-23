@@ -20,6 +20,7 @@ export default function ContactForm() {
     const payload = {
       name: String(data.get('name') ?? ''),
       email: String(data.get('email') ?? ''),
+      phone: String(data.get('phone') ?? ''),
       message: String(data.get('message') ?? ''),
       company: String(data.get('company') ?? ''), // honeypot
     };
@@ -72,6 +73,11 @@ export default function ContactForm() {
       <label className="flex flex-col gap-1">
         <span className="type-p2 text-oslo">Email*</span>
         <input type="email" name="email" required maxLength={200} className={field} />
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span className="type-p2 text-oslo">Phone</span>
+        <input type="tel" name="phone" maxLength={40} className={field} />
       </label>
 
       <label className="flex flex-col gap-1">

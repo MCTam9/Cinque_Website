@@ -7,13 +7,12 @@ import { formatGBP } from '@/lib/products';
 import type { ProductCardData } from '@/types';
 
 /**
- * Canonical product card (Figma 308×612): image over an info block with
- * spec rows, price, and a real Add-to-cart button. Image is B&W → colour on
- * card hover. Adds the default variant; the PDP handles full variant choice.
+ * Product card (Figma): 2:3 photo → info panel with a bordered title, a
+ * two-column spec block (labels left / values right), a bordered Add-to-cart
+ * button, and the price. Image is B&W → colour on card hover.
  */
 export default function ProductCard({ product }: { product: ProductCardData }) {
   const addLine = useCart((s) => s.addLine);
-
   const canAdd = product.inStock && Boolean(product.variantKey && product.sku);
 
   const handleAdd = () => {
@@ -31,9 +30,8 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
 
   return (
     <article className="flex flex-col border border-oslo bg-cararra">
-      {/* Image + title link to the PDP */}
       <Link href={`/shop/${product.slug}`} className="group block">
-        <div className="relative aspect-[308/462] w-full overflow-hidden bg-cloud/30">
+        <div className="relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
@@ -43,43 +41,42 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
               className="img-bw object-cover"
             />
           ) : (
-            <div className="flex h-full items-center justify-center type-p2 text-oslo">
-              No image
-            </div>
+            <div className="flex h-full items-center justify-center type-p2 text-oslo">No image</div>
           )}
         </div>
       </Link>
 
-      {/* Info block */}
-      <div className="flex flex-1 flex-col gap-3 p-3">
-        <Link href={`/shop/${product.slug}`} className="type-p1 hover:text-redcurrent">
+      <div className="flex flex-1 flex-col gap-2.5 p-2.5">
+        <Link
+          href={`/shop/${product.slug}`}
+          className="type-p1 border-b border-oslo/60 pb-2 hover:text-redcurrent"
+        >
           {product.title}
         </Link>
 
-        <dl className="flex gap-4 type-p2 text-oslo">
-          <div className="flex flex-col gap-1">
-            {product.drop && <dt>Drop</dt>}
-            {product.material && <dt>Material</dt>}
-            {product.size && <dt>Size</dt>}
+        <dl className="flex justify-between type-p2">
+          <div className="flex flex-col gap-0.5 text-oslo">
+            <dt>Drop</dt>
+            <dt>Material</dt>
+            <dt>Size</dt>
           </div>
-          <div className="flex flex-col gap-1 text-graphite">
-            {product.drop && <dd>{product.drop}</dd>}
-            {product.material && <dd>{product.material}</dd>}
-            {product.size && <dd>{product.size}</dd>}
+          <div className="flex flex-col gap-0.5 text-right text-graphite">
+            <dd>{product.drop || '—'}</dd>
+            <dd>{product.material || '—'}</dd>
+            <dd>{product.size || '—'}</dd>
           </div>
         </dl>
 
-        <div className="mt-auto flex items-center justify-between border-t border-oslo/50 pt-3">
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={!canAdd}
-            className="type-p2 min-h-[44px] px-1 text-left uppercase tracking-wide text-graphite underline underline-offset-4 transition-colors hover:text-redcurrent disabled:text-oslo disabled:no-underline"
-          >
-            {canAdd ? 'Add to cart' : 'Sold out'}
-          </button>
-          <span className="type-p1">{formatGBP(product.priceGBP)}</span>
-        </div>
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={!canAdd}
+          className="type-p2 mt-auto min-h-[40px] border border-graphite text-graphite transition-colors hover:bg-graphite hover:text-cararra disabled:border-oslo disabled:text-oslo disabled:hover:bg-transparent"
+        >
+          {canAdd ? 'Add to cart' : 'Sold out'}
+        </button>
+
+        <span className="type-p1">{formatGBP(product.priceGBP)}</span>
       </div>
     </article>
   );

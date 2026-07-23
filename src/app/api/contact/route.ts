@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 const contactSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(120),
   email: z.string().trim().email('A valid email is required').max(200),
+  phone: z.string().trim().max(40).optional(),
   message: z.string().trim().min(1, 'Message is required').max(5000),
   // Honeypot — must stay empty. Bots fill it; humans never see it.
   company: z.string().optional(),
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
   const result = await sendContactMessage({
     name: parsed.data.name,
     email: parsed.data.email,
+    phone: parsed.data.phone,
     message: parsed.data.message,
   });
 
