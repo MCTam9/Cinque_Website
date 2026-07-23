@@ -9,7 +9,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 // Each Home section = a heading + a horizontal image strip (rendered from the
 // Figma frame so the crops match), linking to its page.
 const SECTIONS = [
-  { href: '/shop', label: 'SHOP', img: '/figma/home-shop.png', w: 1800, h: 653, labelBelow: true },
+  { href: '/shop', label: 'SHOP', img: '/figma/home-shop.png', w: 1800, h: 653 },
   {
     href: '/lookbook',
     label: 'LOOKBOOK',
@@ -63,11 +63,9 @@ export default function HomePage() {
             href={s.href}
             className="group block transition-opacity hover:opacity-90"
           >
-            {!s.labelBelow && (
-              <H1 className="mb-3 border-b border-graphite pb-3 group-hover:text-redcurrent">
-                {s.label}
-              </H1>
-            )}
+            <H1 className="mb-3 border-b border-graphite pb-3 group-hover:text-redcurrent">
+              {s.label}
+            </H1>
 
             {'drops' in s && s.drops && (
               <div className="mb-2 hidden grid-cols-5 gap-[10px] sm:grid">
@@ -88,12 +86,6 @@ export default function HomePage() {
               className="h-auto w-full"
               priority={s.label === 'SHOP'}
             />
-
-            {s.labelBelow && (
-              <H1 className="mt-3 border-b border-graphite pb-3 group-hover:text-redcurrent">
-                {s.label}
-              </H1>
-            )}
           </Link>
         ))}
       </div>
