@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { H1, P1, P2 } from '@/components/typography';
+import { H1, P2 } from '@/components/typography';
 
 /**
  * Shared Shop chrome (Figma): the SHOP heading + subtitle in the centre column
@@ -58,9 +58,12 @@ export default function ShopLayout({
       {/* Header — centre column, with rule beneath */}
       <header className="mb-[30px] flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
         <H1>SHOP</H1>
-        <P1 className="hidden text-right text-oslo md:block">
+        <Link
+          href="/studio#contact"
+          className="type-p1 hidden text-right text-oslo hover:text-redcurrent md:block"
+        >
           Contact us if you would like a bespoke commission
-        </P1>
+        </Link>
         {filterable && (
           <details className="md:hidden">
             <summary className="type-h3 cursor-pointer list-none">FILTER</summary>
@@ -73,7 +76,7 @@ export default function ShopLayout({
 
       {/* Category sidebar — left gutter (desktop), top-aligned with the grid */}
       <aside className="hidden pt-[10px] md:col-start-1 md:row-start-2 md:block md:pr-4">
-        <P2 className="mb-[10px] text-oslo">SHOP_CATEGORY</P2>
+        <P2 className="mb-[10px] text-oslo">CATEGORY</P2>
         <CategoryList active={active} />
       </aside>
 

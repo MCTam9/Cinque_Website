@@ -2,7 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Container from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
-import { H1, H3, P2 } from '@/components/typography';
+import { H1, H3 } from '@/components/typography';
+import { formatLabel } from '@/lib/products';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -57,37 +58,55 @@ export default function HomePage() {
 
       {/* Section strips */}
       <div className="flex flex-col gap-[40px] md:gap-[60px]">
-        {SECTIONS.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            className="group block transition-opacity hover:opacity-90"
-          >
-            <H1 className="mb-[10px] border-b border-oslo pb-[10px] group-hover:text-redcurrent">
-              {s.label}
-            </H1>
-
-            {'drops' in s && s.drops && (
-              <div className="mb-2 hidden grid-cols-5 gap-[10px] sm:grid">
-                {s.drops.map((d) => (
-                  <P2 key={d} className="text-oslo">
-                    {d}
-                  </P2>
-                ))}
-              </div>
-            )}
-
+        {SECTIONS.map((s) => {
+          const hasDrops = 'drops' in s && s.drops;
+          const strip = (
             <Image
               src={s.img}
               alt={`${s.label} — Cinque`}
               width={s.w}
               height={s.h}
               sizes="(max-width: 768px) 100vw, 900px"
-              className="h-auto w-full"
+              className="h-auto w-full transition-opacity hover:opacity-90"
               priority={s.label === 'SHOP'}
             />
-          </Link>
-        ))}
+          );
+
+          // LOOKBOOK: heading + per-drop links (can't nest links) + strip.
+          if (hasDrops) {
+            return (
+              <section key={s.href} className="group block">
+                <Link href={s.href}>
+                  <H1 className="mb-[10px] border-b border-oslo pb-[10px] hover:text-redcurrent">
+                    {s.label}
+                  </H1>
+                </Link>
+                <div className="mb-[10px] hidden grid-cols-5 gap-[10px] sm:grid">
+                  {s.drops.map((d) => (
+                    <Link
+                      key={d}
+                      href={`/lookbook?drop=${d}`}
+                      className="type-h3 text-graphite hover:text-redcurrent"
+                    >
+                      {formatLabel(d)}
+                    </Link>
+                  ))}
+                </div>
+                <Link href={s.href}>{strip}</Link>
+              </section>
+            );
+          }
+
+          // SHOP / EXHIBITION / STUDIO: whole section is one link.
+          return (
+            <Link key={s.href} href={s.href} className="group block">
+              <H1 className="mb-[10px] border-b border-oslo pb-[10px] group-hover:text-redcurrent">
+                {s.label}
+              </H1>
+              {strip}
+            </Link>
+          );
+        })}
       </div>
     </Container>
   );

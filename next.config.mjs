@@ -16,6 +16,8 @@ const nextConfig = {
     return [
       { source: '/products', destination: '/shop', permanent: true },
       { source: '/products/:slug', destination: '/shop/:slug', permanent: true },
+      // Contact lives in the Studio page's #contact section now.
+      { source: '/contact', destination: '/studio', permanent: true },
     ];
   },
   // NOTE: The Content-Security-Policy is intentionally NOT set here.
