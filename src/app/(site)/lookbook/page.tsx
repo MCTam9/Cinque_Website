@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { H1, H2, H3, P1, P2 } from '@/components/typography';
+import { H2, H3, P1, P2 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
+import LookbookHeader from '@/components/LookbookHeader';
 
 export const metadata: Metadata = {
   title: 'Lookbook',
@@ -45,31 +46,8 @@ export default async function LookbookPage({
       {/* Rule above sidebar */}
       <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 
-      {/* Header + rule */}
-      <header className="mb-[30px] flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
-        <H1>LOOKBOOK</H1>
-        <P1 className="hidden text-right text-oslo md:block">
-          Individually made, cast and hallmarked in London.
-        </P1>
-        {/* Mobile: SHOW ALL reveals the drop list (the sidebar is desktop-only) */}
-        <details className="md:hidden">
-          <summary className="type-h3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-            SHOW ALL
-          </summary>
-          <ul className="mt-[10px] flex flex-col gap-[10px]">
-            {DROPS.map((d) => (
-              <li key={d}>
-                <Link
-                  href={`/lookbook?drop=${d}`}
-                  className={`type-h3 ${d === active ? 'text-redcurrent underline underline-offset-4' : 'text-graphite'}`}
-                >
-                  {formatLabel(d)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </details>
-      </header>
+      {/* Header + rule (mobile: SHOW ALL / HIDE drop row below the title) */}
+      <LookbookHeader drops={DROPS} active={active} />
 
       {/* Drop sidebar (desktop only) */}
       <aside className="hidden pt-[10px] md:col-start-1 md:row-start-2 md:block md:pr-4">
