@@ -1,18 +1,34 @@
 import { urlFor } from '@/lib/sanity/image';
 import type { MetalType, Product, ProductCardData, Variant } from '@/types';
 
-/** Metal enum → brand-style display label (underscore-joined, per Figma). */
+/** Metal enum → display label (spaced). */
 const METAL_LABELS: Record<MetalType, string> = {
-  '9ct_gold': '9ct_Gold',
-  '18ct_gold': '18ct_Gold',
-  sterling_silver: 'Sterling_Silver',
+  '9ct_gold': '9ct Gold',
+  '18ct_gold': '18ct Gold',
+  sterling_silver: 'Sterling Silver',
   platinum: 'Platinum',
-  gold_vermeil: 'Gold_Vermeil',
+  gold_vermeil: 'Gold Vermeil',
   brass: 'Brass',
 };
 
 export function metalLabel(metal?: MetalType): string | undefined {
   return metal ? METAL_LABELS[metal] : undefined;
+}
+
+/**
+ * Format an underscored code label for display: the leading numeric code is
+ * separated with a slash, the rest with spaces.
+ *   "04_Lost_Garden"     → "04/Lost Garden"
+ *   "01_Lace_Fork_Pendant" → "01/Lace Fork Pendant"
+ *   "Lace_Fork_Pendant"  → "Lace Fork Pendant"
+ */
+export function formatLabel(s?: string): string {
+  if (!s) return '';
+  const i = s.indexOf('_');
+  if (i === -1) return s;
+  const first = s.slice(0, i);
+  const rest = s.slice(i + 1).replace(/_/g, ' ');
+  return /^\d+$/.test(first) ? `${first}/${rest}` : `${first} ${rest}`;
 }
 
 /** "£120.00" from pence; drops the ".00" for whole pounds. */
@@ -25,12 +41,12 @@ function variantIsAvailable(v: Variant): boolean {
   return v.stockQuantity > 0 || Boolean(v.allowBackorder);
 }
 
-/** Drop label like "01_Metal_Veil" from a collection ref. */
+/** Drop label like "01/Metal Veil" from a collection ref. */
 function dropLabel(collection?: Product['collection']): string | undefined {
   if (!collection?.title) return undefined;
-  const name = collection.title.trim().replace(/\s+/g, '_');
+  const name = collection.title.trim();
   if (typeof collection.dropNumber === 'number') {
-    return `${String(collection.dropNumber).padStart(2, '0')}_${name}`;
+    return `${String(collection.dropNumber).padStart(2, '0')}/${name}`;
   }
   return name;
 }
@@ -59,7 +75,7 @@ export function toCardData(product: Product): ProductCardData {
   return {
     productId: product._id,
     slug: product.slug,
-    title: product.title,
+    title: formatLabel(product.title),
     imageUrl,
     imageAlt: firstImage?.alt || product.title,
     priceGBP: minPrice,

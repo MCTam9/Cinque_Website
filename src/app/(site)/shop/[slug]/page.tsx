@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
-import { metalLabel } from '@/lib/products';
+import { metalLabel, formatLabel } from '@/lib/products';
 import ShopLayout from '@/components/ShopLayout';
 import JsonLd from '@/components/JsonLd';
 import { H2, P1, P2 } from '@/components/typography';
@@ -56,7 +56,7 @@ export async function generateMetadata({
   const first = product.images?.[0];
   const ogImage = first?.asset ? urlFor(first as never).width(1200).height(1200).url() : undefined;
   return {
-    title: product.title.replace(/_/g, ' '),
+    title: formatLabel(product.title),
     description: `${product.title} — Cinque®. Individually made, cast and hallmarked in London.`,
     openGraph: ogImage ? { images: [{ url: ogImage }] } : undefined,
   };
@@ -95,7 +95,7 @@ export default async function ProductPage({
   const drop =
     product.collection?.title &&
     (typeof product.collection.dropNumber === 'number'
-      ? `${String(product.collection.dropNumber).padStart(2, '0')}_${product.collection.title.replace(/\s+/g, '_')}`
+      ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
   const material = metalLabel(product.variants?.[0]?.metalType);
   const minPrice = product.variants?.length
@@ -110,7 +110,7 @@ export default async function ProductPage({
         data={{
           '@context': 'https://schema.org',
           '@type': 'Product',
-          name: product.title.replace(/_/g, ' '),
+          name: formatLabel(product.title),
           image: imageUrls.map((i) => i.url),
           description: `${product.title} — Cinque®. Individually made, cast and hallmarked in London.`,
           brand: { '@type': 'Brand', name: 'Cinque' },
@@ -127,7 +127,9 @@ export default async function ProductPage({
       {/* Product layout: title over gallery (2/3) + info (1/3) */}
       <div className="grid grid-cols-1 gap-x-[10px] md:grid-cols-3">
         {/* Title row */}
-        <H2 className="mb-[10px] border-b border-oslo pb-[10px] md:col-span-2">{product.title}</H2>
+        <H2 className="mb-[10px] border-b border-oslo pb-[10px] md:col-span-2">
+          {formatLabel(product.title)}
+        </H2>
         <div className="mb-[10px] hidden border-b border-oslo md:col-start-3 md:block" />
 
         {/* Gallery */}
@@ -188,7 +190,7 @@ export default async function ProductPage({
           {purchaseVariants.length > 0 && (
             <ProductPurchase
               productId={product._id}
-              title={product.title}
+              title={formatLabel(product.title)}
               variants={purchaseVariants}
               imageUrl={thumbUrl}
             />

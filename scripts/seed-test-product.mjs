@@ -93,7 +93,7 @@ async function main() {
   await client.createOrReplace({
     _id: PRODUCT_ID,
     _type: 'product',
-    title: 'Lace Fork Pendant',
+    title: '01_Lace_Fork_Pendant',
     slug: { _type: 'slug', current: 'lace-fork-pendant' },
     status: 'active',
     category: 'necklaces',

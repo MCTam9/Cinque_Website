@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const LINKS: { label: string; href: string; external?: boolean }[] = [
-  { label: 'Contact', href: '/contact' },
+  { label: 'Contact', href: '/studio#contact' },
   { label: 'Instagram', href: 'https://www.instagram.com/cinque.made', external: true },
   { label: 'Shipping & Returns', href: '/shipping' },
   { label: 'Privacy Policy', href: '/privacy' },

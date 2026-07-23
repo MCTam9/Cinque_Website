@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { H1, H2, H3, P1, P2 } from '@/components/typography';
+import { formatLabel } from '@/lib/products';
 
 export const metadata: Metadata = {
   title: 'Lookbook',
@@ -54,7 +55,7 @@ export default async function LookbookPage({
 
       {/* Drop sidebar */}
       <aside className="mb-[30px] pt-[10px] md:col-start-1 md:row-start-2 md:mb-0 md:pr-4">
-        <P2 className="mb-[10px] text-oslo">LOOKBOOK_DROP</P2>
+        <P2 className="mb-[10px] text-oslo">DROP</P2>
         <ul className="flex flex-col gap-[10px]">
           {DROPS.map((d) => (
             <li key={d}>
@@ -66,7 +67,7 @@ export default async function LookbookPage({
                     : 'text-graphite hover:text-redcurrent'
                 }`}
               >
-                {d}
+                {formatLabel(d)}
               </Link>
             </li>
           ))}
@@ -75,7 +76,7 @@ export default async function LookbookPage({
 
       {/* Editorial content */}
       <div className="pt-[10px] md:col-start-2 md:row-start-2">
-        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop_{active}</H2>
+        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop {formatLabel(active)}</H2>
 
         {/* Row 1: copy + two small images | tall image */}
         <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
@@ -91,7 +92,7 @@ export default async function LookbookPage({
                 and no exact replicas are produced.
               </P1>
               <P1>
-                <Link href="/contact" className="underline underline-offset-4 hover:text-redcurrent">
+                <Link href="/studio#contact" className="underline underline-offset-4 hover:text-redcurrent">
                   Contact us
                 </Link>{' '}
                 to request a custom variation of an existing design. Further details regarding
@@ -123,14 +124,14 @@ export default async function LookbookPage({
         <nav className="flex items-center justify-between border-t border-graphite pt-[20px]">
           {prev ? (
             <Link href={`/lookbook?drop=${prev}`}>
-              <H3 className="font-bold hover:text-redcurrent">&lt; {prev}</H3>
+              <H3 className="font-bold hover:text-redcurrent">&lt; {formatLabel(prev)}</H3>
             </Link>
           ) : (
             <span />
           )}
           {next ? (
             <Link href={`/lookbook?drop=${next}`}>
-              <H3 className="font-bold hover:text-redcurrent">{next} &gt;</H3>
+              <H3 className="font-bold hover:text-redcurrent">{formatLabel(next)} &gt;</H3>
             </Link>
           ) : (
             <span />

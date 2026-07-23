@@ -50,12 +50,12 @@ function Entry({
       {/* Body — description | Date/Location, then the 3 image columns */}
       <div className="grid grid-cols-1 gap-x-[10px] gap-y-[30px] md:grid-cols-3">
         <div className="flex flex-col gap-[20px] md:col-span-2">{children}</div>
-        <dl className="flex h-fit gap-4 type-p1">
+        <dl className="flex h-fit justify-between gap-4 type-p1">
           <div className="flex flex-col text-oslo">
             <dt>Date</dt>
             <dt>Location</dt>
           </div>
-          <div className="flex flex-col text-graphite">
+          <div className="flex flex-col text-right text-graphite">
             <dd>{date}</dd>
             <dd>{location}</dd>
           </div>
