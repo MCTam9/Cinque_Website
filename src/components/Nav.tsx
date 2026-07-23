@@ -35,18 +35,18 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-50 bg-cararra">
-      <div className="relative mx-auto h-[70px] max-w-frame px-5">
-        {/* Rule line — inset to the 20px padding, at the link baseline. */}
+      <div className="relative h-[70px] px-5">
+        {/* Rule line — inset to the 20px padding; links sit 10px above it. */}
         <div className="pointer-events-none absolute inset-x-5 top-[48px] border-b border-graphite" />
 
         {/* Logo — overlaps the line (reads as written on it). */}
-        <Link href="/" aria-label="Cinque home" className="absolute left-5 top-[13px]">
+        <Link href="/" aria-label="Cinque home" className="absolute left-5 top-[10px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[42px] w-auto" />
+          <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[46px] w-auto" />
         </Link>
 
-        {/* Links — centred, baseline on the line (desktop). */}
-        <ul className="absolute left-1/2 top-[32px] hidden -translate-x-1/2 md:flex">
+        {/* Links — centred, sitting ~10px above the line (desktop). */}
+        <ul className="absolute left-1/2 top-[18px] hidden -translate-x-1/2 md:flex">
           {LINKS.map((l) => (
             <li key={l.href} className="w-[150px]">
               <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
@@ -59,7 +59,7 @@ export default function Nav() {
         {/* Cart — right, aligned to the 20px padding (desktop). */}
         <Link
           href="/cart"
-          className="type-h3 absolute right-5 top-[32px] hidden text-graphite hover:text-redcurrent md:block"
+          className="type-h3 absolute right-5 top-[18px] hidden text-graphite hover:text-redcurrent md:block"
         >
           {cartLabel}
         </Link>
@@ -67,7 +67,7 @@ export default function Nav() {
         {/* Hamburger (mobile). */}
         <button
           type="button"
-          className="type-h3 absolute right-5 top-[32px] text-graphite md:hidden"
+          className="type-h3 absolute right-5 top-[18px] text-graphite md:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
