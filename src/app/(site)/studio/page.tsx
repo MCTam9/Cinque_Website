@@ -15,10 +15,10 @@ const INSTAGRAM = 'https://www.instagram.com/cinque.made';
 export default function StudioPage() {
   return (
     <Container className="py-[40px] md:py-[60px]">
-      <H1 className="mb-[10px] border-b border-graphite pb-[10px]">STUDIO</H1>
+      <H1 className="mb-[10px] border-b border-oslo pb-[10px]">STUDIO</H1>
 
       {/* About */}
-      <H2 className="mb-[10px] border-b border-graphite pb-[10px]">About</H2>
+      <H2 className="mb-[10px] border-b border-oslo pb-[10px]">About</H2>
       <section className="mb-[60px] grid grid-cols-1 gap-[30px] md:grid-cols-3">
         <div className="flex flex-col gap-[20px] md:col-span-2">
           <P1 className="text-oslo">[Cinque: five]</P1>
@@ -73,7 +73,7 @@ export default function StudioPage() {
       </div>
 
       {/* Contact */}
-      <H2 className="mb-[10px] border-b border-graphite pb-[10px]">Contact</H2>
+      <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Contact</H2>
       <section id="contact" className="grid grid-cols-1 gap-[30px] md:grid-cols-3">
         <div className="md:col-span-2">
           <ContactForm />

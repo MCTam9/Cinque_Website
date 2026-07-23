@@ -45,10 +45,10 @@ export default function Nav() {
           <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[46px] w-auto" />
         </Link>
 
-        {/* Links — centred, sitting ~10px above the line (desktop). */}
+        {/* Links — centred on the page, evenly distributed in equal slots. */}
         <ul className="absolute left-1/2 top-[18px] hidden -translate-x-1/2 md:flex">
           {LINKS.map((l) => (
-            <li key={l.href} className="w-[150px]">
+            <li key={l.href} className="w-[160px] text-center">
               <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                 {l.label}
               </Link>

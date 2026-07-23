@@ -1,33 +1,14 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
 import type { ProductCardData } from '@/types';
 
 /**
  * Product card (Figma): 2:3 photo → info panel with a bordered title, a
- * two-column spec block (labels left / values right), a bordered Add-to-cart
- * button, and the price. Image is B&W → colour on card hover.
+ * two-column spec block (labels left / values right), and the price (right
+ * aligned). Add-to-cart lives on the product page, not the card.
  */
 export default function ProductCard({ product }: { product: ProductCardData }) {
-  const addLine = useCart((s) => s.addLine);
-  const canAdd = product.inStock && Boolean(product.variantKey && product.sku);
-
-  const handleAdd = () => {
-    if (!product.variantKey || !product.sku) return;
-    addLine({
-      productId: product.productId,
-      variantKey: product.variantKey,
-      sku: product.sku,
-      title: product.title,
-      unitPriceGBP: product.priceGBP,
-      quantity: 1,
-      imageUrl: product.imageUrl,
-    });
-  };
-
   return (
     <article className="flex flex-col border border-oslo bg-cararra">
       <Link href={`/shop/${product.slug}`} className="group block">
@@ -67,16 +48,7 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         </dl>
 
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!canAdd}
-          className="type-p2 mt-auto min-h-[40px] border border-graphite text-graphite transition-colors hover:bg-graphite hover:text-cararra disabled:border-oslo disabled:text-oslo disabled:hover:bg-transparent"
-        >
-          {canAdd ? 'Add to cart' : 'Sold out'}
-        </button>
-
-        <span className="type-p1">{formatGBP(product.priceGBP)}</span>
+        <span className="type-p1 mt-auto text-right">{formatGBP(product.priceGBP)}</span>
       </div>
     </article>
   );

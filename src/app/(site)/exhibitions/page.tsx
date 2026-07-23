@@ -71,7 +71,7 @@ function Entry({
 export default function ExhibitionsPage() {
   return (
     <Container className="py-[40px] md:py-[60px]">
-      <H1 className="mb-[10px] border-b border-graphite pb-[10px]">EXHIBITION</H1>
+      <H1 className="mb-[10px] border-b border-oslo pb-[10px]">EXHIBITION</H1>
 
       <Entry
         title="The_Invisible_Made_Visible"

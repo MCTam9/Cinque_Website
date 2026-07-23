@@ -18,8 +18,8 @@ export default function Footer() {
   return (
     <footer className="mt-[80px] bg-cararra">
       <div className="px-5">
-        <div className="border-t border-graphite pt-[30px] pb-[30px]">
-          <ul className="grid grid-cols-2 gap-x-[10px] gap-y-[20px] md:grid-cols-6">
+        <div className="border-t border-graphite pt-[10px] pb-[30px]">
+          <ul className="grid grid-cols-2 gap-x-[10px] gap-y-[20px] md:flex md:justify-between md:gap-0">
             {LINKS.map((l) => (
               <li key={l.href}>
                 {l.external ? (
