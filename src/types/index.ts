@@ -36,13 +36,44 @@ export interface Variant {
   allowBackorder?: boolean;
 }
 
+export type ProductCategory = 'rings' | 'earrings' | 'necklaces' | 'objects';
+
+export interface SanityImageRef {
+  alt?: string;
+  asset?: unknown;
+}
+
+export interface CollectionRef {
+  title?: string;
+  slug?: string;
+  dropNumber?: number;
+}
+
 export interface Product {
   _id: string;
   title: string;
   slug: string;
   status: 'draft' | 'active' | 'sold_out' | 'archived';
-  images?: Array<{ alt?: string; asset?: unknown }>;
+  category?: ProductCategory;
+  collection?: CollectionRef;
+  images?: SanityImageRef[];
   variants: Variant[];
+}
+
+/** Flat, presentation-ready data for a product card (computed server-side). */
+export interface ProductCardData {
+  productId: string;
+  slug: string;
+  title: string;
+  imageUrl?: string;
+  imageAlt: string;
+  priceGBP: number; // pence — the default variant's price
+  material?: string; // display label, e.g. "Sterling_Silver"
+  drop?: string; // e.g. "01_Metal_Veil"
+  size?: string;
+  variantKey?: string;
+  sku?: string;
+  inStock: boolean;
 }
 
 /** A line in the client-side cart (Zustand). */
