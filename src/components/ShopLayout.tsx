@@ -66,7 +66,9 @@ export default function ShopLayout({
         </Link>
         {filterable && (
           <details className="md:hidden">
-            <summary className="type-h3 cursor-pointer list-none">FILTER</summary>
+            <summary className="type-h3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              FILTER
+            </summary>
             <div className="mt-[10px]">
               <CategoryList active={active} />
             </div>
