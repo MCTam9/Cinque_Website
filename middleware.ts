@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *  1. Storefront (strict, nonce-based): scripts only from 'self' + the nonce +
  *     js.stripe.com. Embedded Checkout also needs Stripe's iframe (frame-src)
  *     and API (connect-src). Sanity CDN is allowed for images only.
- *  2. /studio (relaxed): the Sanity Studio is a client app that needs
+ *  2. /admin (relaxed): the Sanity Studio is a client app that needs
  *     'unsafe-inline'/'unsafe-eval'/blob: workers and *.sanity.io. A strict
  *     nonce policy would white-screen it, so it gets its own scoped policy.
  */
@@ -49,7 +49,8 @@ function buildStudioCsp(): string {
 }
 
 export function middleware(request: NextRequest) {
-  const isStudio = request.nextUrl.pathname.startsWith('/studio');
+  // Sanity Studio (CMS editor) is mounted at /admin and needs the relaxed CSP.
+  const isStudio = request.nextUrl.pathname.startsWith('/admin');
 
   if (isStudio) {
     const response = NextResponse.next();
