@@ -56,7 +56,7 @@ export default async function ExhibitionPage({
   return (
     <Container className="py-12 md:py-16">
       <header className="mb-8 flex flex-col gap-2">
-        <H1 className="font-bold">{doc.title}</H1>
+        <H1>{doc.title}</H1>
         {(doc.venue || doc.location) && (
           <P1 className="text-oslo">{[doc.venue, doc.location].filter(Boolean).join(', ')}</P1>
         )}

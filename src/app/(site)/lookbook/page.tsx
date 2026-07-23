@@ -28,7 +28,7 @@ export default function LookbookPage() {
     <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-10 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-14">
       {/* Header — centre column */}
       <header className="mb-6 flex items-end justify-between md:col-start-2 md:row-start-1">
-        <H1 className="font-bold">LOOKBOOK</H1>
+        <H1>LOOKBOOK</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Individually made, cast and hallmarked in London.
         </P1>

@@ -66,7 +66,7 @@ export default async function ShopPage({
     <div className="mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 py-10 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:px-0 md:py-14">
       {/* Header — centre column */}
       <header className="mb-6 flex items-end justify-between border-b border-graphite pb-3 md:col-start-2 md:row-start-1">
-        <H1 className="font-bold">SHOP</H1>
+        <H1>SHOP</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Contact us if you would like a bespoke commission.
         </P1>

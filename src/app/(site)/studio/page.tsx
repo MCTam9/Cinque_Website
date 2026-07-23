@@ -14,7 +14,7 @@ export default function StudioPage() {
   return (
     <>
       <Container className="py-10 md:py-14">
-        <H1 className="mb-10 font-bold">STUDIO</H1>
+        <H1 className="mb-10">STUDIO</H1>
 
         {/* About: bio left, portrait right */}
         <section className="mb-16">

@@ -23,7 +23,7 @@ const ENTRIES = [
 export default function ExhibitionsPage() {
   return (
     <Container className="py-10 md:py-14">
-      <H1 className="mb-8 font-bold">EXHIBITION</H1>
+      <H1 className="mb-8">EXHIBITION</H1>
 
       {ENTRIES.map((ex) => (
         <article key={ex.title} className="mb-16 border-t border-graphite pt-6">

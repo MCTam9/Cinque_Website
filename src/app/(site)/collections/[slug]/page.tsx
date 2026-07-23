@@ -57,7 +57,7 @@ export default async function CollectionPage({
         {typeof doc.dropNumber === 'number' && (
           <P2 className="text-oslo">Drop {String(doc.dropNumber).padStart(2, '0')}</P2>
         )}
-        <H1 className="font-bold">{doc.title}</H1>
+        <H1>{doc.title}</H1>
       </header>
       <PageBuilder blocks={doc.content} />
     </Container>

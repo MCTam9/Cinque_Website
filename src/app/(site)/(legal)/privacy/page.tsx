@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <>
-      <H1 className="font-bold">Privacy Policy</H1>
+      <H1>Privacy Policy</H1>
       <P2 className="text-oslo">Last updated: July 2026</P2>
 
       <P1>

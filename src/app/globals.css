@@ -38,33 +38,40 @@
    breakpoints; only P2 has a mobile-specific size (M_P2).
    ─────────────────────────────────────────────────────────────── */
 @layer components {
+  /* Matches the Figma text styles exactly. "Auto" line-height → `normal`.
+     Long monospace headings wrap (overflow-wrap in the base layer) rather than
+     shrink, so the sizes stay fixed as in Figma. */
   .type-h1 {
-    font-weight: 400; /* Letter Gothic Medium */
+    font-weight: 400; /* H1 · 32/Auto — Letter Gothic Medium */
     font-size: 32px;
-    line-height: 1.1;
-    letter-spacing: 0;
+    line-height: normal;
   }
   .type-h2 {
-    font-weight: 700; /* Bold */
-    /* Fluid: 32 on desktop, eases down only on the narrowest phones so long
-       monospace headings don't overflow. */
-    font-size: clamp(22px, 6vw, 32px);
-    line-height: 1.12;
+    font-weight: 700; /* H2 · 32/Auto — Bold */
+    font-size: 32px;
+    line-height: normal;
   }
   .type-h3 {
-    font-weight: 400;
+    font-weight: 400; /* H3 · 18/Auto (H3_Bold via font-bold) */
     font-size: 18px;
-    line-height: 1.2;
+    line-height: normal;
   }
   .type-p1 {
-    font-weight: 400;
+    font-weight: 400; /* P1 · 14/18 */
     font-size: 14px;
     line-height: 18px;
   }
+  /* P2 · 12/16 on desktop; M_P2 · 11/20 on mobile. */
   .type-p2 {
     font-weight: 400;
-    font-size: 12px; /* M_P2 floor — never below 12px on mobile */
-    line-height: 16px;
+    font-size: 11px;
+    line-height: 20px;
+  }
+  @media (min-width: 768px) {
+    .type-p2 {
+      font-size: 12px;
+      line-height: 16px;
+    }
   }
 }
 
