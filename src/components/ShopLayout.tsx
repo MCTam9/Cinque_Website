@@ -53,10 +53,10 @@ export default function ShopLayout({
   return (
     <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
       {/* Rule above the sidebar (left gutter) — aligns with the header rule */}
-      <div className="hidden border-b border-graphite md:col-start-1 md:row-start-1 md:block" />
+      <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 
       {/* Header — centre column, with rule beneath */}
-      <header className="mb-[30px] flex items-end justify-between border-b border-graphite pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
+      <header className="mb-[30px] flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
         <H1>SHOP</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Contact us if you would like a bespoke commission

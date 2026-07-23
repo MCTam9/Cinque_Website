@@ -63,7 +63,7 @@ export default function HomePage() {
             href={s.href}
             className="group block transition-opacity hover:opacity-90"
           >
-            <H1 className="mb-[10px] border-b border-graphite pb-[10px] group-hover:text-redcurrent">
+            <H1 className="mb-[10px] border-b border-oslo pb-[10px] group-hover:text-redcurrent">
               {s.label}
             </H1>
 

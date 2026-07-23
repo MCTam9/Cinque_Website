@@ -127,8 +127,8 @@ export default async function ProductPage({
       {/* Product layout: title over gallery (2/3) + info (1/3) */}
       <div className="grid grid-cols-1 gap-x-[10px] md:grid-cols-3">
         {/* Title row */}
-        <H2 className="mb-[10px] border-b border-graphite pb-[10px] md:col-span-2">{product.title}</H2>
-        <div className="mb-[10px] hidden border-b border-graphite md:col-start-3 md:block" />
+        <H2 className="mb-[10px] border-b border-oslo pb-[10px] md:col-span-2">{product.title}</H2>
+        <div className="mb-[10px] hidden border-b border-oslo md:col-start-3 md:block" />
 
         {/* Gallery */}
         <div className="md:col-span-2 md:row-start-2">

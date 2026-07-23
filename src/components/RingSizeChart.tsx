@@ -23,7 +23,7 @@ export default function RingSizeChart() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="type-h3 flex w-full items-center justify-between border-b border-graphite pb-[10px] text-left"
+        className="type-h3 flex w-full items-center justify-between border-b border-oslo pb-[10px] text-left"
       >
         <span>Ring size chart</span>
         <span className="text-oslo">{open ? '−' : '+'}</span>

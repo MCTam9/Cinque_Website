@@ -42,10 +42,10 @@ export default async function LookbookPage({
   return (
     <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
       {/* Rule above sidebar */}
-      <div className="hidden border-b border-graphite md:col-start-1 md:row-start-1 md:block" />
+      <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 
       {/* Header + rule */}
-      <header className="mb-[30px] flex items-end justify-between border-b border-graphite pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
+      <header className="mb-[30px] flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
         <H1>LOOKBOOK</H1>
         <P1 className="hidden text-right text-oslo md:block">
           Individually made, cast and hallmarked in London.
@@ -75,7 +75,7 @@ export default async function LookbookPage({
 
       {/* Editorial content */}
       <div className="pt-[10px] md:col-start-2 md:row-start-2">
-        <H2 className="mb-[10px] border-b border-graphite pb-[10px]">Drop_{active}</H2>
+        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop_{active}</H2>
 
         {/* Row 1: copy + two small images | tall image */}
         <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
@@ -119,14 +119,14 @@ export default async function LookbookPage({
           <LbImage src={MACRO} alt="Cinque piece — macro detail" />
         </div>
 
-        {/* Pagination between drops */}
+        {/* Pagination between drops — both ends carry the drop title */}
         <nav className="flex items-center justify-between border-t border-graphite pt-[20px]">
           {prev ? (
-            <Link href={`/lookbook?drop=${prev}`} className="type-h3 hover:text-redcurrent">
-              &lt;
+            <Link href={`/lookbook?drop=${prev}`}>
+              <H3 className="font-bold hover:text-redcurrent">&lt; {prev}</H3>
             </Link>
           ) : (
-            <span className="type-h3 text-oslo">&lt;</span>
+            <span />
           )}
           {next ? (
             <Link href={`/lookbook?drop=${next}`}>
