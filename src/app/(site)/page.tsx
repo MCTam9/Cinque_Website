@@ -24,7 +24,7 @@ const SECTIONS = [
 
 export default function HomePage() {
   return (
-    <Container className="py-10 md:py-14">
+    <Container className="py-[40px] md:py-[60px]">
       <JsonLd
         data={{
           '@context': 'https://schema.org',
@@ -38,7 +38,7 @@ export default function HomePage() {
       />
 
       {/* Hero: logo left, tagline right */}
-      <section className="mb-12 flex flex-col gap-8 md:mb-16 md:flex-row md:items-end md:justify-between">
+      <section className="mb-[40px] flex flex-col gap-[30px] md:mb-[60px] md:flex-row md:items-end md:justify-between">
         <img
           src="/figma/cinque-logo.svg"
           alt="Cinque"
@@ -56,14 +56,14 @@ export default function HomePage() {
       </section>
 
       {/* Section strips */}
-      <div className="flex flex-col gap-14 md:gap-20">
+      <div className="flex flex-col gap-[40px] md:gap-[60px]">
         {SECTIONS.map((s) => (
           <Link
             key={s.href}
             href={s.href}
             className="group block transition-opacity hover:opacity-90"
           >
-            <H1 className="mb-3 border-b border-graphite pb-3 group-hover:text-redcurrent">
+            <H1 className="mb-[10px] border-b border-graphite pb-[10px] group-hover:text-redcurrent">
               {s.label}
             </H1>
 

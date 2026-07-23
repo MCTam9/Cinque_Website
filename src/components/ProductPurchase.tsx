@@ -53,7 +53,7 @@ export default function ProductPurchase({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex items-end justify-between">
         <div className="flex flex-wrap gap-[10px]">
           {variants.map((v) => {

@@ -49,7 +49,7 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
       <div className="flex flex-1 flex-col gap-2.5 p-2.5">
         <Link
           href={`/shop/${product.slug}`}
-          className="type-p1 border-b border-oslo/60 pb-2 hover:text-redcurrent"
+          className="type-p1 border-b border-oslo/60 pb-[10px] hover:text-redcurrent"
         >
           {product.title}
         </Link>

@@ -22,14 +22,14 @@ const ENTRIES = [
 
 export default function ExhibitionsPage() {
   return (
-    <Container className="py-10 md:py-14">
-      <H1 className="mb-8">EXHIBITION</H1>
+    <Container className="py-[40px] md:py-[60px]">
+      <H1 className="mb-[30px]">EXHIBITION</H1>
 
       {ENTRIES.map((ex) => (
-        <article key={ex.title} className="mb-16 border-t border-graphite pt-6">
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <article key={ex.title} className="mb-[60px] border-t border-graphite pt-[30px]">
+          <div className="mb-5 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <H2 className="max-w-xl">{ex.title}</H2>
-            <dl className="flex shrink-0 gap-4 type-p2">
+            <dl className="flex shrink-0 gap-5 type-p2">
               <div className="flex flex-col gap-0.5 text-oslo">
                 <dt>Date</dt>
                 <dt>Location</dt>
@@ -41,7 +41,7 @@ export default function ExhibitionsPage() {
             </dl>
           </div>
 
-          <div className="group relative mb-4 w-full overflow-hidden bg-cloud/30" style={{ aspectRatio: ex.imageRatio }}>
+          <div className="group relative mb-5 w-full overflow-hidden bg-cloud/30" style={{ aspectRatio: ex.imageRatio }}>
             <Image src={ex.image} alt={ex.title} fill sizes="(max-width: 768px) 100vw, 900px" className="img-bw object-cover" />
           </div>
 
@@ -51,10 +51,10 @@ export default function ExhibitionsPage() {
       ))}
 
       {/* Press feature — Scura Magazine */}
-      <article className="border-t border-graphite pt-6">
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <article className="border-t border-graphite pt-[30px]">
+        <div className="mb-5 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <H2 className="max-w-xl">Jewellery_Shaped_by_Architecture_History_and_the_Human_Hand</H2>
-          <dl className="flex shrink-0 gap-4 type-p2">
+          <dl className="flex shrink-0 gap-5 type-p2">
             <div className="flex flex-col gap-0.5 text-oslo">
               <dt>Date</dt>
               <dt>Location</dt>

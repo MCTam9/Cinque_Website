@@ -57,8 +57,8 @@ export default async function GenericPage({
   if (!doc) notFound();
 
   return (
-    <Container className="py-12 md:py-16">
-      <H1 className="mb-8">{doc.title}</H1>
+    <Container className="py-[40px] md:py-[60px]">
+      <H1 className="mb-[30px]">{doc.title}</H1>
       <PageBuilder blocks={doc.content} />
     </Container>
   );

@@ -20,7 +20,7 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <Container className="py-12 md:py-16">
+      <Container className="py-[40px] md:py-[60px]">
         <H1>CART</H1>
       </Container>
     );
@@ -28,9 +28,9 @@ export default function CartPage() {
 
   if (lines.length === 0) {
     return (
-      <Container className="py-12 md:py-16">
-        <H1 className="mb-4">CART</H1>
-        <P1 className="mb-6 text-oslo">Your cart is empty.</P1>
+      <Container className="py-[40px] md:py-[60px]">
+        <H1 className="mb-5">CART</H1>
+        <P1 className="mb-5 text-oslo">Your cart is empty.</P1>
         <Link
           href="/shop"
           className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
@@ -42,14 +42,14 @@ export default function CartPage() {
   }
 
   return (
-    <Container className="py-12 md:py-16">
-      <H1 className="mb-8">CART</H1>
+    <Container className="py-[40px] md:py-[60px]">
+      <H1 className="mb-[30px]">CART</H1>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_320px]">
         {/* Line items */}
         <ul className="flex flex-col divide-y divide-oslo/40 border-y border-oslo/40">
           {lines.map((l) => (
-            <li key={`${l.productId}-${l.variantKey}`} className="flex gap-4 py-4">
+            <li key={`${l.productId}-${l.variantKey}`} className="flex gap-5 py-4">
               <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-cloud/30">
                 {l.imageUrl && (
                   <Image
@@ -102,7 +102,7 @@ export default function CartPage() {
         </ul>
 
         {/* Summary */}
-        <aside className="flex h-fit flex-col gap-4 border border-oslo p-6">
+        <aside className="flex h-fit flex-col gap-5 border border-oslo p-5">
           <div className="flex justify-between">
             <P1>Subtotal</P1>
             <P1>{formatGBP(subtotal)}</P1>

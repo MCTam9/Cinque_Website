@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <Container className="py-12 md:py-16">
-      <H1 className="mb-8">CONTACT</H1>
+    <Container className="py-[40px] md:py-[60px]">
+      <H1 className="mb-[30px]">CONTACT</H1>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_1fr]">
-        <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-[30px] md:grid-cols-[1fr_1fr]">
+        <div className="flex flex-col gap-5">
           <P1 className="text-oslo">
             For bespoke commissions, custom variations, or general enquiries, email{' '}
             <a

@@ -21,9 +21,9 @@ export default function CheckoutPage() {
 
   if (checkoutLines.length === 0) {
     return (
-      <Container className="py-12 md:py-16">
-        <H1 className="mb-4">CHECKOUT</H1>
-        <P1 className="mb-6 text-oslo">Your cart is empty.</P1>
+      <Container className="py-[40px] md:py-[60px]">
+        <H1 className="mb-5">CHECKOUT</H1>
+        <P1 className="mb-5 text-oslo">Your cart is empty.</P1>
         <Link
           href="/shop"
           className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
@@ -35,8 +35,8 @@ export default function CheckoutPage() {
   }
 
   return (
-    <Container className="py-12 md:py-16">
-      <H1 className="mb-8">CHECKOUT</H1>
+    <Container className="py-[40px] md:py-[60px]">
+      <H1 className="mb-[30px]">CHECKOUT</H1>
       <EmbeddedCheckout lines={checkoutLines} />
     </Container>
   );

@@ -54,13 +54,13 @@ export default async function ExhibitionPage({
   if (!doc) notFound();
 
   return (
-    <Container className="py-12 md:py-16">
-      <header className="mb-8 flex flex-col gap-2">
+    <Container className="py-[40px] md:py-[60px]">
+      <header className="mb-[30px] flex flex-col gap-2">
         <H1>{doc.title}</H1>
         {(doc.venue || doc.location) && (
           <P1 className="text-oslo">{[doc.venue, doc.location].filter(Boolean).join(', ')}</P1>
         )}
-        {doc.description && <P1 className="mt-4 max-w-2xl">{doc.description}</P1>}
+        {doc.description && <P1 className="mt-5 max-w-2xl">{doc.description}</P1>}
       </header>
       <PageBuilder blocks={doc.content} />
     </Container>

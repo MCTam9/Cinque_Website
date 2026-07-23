@@ -13,14 +13,14 @@ export const metadata: Metadata = {
 export default function StudioPage() {
   return (
     <>
-      <Container className="py-10 md:py-14">
-        <H1 className="mb-10">STUDIO</H1>
+      <Container className="py-[40px] md:py-[60px]">
+        <H1 className="mb-[40px]">STUDIO</H1>
 
         {/* About: bio left, portrait right */}
-        <section className="mb-16">
-          <H2 className="mb-4">About</H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="flex flex-col gap-4 type-p1">
+        <section className="mb-[60px]">
+          <H2 className="mb-5">About</H2>
+          <div className="grid grid-cols-1 gap-[30px] md:grid-cols-2">
+            <div className="flex flex-col gap-5 type-p1">
               <P1 className="text-oslo">[Cinque: five]</P1>
               <P1>
                 Cinque founder Cindy Liu, with backgrounds in architecture and metalsmithing,
@@ -64,10 +64,10 @@ export default function StudioPage() {
 
         {/* Contact: form left, commission info right */}
         <section id="contact">
-          <H2 className="mb-4">Contact</H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <H2 className="mb-5">Contact</H2>
+          <div className="grid grid-cols-1 gap-[30px] md:grid-cols-2">
             <ContactForm />
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <P1 className="text-oslo">
                 For bespoke commissions, custom variations, or general enquiries, please email{' '}
                 <a
@@ -98,7 +98,7 @@ export default function StudioPage() {
       </Container>
 
       {/* Studio image band (full frame width) */}
-      <div className="mx-auto mt-14 w-full max-w-frame px-5 md:px-0">
+      <div className="mx-auto mt-[60px] w-full max-w-frame px-5 md:px-0">
         <div className="relative aspect-[900/522] w-full overflow-hidden bg-cloud/30">
           <Image
             src="/figma/home-studio.png"

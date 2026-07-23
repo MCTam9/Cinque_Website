@@ -15,8 +15,8 @@ const LINKS: { label: string; href: string; external?: boolean }[] = [
  */
 export default function Footer() {
   return (
-    <footer className="mt-20 border-t border-graphite bg-cararra">
-      <div className="mx-auto max-w-frame px-5 py-6">
+    <footer className="mt-[80px] border-t border-graphite bg-cararra">
+      <div className="mx-auto max-w-frame px-5 py-[30px]">
         <ul className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-6">
           {LINKS.map((l) => (
             <li key={l.href}>
@@ -38,7 +38,7 @@ export default function Footer() {
           ))}
         </ul>
 
-        <div className="mt-6 flex items-end justify-between">
+        <div className="mt-5 flex items-end justify-between">
           <span className="type-p2 text-oslo">Handcrafted by Cinque. © 2026</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

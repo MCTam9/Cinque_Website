@@ -105,7 +105,7 @@ export default async function ProductPage({
   const hasThumbs = imageUrls.length > 1;
 
   return (
-    <Container className="py-10 md:py-14">
+    <Container className="py-[40px] md:py-[60px]">
       <JsonLd
         data={{
           '@context': 'https://schema.org',
@@ -124,7 +124,7 @@ export default async function ProductPage({
         }}
       />
 
-      <nav aria-label="Breadcrumb" className="mb-4 type-p2 text-oslo">
+      <nav aria-label="Breadcrumb" className="mb-5 type-p2 text-oslo">
         <Link href="/shop" className="hover:text-graphite">
           Shop
         </Link>{' '}
@@ -134,7 +134,7 @@ export default async function ProductPage({
       {/* Product layout: title over gallery (2/3) + info (1/3) */}
       <div className="grid grid-cols-1 gap-x-[10px] md:grid-cols-3">
         {/* Title row */}
-        <H2 className="mb-[10px] border-b border-graphite pb-3 md:col-span-2">{product.title}</H2>
+        <H2 className="mb-[10px] border-b border-graphite pb-[10px] md:col-span-2">{product.title}</H2>
         <div className="mb-[10px] hidden border-b border-graphite md:col-start-3 md:block" />
 
         {/* Gallery */}
@@ -178,7 +178,7 @@ export default async function ProductPage({
         </div>
 
         {/* Info */}
-        <div className="mt-8 flex flex-col gap-6 md:col-start-3 md:row-start-2 md:mt-0">
+        <div className="mt-[30px] flex flex-col gap-5 md:col-start-3 md:row-start-2 md:mt-0">
           <dl className="flex justify-between type-p1">
             <div className="flex flex-col gap-0.5 text-oslo">
               {drop && <dt>Drop</dt>}
@@ -200,7 +200,7 @@ export default async function ProductPage({
           )}
 
           {product.careInstructions && (
-            <div className="border-t border-oslo/50 pt-4">
+            <div className="border-t border-oslo/50 pt-5">
               <P2 className="mb-2 font-bold">After Care</P2>
               <P2 className="whitespace-pre-line text-graphite">{product.careInstructions}</P2>
             </div>
@@ -209,7 +209,7 @@ export default async function ProductPage({
       </div>
 
       {/* Ring size chart — full centre width */}
-      <div className="mt-12">
+      <div className="mt-[40px]">
         <RingSizeChart />
       </div>
     </Container>
