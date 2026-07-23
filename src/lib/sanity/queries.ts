@@ -115,7 +115,7 @@ export const pageSlugsQuery = groq`
 
 export const exhibitionsQuery = groq`
   *[_type == "exhibition"] | order(startDate desc) {
-    _id, title, venue, location, startDate, endDate, description,
+    _id, title, "slug": slug.current, venue, location, startDate, endDate, description,
     "images": images[]{ alt, asset }, externalUrl
   }
 `;

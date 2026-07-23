@@ -1,15 +1,37 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Image from 'next/image';
 import Container from '@/components/Container';
 import { H1, H2, P1 } from '@/components/typography';
+import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
+import { sanityClient } from '@/lib/sanity/client';
+import { exhibitionsQuery } from '@/lib/sanity/queries';
+import { urlFor } from '@/lib/sanity/image';
+import type { SanityImageRef } from '@/types';
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Exhibition',
   description: 'Cinque® exhibitions, shows and installations.',
 };
 
-const IMAGES = [
+interface ExhibitionDoc {
+  _id: string;
+  title: string;
+  slug?: string;
+  venue?: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  description?: unknown;
+  images?: SanityImageRef[];
+  externalUrl?: string;
+}
+
+// Fallback imagery when an exhibition has no photos yet.
+const STANDINS = [
   '/figma/lookbook-1-hand.png',
   '/figma/lookbook-2-bench-flatlay.png',
   '/figma/lookbook-3-macro-hallmark-bead.png',
@@ -23,96 +45,92 @@ function ExhImage({ src, hideOnMobile = false }: { src: string; hideOnMobile?: b
   );
 }
 
-/** One exhibition/press entry: bottom-aligned title + publication (both over a
- *  grey rule at the same y), then description | Date/Location, then 3 images. */
-function Entry({
-  title,
-  publication,
-  date,
-  location,
-  children,
-  last = false,
-}: {
-  title: string;
-  publication: string;
-  date: string;
-  location: string;
-  children: React.ReactNode;
-  last?: boolean;
-}) {
+function formatMonth(iso?: string): string {
+  return iso ? iso.slice(0, 7) : '';
+}
+
+function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
+  const images =
+    ex.images && ex.images.length
+      ? ex.images
+          .filter((i) => i.asset)
+          .slice(0, 3)
+          .map((img) => urlFor(img as never).width(600).height(900).fit('crop').url())
+      : STANDINS;
+  const date = [formatMonth(ex.startDate), formatMonth(ex.endDate)].filter(Boolean).join(' – ');
+
   return (
     <article className={last ? '' : 'mb-[60px]'}>
-      {/* Header row — title + publication bottom-aligned over a shared grey rule */}
+      {/* Header — title + venue bottom-aligned over a shared grey rule */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
-        <H2 className="border-b border-oslo pb-[10px] md:col-span-2">{formatLabel(title)}</H2>
-        <P1 className="border-b border-oslo pb-[10px] text-right text-oslo">{publication}</P1>
+        <H2 className="border-b border-oslo pb-[10px] md:col-span-2">
+          {ex.slug ? (
+            <Link href={`/exhibitions/${ex.slug}`} className="hover:text-redcurrent">
+              {formatLabel(ex.title)}
+            </Link>
+          ) : (
+            formatLabel(ex.title)
+          )}
+        </H2>
+        <P1 className="border-b border-oslo pb-[10px] text-right text-oslo">{ex.venue || ''}</P1>
       </div>
 
-      {/* Body — description | Date/Location, then the 3 image columns */}
+      {/* Body — description | Date/Location, then the image columns */}
       <div className="grid grid-cols-1 gap-x-[10px] gap-y-[30px] md:grid-cols-3">
-        <div className="flex flex-col gap-[20px] md:col-span-2">{children}</div>
+        <div className="flex flex-col gap-[20px] md:col-span-2">
+          {Boolean(ex.description) && (
+            <div className="type-p1 flex flex-col gap-[10px]">
+              <PortableText value={ex.description as never} />
+            </div>
+          )}
+          {ex.externalUrl && (
+            <P1>
+              <a
+                href={ex.externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 hover:text-redcurrent"
+              >
+                Read more
+              </a>
+            </P1>
+          )}
+        </div>
         <dl className="flex h-fit justify-between gap-4 type-p1">
           <div className="flex flex-col text-oslo">
-            <dt>Date</dt>
-            <dt>Location</dt>
+            {date && <dt>Date</dt>}
+            {ex.location && <dt>Location</dt>}
           </div>
           <div className="flex flex-col text-right text-graphite">
-            <dd>{date}</dd>
-            <dd>{location}</dd>
+            {date && <dd>{date}</dd>}
+            {ex.location && <dd>{ex.location}</dd>}
           </div>
         </dl>
-        <ExhImage src={IMAGES[0]} />
-        <ExhImage src={IMAGES[1]} />
-        <ExhImage src={IMAGES[2]} hideOnMobile />
+        {images.map((src, i) => (
+          <ExhImage key={`${src}-${i}`} src={src} hideOnMobile={i === 2} />
+        ))}
       </div>
     </article>
   );
 }
 
-export default function ExhibitionsPage() {
+export default async function ExhibitionsPage() {
+  let items: ExhibitionDoc[] = [];
+  try {
+    items = await sanityClient.fetch<ExhibitionDoc[]>(exhibitionsQuery);
+  } catch {
+    items = [];
+  }
+
   return (
     <Container className="py-[40px] md:py-[60px]">
       <H1 className="mb-[10px] border-b border-oslo pb-[10px]">EXHIBITION</H1>
 
-      <Entry
-        title="The_Invisible_Made_Visible"
-        publication="London Craft Week"
-        date="2026-09"
-        location="Blackdot Gallery, London"
-      >
-        <P1>
-          Jewellery becomes an intimate archive, where reclaimed materials and antique textiles
-          preserve traces of everyday histories.
-        </P1>
-        <P1>
-          The Invisible Made Visible at @londoncraftweek explores the hidden forces that shape making
-          — from unseen labour and material transformation to the quiet gestures embedded in process.
-          Bringing together practices across jewellery, ceramics, sculpture, installation, furniture,
-          wearable works, glass, textile and embroidery, the exhibition reveals what often remains
-          unnoticed: the time, care and experimentation behind each piece, highlighting the stories
-          and processes that usually remain invisible.
-        </P1>
-      </Entry>
-
-      <Entry
-        title="Jewellery_Shaped_by_Architecture_History_and_the_Human_Hand"
-        publication="Scura Magazine"
-        date="2026-09"
-        location="Blackdot Gallery, London"
-        last
-      >
-        <P1>
-          <a
-            href="https://scura.co.uk/cinque/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-4 hover:text-redcurrent"
-          >
-            Read Our Story on Scura Magazine
-          </a>
-        </P1>
-        <P1 className="text-oslo">Words by Charlie Monaghan, Photography by Ashley Law.</P1>
-      </Entry>
+      {items.length === 0 ? (
+        <P1 className="text-oslo">No exhibitions listed yet. Please check back soon.</P1>
+      ) : (
+        items.map((ex, i) => <Entry key={ex._id} ex={ex} last={i === items.length - 1} />)
+      )}
     </Container>
   );
 }
