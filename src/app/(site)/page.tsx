@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Container from '@/components/Container';
+import JsonLd from '@/components/JsonLd';
 import { H1, H3, P1 } from '@/components/typography';
 
 const CATEGORIES = [
@@ -9,9 +10,22 @@ const CATEGORIES = [
   { label: 'STUDIO', href: '/studio', blurb: 'About Cinque & commissions' },
 ] as const;
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
 export default function HomePage() {
   return (
     <Container className="py-16 md:py-24">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'Cinque',
+          url: siteUrl,
+          description:
+            'Jewellery and object maker. Individually made, cast and hallmarked in London.',
+          sameAs: ['https://www.instagram.com/cinque.made'],
+        }}
+      />
       {/* Hero */}
       <section className="mb-16 md:mb-24">
         <H1 className="mb-6 text-4xl md:text-5xl font-bold tracking-tight">Cinque®</H1>
