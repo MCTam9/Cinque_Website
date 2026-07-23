@@ -38,8 +38,8 @@ export default function HomePage() {
         }}
       />
 
-      {/* Hero: logo left, tagline right */}
-      <section className="mb-[40px] flex flex-col gap-[30px] md:mb-[60px] md:flex-row md:items-end md:justify-between">
+      {/* Hero: logo left, tagline vertically centred with it */}
+      <section className="mb-[40px] flex flex-col gap-[30px] md:mb-[60px] md:flex-row md:items-center md:justify-between">
         <img
           src="/figma/cinque-logo.svg"
           alt="Cinque"
