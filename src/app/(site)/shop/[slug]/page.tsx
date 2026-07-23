@@ -8,12 +8,15 @@ import { urlFor } from '@/lib/sanity/image';
 import { metalLabel, formatGBP } from '@/lib/products';
 import { PortableText } from '@/components/PortableText';
 import Container from '@/components/Container';
+import JsonLd from '@/components/JsonLd';
 import { H2, P1, P2 } from '@/components/typography';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
 import RingSizeChart from '@/components/RingSizeChart';
 import type { CollectionRef, SanityImageRef, Variant } from '@/types';
 
 export const revalidate = 60;
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 interface PDPProduct {
   _id: string;
@@ -101,8 +104,29 @@ export default async function ProductPage({
     ? Math.min(...product.variants.map((v) => v.priceGBP))
     : 0;
 
+  const anyInStock = purchaseVariants.some((v) => v.inStock);
+
   return (
     <Container className="py-10 md:py-14">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.title,
+          image: imageUrls.map((i) => i.url),
+          description: `${product.title} — Cinque®. Individually made, cast and hallmarked in London.`,
+          brand: { '@type': 'Brand', name: 'Cinque' },
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'GBP',
+            price: (minPrice / 100).toFixed(2),
+            availability: anyInStock
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            url: `${siteUrl}/shop/${product.slug}`,
+          },
+        }}
+      />
       <nav aria-label="Breadcrumb" className="mb-6 type-p2 text-oslo">
         <Link href="/shop" className="hover:text-graphite">
           Shop
