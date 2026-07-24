@@ -180,7 +180,9 @@ export default async function LookbookPage({
               )}
             </div>
             {rest.length > 0 && (
-              <div className="grid grid-cols-2 gap-[10px]">
+              // Desktop: push the pair to the bottom so it aligns with the
+              // hero image on the right.
+              <div className="grid grid-cols-2 gap-[10px] md:mt-auto">
                 {rest.slice(0, 2).map((img, i) => (
                   <LbImage key={`a-${i}`} src={img.src} alt={img.alt} />
                 ))}

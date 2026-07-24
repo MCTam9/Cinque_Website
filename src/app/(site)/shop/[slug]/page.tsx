@@ -100,6 +100,10 @@ export default async function ProductPage({
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
   const material = metalLabel(product.variants?.[0]?.metalType);
+  // Distinct sizes across the variants (e.g. "M · P"); empty for sizeless pieces.
+  const sizes = Array.from(
+    new Set((product.variants ?? []).map((v) => v.size).filter(Boolean))
+  ).join(' · ');
   const minPrice = product.variants?.length
     ? Math.min(...product.variants.map((v) => v.priceGBP))
     : 0;
@@ -145,6 +149,7 @@ export default async function ProductPage({
               {drop && <dt>Drop</dt>}
               {material && <dt>Material</dt>}
               {product.edition && <dt>Edition</dt>}
+              {sizes && <dt>Size</dt>}
             </div>
             <div className="flex flex-col gap-0.5 text-right text-graphite">
               {drop && (
@@ -163,6 +168,7 @@ export default async function ProductPage({
               )}
               {material && <dd>{material}</dd>}
               {product.edition && <dd>{product.edition}</dd>}
+              {sizes && <dd>{sizes}</dd>}
             </div>
           </dl>
 
