@@ -21,7 +21,7 @@ export default function LookbookHeader({
   const [open, setOpen] = useState(true);
 
   return (
-    <header className="mb-[30px] border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
+    <header className="border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1">
       <div className="flex items-end justify-between">
         <H1>LOOKBOOK</H1>
         <P1 className="hidden text-right text-oslo md:block">
