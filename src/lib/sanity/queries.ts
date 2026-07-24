@@ -136,13 +136,13 @@ export const lookbookDropsQuery = groq`
   }
 `;
 
-// The Home page singleton (tagline + four section strip images).
+// The Home page singleton (tagline + per-section image galleries).
 export const homePageQuery = groq`
   *[_type == "homePage"][0]{
     tagline,
-    shopImage{ alt, asset },
-    lookbookImage{ alt, asset },
-    exhibitionImage{ alt, asset },
-    studioImage{ alt, asset }
+    "shopImages": shopImages[]{ alt, asset },
+    "lookbookImages": lookbookImages[]{ alt, asset },
+    "exhibitionImages": exhibitionImages[]{ alt, asset },
+    "studioImages": studioImages[]{ alt, asset }
   }
 `;

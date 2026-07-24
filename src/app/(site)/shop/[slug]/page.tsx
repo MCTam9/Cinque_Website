@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
@@ -7,8 +7,9 @@ import { urlFor } from '@/lib/sanity/image';
 import { metalLabel, formatLabel } from '@/lib/products';
 import ShopLayout from '@/components/ShopLayout';
 import JsonLd from '@/components/JsonLd';
-import { H2, P1, P2 } from '@/components/typography';
+import { H2, P1 } from '@/components/typography';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
+import ProductGallery from '@/components/ProductGallery';
 import RingSizeChart from '@/components/RingSizeChart';
 import type { CollectionRef, ProductCategory, SanityImageRef, Variant } from '@/types';
 
@@ -103,7 +104,6 @@ export default async function ProductPage({
     ? Math.min(...product.variants.map((v) => v.priceGBP))
     : 0;
   const anyInStock = purchaseVariants.some((v) => v.inStock);
-  const hasThumbs = imageUrls.length > 1;
 
   return (
     <ShopLayout active={product.category ?? 'all'} filterable titleHref="/shop">
@@ -133,54 +133,9 @@ export default async function ProductPage({
         </H2>
         <div className="mb-[10px] hidden border-b border-oslo md:col-start-3 md:block" />
 
-        {/* Gallery: main image (3fr) + vertical scrolling thumbnails (1fr) */}
+        {/* Gallery: main image + clickable thumbnails (interactive) */}
         <div className="md:col-span-2 md:row-start-2">
-          {imageUrls.length > 0 ? (
-            <div className={`grid gap-[10px] ${hasThumbs ? 'md:grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
-              <div className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30">
-                <Image
-                  src={imageUrls[0].url}
-                  alt={imageUrls[0].alt}
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, 45vw"
-                  className="img-bw object-cover"
-                />
-              </div>
-              {/* Desktop: vertical scrolling thumbnail column */}
-              {hasThumbs && (
-                <div className="relative hidden md:block">
-                  <div className="absolute inset-0 flex flex-col gap-[10px] overflow-y-auto">
-                    {imageUrls.map((img) => (
-                      <div
-                        key={img.thumb}
-                        className="group relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-cloud/30"
-                      >
-                        <Image src={img.thumb} alt={img.alt} fill sizes="15vw" className="img-bw object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Mobile: horizontal thumbnail row below the main image */}
-              {hasThumbs && (
-                <div className="grid grid-cols-4 gap-[10px] md:hidden">
-                  {imageUrls.slice(0, 4).map((img) => (
-                    <div
-                      key={img.thumb}
-                      className="group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30"
-                    >
-                      <Image src={img.thumb} alt={img.alt} fill sizes="22vw" className="img-bw object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex aspect-[3/4] items-center justify-center bg-cloud/30 type-p2 text-oslo">
-              No image
-            </div>
-          )}
+          <ProductGallery images={imageUrls} />
         </div>
 
         {/* Info */}
@@ -192,7 +147,20 @@ export default async function ProductPage({
               {product.edition && <dt>Edition</dt>}
             </div>
             <div className="flex flex-col gap-0.5 text-right text-graphite">
-              {drop && <dd>{drop}</dd>}
+              {drop && (
+                <dd>
+                  {product.collection?.slug ? (
+                    <Link
+                      href={`/collections/${product.collection.slug}`}
+                      className="underline underline-offset-4 hover:text-redcurrent"
+                    >
+                      {drop}
+                    </Link>
+                  ) : (
+                    drop
+                  )}
+                </dd>
+              )}
               {material && <dd>{material}</dd>}
               {product.edition && <dd>{product.edition}</dd>}
             </div>
@@ -216,10 +184,12 @@ export default async function ProductPage({
         </div>
       </div>
 
-      {/* Ring size chart — full centre width */}
-      <div className="mt-[60px]">
-        <RingSizeChart />
-      </div>
+      {/* Ring size chart — only relevant for rings */}
+      {product.category === 'rings' && (
+        <div className="mt-[60px]">
+          <RingSizeChart />
+        </div>
+      )}
     </ShopLayout>
   );
 }

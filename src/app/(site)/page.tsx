@@ -8,6 +8,7 @@ import { formatLabel } from '@/lib/products';
 import { sanityClient } from '@/lib/sanity/client';
 import { homePageQuery, lookbookDropsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
+import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
 import type { HomePageDoc, LookbookDrop, SanityImageRef } from '@/types';
 
 export const revalidate = 60;
@@ -27,14 +28,14 @@ const DEFAULT_DROPS = [
   '00_Archive',
 ];
 
-// Each Home section = a heading + a horizontal image strip, linking to its page.
-// `imageKey` is the Sanity field to swap the strip; `img` is the built-in
-// fallback exported from Figma (so crops match until an image is uploaded).
+// Each Home section = a heading + section imagery, linking to its page.
+// `imageKey` is the Sanity array field; `img` is the built-in Figma fallback
+// strip (shown until images are uploaded).
 const SECTIONS = [
-  { href: '/shop', label: 'SHOP', imageKey: 'shopImage', img: '/figma/home-shop.png', w: 1800, h: 653 },
-  { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImage', img: '/figma/home-lookbook.png', w: 1800, h: 516, drops: true },
-  { href: '/exhibitions', label: 'EXHIBITION', imageKey: 'exhibitionImage', img: '/figma/home-exhibition.png', w: 1800, h: 652 },
-  { href: '/studio', label: 'STUDIO', imageKey: 'studioImage', img: '/figma/home-studio.png', w: 1800, h: 652 },
+  { href: '/shop', label: 'SHOP', imageKey: 'shopImages', img: '/figma/home-shop.png', w: 1800, h: 653 },
+  { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', img: '/figma/home-lookbook.png', w: 1800, h: 516, drops: true },
+  { href: '/exhibitions', label: 'EXHIBITION', imageKey: 'exhibitionImages', img: '/figma/home-exhibition.png', w: 1800, h: 652 },
+  { href: '/studio', label: 'STUDIO', imageKey: 'studioImages', img: '/figma/home-studio.png', w: 1800, h: 652 },
 ] as const;
 
 export default async function HomePage() {
@@ -53,7 +54,7 @@ export default async function HomePage() {
   const tagline = home?.tagline?.trim() || DEFAULT_TAGLINE;
   const taglineLines = tagline.split('\n');
 
-  // Drop links for the LOOKBOOK strip: from Sanity, or the built-in defaults.
+  // Drop links for the LOOKBOOK section: from Sanity, or the built-in defaults.
   const dropLinks =
     drops.length > 0
       ? drops.map((d) => ({
@@ -95,42 +96,48 @@ export default async function HomePage() {
         </H3>
       </section>
 
-      {/* Section strips */}
+      {/* Sections */}
       <div className="flex flex-col gap-[40px] md:gap-[60px]">
         {SECTIONS.map((s) => {
-          const cmsImage = home?.[s.imageKey as keyof HomePageDoc] as
-            | SanityImageRef
-            | undefined;
-          const strip =
-            cmsImage?.asset ? (
-              // Uploaded strip: Sanity CDN already optimizes; keep natural aspect.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={urlFor(cmsImage as never).width(1800).url()}
-                alt={cmsImage.alt || `${s.label} — Cinque`}
-                className="h-auto w-full transition-opacity hover:opacity-90"
-              />
+          const cmsImages = (home?.[s.imageKey as keyof HomePageDoc] as
+            | SanityImageRef[]
+            | undefined
+          )?.filter((i) => i.asset);
+
+          const mediaImages: MediaImage[] = (cmsImages ?? []).map((i) => ({
+            url: urlFor(i as never).width(600).height(900).fit('crop').url(),
+            alt: i.alt || `${s.label} — Cinque`,
+          }));
+
+          // Media: CMS gallery (grid or auto-scroll) if uploaded, else the
+          // built-in Figma fallback strip (a single image linking to the page).
+          const media =
+            mediaImages.length > 0 ? (
+              <HomeSectionMedia images={mediaImages} href={s.href} label={s.label} />
             ) : (
-              <Image
-                src={s.img}
-                alt={`${s.label} — Cinque`}
-                width={s.w}
-                height={s.h}
-                sizes="(max-width: 768px) 100vw, 900px"
-                className="h-auto w-full transition-opacity hover:opacity-90"
-                priority={s.label === 'SHOP'}
-              />
+              <Link href={s.href} aria-label={s.label}>
+                <Image
+                  src={s.img}
+                  alt={`${s.label} — Cinque`}
+                  width={s.w}
+                  height={s.h}
+                  sizes="(max-width: 768px) 100vw, 900px"
+                  className="h-auto w-full transition-opacity hover:opacity-90"
+                  priority={s.label === 'SHOP'}
+                />
+              </Link>
             );
 
-          // LOOKBOOK: heading + per-drop links (can't nest links) + strip.
-          if ('drops' in s && s.drops) {
-            return (
-              <section key={s.href} className="group block">
-                <Link href={s.href}>
-                  <H1 className="mb-[10px] border-b border-oslo pb-[10px] hover:text-redcurrent">
-                    {s.label}
-                  </H1>
-                </Link>
+          return (
+            <section key={s.href}>
+              <Link href={s.href}>
+                <H1 className="mb-[10px] border-b border-oslo pb-[10px] hover:text-redcurrent">
+                  {s.label}
+                </H1>
+              </Link>
+
+              {/* LOOKBOOK: per-drop quick links between the heading and imagery */}
+              {'drops' in s && s.drops && (
                 <div className="mb-[10px] hidden grid-cols-5 gap-[10px] sm:grid">
                   {dropLinks.map((d) => (
                     <Link
@@ -142,19 +149,10 @@ export default async function HomePage() {
                     </Link>
                   ))}
                 </div>
-                <Link href={s.href}>{strip}</Link>
-              </section>
-            );
-          }
+              )}
 
-          // SHOP / EXHIBITION / STUDIO: whole section is one link.
-          return (
-            <Link key={s.href} href={s.href} className="group block">
-              <H1 className="mb-[10px] border-b border-oslo pb-[10px] group-hover:text-redcurrent">
-                {s.label}
-              </H1>
-              {strip}
-            </Link>
+              {media}
+            </section>
           );
         })}
       </div>

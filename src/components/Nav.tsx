@@ -59,7 +59,9 @@ export default function Nav() {
         {/* Cart — right, aligned to the 20px padding (desktop). */}
         <Link
           href="/cart"
-          className="type-h3 absolute right-5 top-[18px] hidden text-graphite hover:text-redcurrent md:block"
+          className={`absolute right-5 top-[18px] hidden md:block ${linkClass(
+            isActive(pathname, '/cart')
+          )}`}
         >
           {cartLabel}
         </Link>
@@ -84,13 +86,14 @@ export default function Nav() {
             {LINKS.map((l, i) => (
               <li
                 key={l.href}
-                className={i === LINKS.length - 1 ? 'flex items-center justify-between' : ''}
+                className={i === 0 ? 'flex items-center justify-between' : ''}
               >
                 <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                   {l.label}
                 </Link>
-                {i === LINKS.length - 1 && (
-                  <Link href="/cart" className="type-h3 text-graphite hover:text-redcurrent">
+                {/* CART sits on the right of the first (SHOP) row, aligned with it. */}
+                {i === 0 && (
+                  <Link href="/cart" className={linkClass(isActive(pathname, '/cart'))}>
                     {cartLabel}
                   </Link>
                 )}

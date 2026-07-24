@@ -126,3 +126,12 @@
     animation: none;
   }
 }
+
+/* Hide the scrollbar on the home auto-scrolling image strips (still scrollable). */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

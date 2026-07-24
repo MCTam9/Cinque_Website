@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import type { PortableTextBlock } from '@portabletext/types';
 import type { SanityImageSource } from '@sanity/image-url/lib/types/types';
 import { urlFor } from '@/lib/sanity/image';
@@ -73,7 +74,15 @@ function Hero({ block }: { block: HeroBlock }) {
       )}
       {block.heading && <h1>{block.heading}</h1>}
       {block.subheading && <p>{block.subheading}</p>}
-      {block.ctaLabel && block.ctaHref && <a href={block.ctaHref}>{block.ctaLabel}</a>}
+      {block.ctaLabel &&
+        block.ctaHref &&
+        (block.ctaHref.startsWith('/') ? (
+          <Link href={block.ctaHref}>{block.ctaLabel}</Link>
+        ) : (
+          <a href={block.ctaHref} target="_blank" rel="noopener noreferrer">
+            {block.ctaLabel}
+          </a>
+        ))}
     </section>
   );
 }
