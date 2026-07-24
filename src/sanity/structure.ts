@@ -9,6 +9,15 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title('Cinque')
     .items([
+      // ── Home page: a singleton, edited in place ──
+      S.listItem()
+        .title('Home Page')
+        .id('homePage')
+        .child(
+          S.document().schemaType('homePage').documentId('homePage')
+        ),
+      S.divider(),
+
       // ── Orders: what needs action first ──
       S.listItem()
         .title('Orders')
@@ -66,6 +75,7 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title('Editorial')
             .items([
+              S.documentTypeListItem('lookbookDrop').title('Lookbook Drops'),
               S.documentTypeListItem('exhibition').title('Exhibitions'),
               S.documentTypeListItem('pressItem').title('Press'),
               S.documentTypeListItem('page').title('Pages'),

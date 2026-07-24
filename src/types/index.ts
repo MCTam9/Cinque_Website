@@ -49,6 +49,25 @@ export interface CollectionRef {
   dropNumber?: number;
 }
 
+/** A Lookbook drop (editorial imagery + copy shown at /lookbook). */
+export interface LookbookDrop {
+  _id: string;
+  title: string;
+  dropNumber?: string;
+  slug: string;
+  intro?: unknown; // Portable Text
+  images?: SanityImageRef[];
+}
+
+/** The Home page singleton (tagline + four section strip images). */
+export interface HomePageDoc {
+  tagline?: string;
+  shopImage?: SanityImageRef;
+  lookbookImage?: SanityImageRef;
+  exhibitionImage?: SanityImageRef;
+  studioImage?: SanityImageRef;
+}
+
 export interface Product {
   _id: string;
   title: string;

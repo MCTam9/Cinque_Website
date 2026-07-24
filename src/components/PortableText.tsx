@@ -13,7 +13,22 @@ import type { PortableTextBlock } from '@portabletext/types';
  */
 
 const components: PortableTextComponents = {
-  // Extend with custom marks/blocks (links, images) as the design requires.
+  marks: {
+    // Renders standard link annotations. External links open in a new tab.
+    link: ({ value, children }) => {
+      const href = (value?.href as string) || '#';
+      const external = /^https?:\/\//i.test(href);
+      return (
+        <a
+          href={href}
+          className="underline underline-offset-4 hover:text-redcurrent"
+          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          {children}
+        </a>
+      );
+    },
+  },
 };
 
 export function PortableText({ value }: { value?: PortableTextBlock[] | null }) {

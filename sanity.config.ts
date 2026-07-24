@@ -29,7 +29,9 @@ export default defineConfig({
     newDocumentOptions: (prev) =>
       prev.filter(
         (item) =>
-          item.templateId !== 'stripeEvent' && item.templateId !== 'order'
+          item.templateId !== 'stripeEvent' &&
+          item.templateId !== 'order' &&
+          item.templateId !== 'homePage'
       ),
   },
 });

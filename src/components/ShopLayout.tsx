@@ -44,10 +44,13 @@ function CategoryList({ active }: { active: string }) {
 export default function ShopLayout({
   active = 'all',
   filterable = false,
+  titleHref,
   children,
 }: {
   active?: string;
   filterable?: boolean;
+  /** When set, the SHOP title becomes a link (e.g. back to /shop from a PDP). */
+  titleHref?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -57,7 +60,13 @@ export default function ShopLayout({
 
       {/* Header — centre column, with rule beneath */}
       <header className="mb-[30px] flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
-        <H1>SHOP</H1>
+        {titleHref ? (
+          <Link href={titleHref} className="hover:text-redcurrent">
+            <H1>SHOP</H1>
+          </Link>
+        ) : (
+          <H1>SHOP</H1>
+        )}
         <Link
           href="/studio#contact"
           className="type-p1 hidden text-right text-oslo hover:text-redcurrent md:block"
@@ -67,7 +76,7 @@ export default function ShopLayout({
         {filterable && (
           <details className="relative md:hidden">
             <summary className="type-h3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-              FILTER
+              CATEGORY
             </summary>
             <div className="absolute right-0 top-full z-20 mt-[10px] border border-oslo bg-cararra px-[20px] py-[10px]">
               <CategoryList active={active} />
