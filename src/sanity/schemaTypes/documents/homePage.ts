@@ -19,7 +19,7 @@ const sectionImages = (name: string, title: string) =>
     title,
     type: 'array',
     description:
-      'On phones these auto-scroll sideways, about 2.5 images at a time. On desktop 1–5 images become a grid (columns follow the count); 6+ auto-scroll. Images are cropped to 2:3.',
+      'On phones these auto-scroll sideways, two at a time. On desktop 1–5 images become a grid (columns follow the count); 6+ auto-scroll. Images are cropped to 2:3.',
     of: [
       defineArrayMember({
         type: 'image',
@@ -49,7 +49,13 @@ export const homePage = defineType({
       description: 'The intro lines beside the logo. Each line break shows as a new line.',
     }),
     sectionImages('shopImages', 'SHOP images'),
-    sectionImages('lookbookImages', 'LOOKBOOK images'),
+    // Order matters here: the first LOOKBOOK image is captioned with the newest
+    // drop, the second with the one before it, and so on (see `lookbookCards`
+    // in the Home page). Reordering these re-pairs the titles.
+    sectionImages(
+      'lookbookImages',
+      'LOOKBOOK images (one per drop, newest first)'
+    ),
     sectionImages('exhibitionImages', 'EXHIBITION images'),
     sectionImages('studioImages', 'STUDIO images'),
   ],
