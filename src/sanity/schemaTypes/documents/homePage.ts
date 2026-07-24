@@ -1,26 +1,35 @@
-import { defineField, defineType } from 'sanity';
+import { defineArrayMember, defineField, defineType } from 'sanity';
 
 /**
  * The Home page — a singleton (only one exists; edited in place, never created
- * or deleted). Staff can change the tagline and swap the four section strip
- * images (Shop / Lookbook / Exhibition / Studio). The Lookbook drop list under
- * the LOOKBOOK strip is generated automatically from the Lookbook Drops.
+ * or deleted). Staff edit the tagline and, for each section (Shop / Lookbook /
+ * Exhibition / Studio), upload one or more images.
  *
- * Any image left empty falls back to the built-in Figma export, so the page
+ * Rendering adapts to how many images a section has:
+ *   • 1–5 images → a grid whose column count follows the image count.
+ *   • 6+ images → a slow auto-scrolling strip the visitor can also scroll.
+ * A section left empty falls back to the built-in Figma strip, so the page
  * always renders.
  */
-const stripImage = (name: string, title: string) =>
+const sectionImages = (name: string, title: string) =>
   defineField({
     name,
     title,
-    type: 'image',
-    options: { hotspot: true },
-    fields: [
-      defineField({
-        name: 'alt',
-        title: 'Alt text',
-        type: 'string',
-        description: 'Describes the image for accessibility and SEO.',
+    type: 'array',
+    description:
+      '1–5 images show as a grid (columns follow the count); 6+ becomes a slow auto-scrolling strip.',
+    of: [
+      defineArrayMember({
+        type: 'image',
+        options: { hotspot: true },
+        fields: [
+          defineField({
+            name: 'alt',
+            title: 'Alt text',
+            type: 'string',
+            description: 'Describes the image for accessibility and SEO.',
+          }),
+        ],
       }),
     ],
   });
@@ -37,10 +46,10 @@ export const homePage = defineType({
       rows: 3,
       description: 'The intro lines beside the logo. Each line break shows as a new line.',
     }),
-    stripImage('shopImage', 'SHOP strip image'),
-    stripImage('lookbookImage', 'LOOKBOOK strip image'),
-    stripImage('exhibitionImage', 'EXHIBITION strip image'),
-    stripImage('studioImage', 'STUDIO strip image'),
+    sectionImages('shopImages', 'SHOP images'),
+    sectionImages('lookbookImages', 'LOOKBOOK images'),
+    sectionImages('exhibitionImages', 'EXHIBITION images'),
+    sectionImages('studioImages', 'STUDIO images'),
   ],
   preview: {
     prepare: () => ({ title: 'Home Page' }),

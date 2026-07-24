@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { pageBySlugQuery, pageSlugsQuery } from '@/lib/sanity/queries';
@@ -58,6 +59,9 @@ export default async function GenericPage({
 
   return (
     <Container className="py-[40px] md:py-[60px]">
+      <Link href="/" className="type-p1 mb-[20px] inline-block text-oslo hover:text-redcurrent">
+        ← Home
+      </Link>
       <H1 className="mb-[30px]">{doc.title}</H1>
       <PageBuilder blocks={doc.content} />
     </Container>

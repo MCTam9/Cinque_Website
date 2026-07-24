@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { collectionBySlugQuery, collectionSlugsQuery } from '@/lib/sanity/queries';
@@ -53,6 +54,9 @@ export default async function CollectionPage({
 
   return (
     <Container className="py-[40px] md:py-[60px]">
+      <Link href="/shop" className="type-p1 mb-[20px] inline-block text-oslo hover:text-redcurrent">
+        ← Shop
+      </Link>
       <header className="mb-[30px] flex flex-col gap-1">
         {typeof doc.dropNumber === 'number' && (
           <P2 className="text-oslo">Drop {String(doc.dropNumber).padStart(2, '0')}</P2>

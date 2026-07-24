@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import ProductGrid from '@/components/ProductGrid';
 import RingSizeChart from '@/components/RingSizeChart';
 import ShopLayout from '@/components/ShopLayout';
+import { P1 } from '@/components/typography';
 import { sanityClient } from '@/lib/sanity/client';
 import { activeProductsQuery } from '@/lib/sanity/queries';
 import type { Product } from '@/types';
@@ -32,7 +34,19 @@ export default async function ShopPage({
 
   return (
     <ShopLayout active={active} filterable>
-      <ProductGrid products={filtered} />
+      {filtered.length === 0 && active !== 'all' ? (
+        <div>
+          <P1 className="mb-5 text-oslo">No pieces in this category right now.</P1>
+          <Link
+            href="/shop"
+            className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
+          >
+            Browse all
+          </Link>
+        </div>
+      ) : (
+        <ProductGrid products={filtered} />
+      )}
       <div className="mt-[60px]">
         <RingSizeChart />
       </div>

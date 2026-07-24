@@ -59,13 +59,13 @@ export interface LookbookDrop {
   images?: SanityImageRef[];
 }
 
-/** The Home page singleton (tagline + four section strip images). */
+/** The Home page singleton (tagline + per-section image galleries). */
 export interface HomePageDoc {
   tagline?: string;
-  shopImage?: SanityImageRef;
-  lookbookImage?: SanityImageRef;
-  exhibitionImage?: SanityImageRef;
-  studioImage?: SanityImageRef;
+  shopImages?: SanityImageRef[];
+  lookbookImages?: SanityImageRef[];
+  exhibitionImages?: SanityImageRef[];
+  studioImages?: SanityImageRef[];
 }
 
 export interface Product {

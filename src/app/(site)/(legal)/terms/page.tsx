@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { H1, H2, P1, P2 } from '@/components/typography';
 
 export const metadata: Metadata = {
@@ -40,9 +41,9 @@ export default function TermsPage() {
       <H2 className="font-bold">Returns</H2>
       <P1>
         Returns are handled in accordance with our{' '}
-        <a href="/shipping" className="underline underline-offset-4 hover:text-redcurrent">
+        <Link href="/shipping" className="underline underline-offset-4 hover:text-redcurrent">
           Shipping &amp; Returns
-        </a>{' '}
+        </Link>{' '}
         policy, which forms part of these terms.
       </P1>
 

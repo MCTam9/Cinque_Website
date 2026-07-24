@@ -8,6 +8,10 @@ import { formatGBP } from '@/lib/products';
 import Container from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
 
+// Per-line quantity cap — mirrors the checkout API's limit so the cart can't
+// exceed what checkout will accept.
+const MAX_QTY = 20;
+
 export default function CartPage() {
   const lines = useCart((s) => s.lines);
   const subtotal = useCart((s) => s.subtotalGBP());
@@ -89,8 +93,11 @@ export default function CartPage() {
                     <button
                       type="button"
                       aria-label="Decrease quantity"
-                      onClick={() => updateQuantity(l.productId, l.variantKey, l.quantity - 1)}
-                      className="min-h-[36px] min-w-[36px] type-p1 hover:text-redcurrent"
+                      disabled={l.quantity <= 1}
+                      onClick={() =>
+                        updateQuantity(l.productId, l.variantKey, Math.max(1, l.quantity - 1))
+                      }
+                      className="min-h-[36px] min-w-[36px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
                     >
                       −
                     </button>
@@ -98,8 +105,11 @@ export default function CartPage() {
                     <button
                       type="button"
                       aria-label="Increase quantity"
-                      onClick={() => updateQuantity(l.productId, l.variantKey, l.quantity + 1)}
-                      className="min-h-[36px] min-w-[36px] type-p1 hover:text-redcurrent"
+                      disabled={l.quantity >= MAX_QTY}
+                      onClick={() =>
+                        updateQuantity(l.productId, l.variantKey, Math.min(MAX_QTY, l.quantity + 1))
+                      }
+                      className="min-h-[36px] min-w-[36px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
                     >
                       +
                     </button>
