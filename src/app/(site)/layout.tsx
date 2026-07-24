@@ -1,5 +1,6 @@
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
+import ImageColorReveal from '@/components/ImageColorReveal';
 
 /**
  * Shared chrome for all public marketing/shop pages. Sanity Studio (/admin)
@@ -11,6 +12,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <Nav />
       <main className="min-h-screen">{children}</main>
       <Footer />
+      <ImageColorReveal />
     </>
   );
 }

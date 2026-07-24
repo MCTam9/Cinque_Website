@@ -92,7 +92,16 @@
     }
   }
   @media (hover: none) {
-    /* No hover affordance on touch — show colour. */
+    /* Touch has no hover: images start grey and are revealed in colour by
+       <ImageColorReveal> — when they cross the centre of the viewport
+       (.in-view, scroll-driven) or sit under a finger (.finger, touch-driven). */
+    .img-bw.in-view,
+    .img-bw.finger {
+      filter: grayscale(0);
+    }
+  }
+  @media (hover: none) and (prefers-reduced-motion: reduce) {
+    /* Reduced motion: skip the reveal, just show colour. */
     .img-bw {
       filter: grayscale(0);
     }
