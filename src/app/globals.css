@@ -93,9 +93,11 @@
   }
   @media (hover: none) {
     /* Touch has no hover: images start grey and are revealed in colour by
-       <ImageColorReveal> when they sit under a finger. The scroll-driven
+       <ImageColorReveal> — under a moving finger (.finger, transient) or on a
+       tap (.tapped, stays until another image is tapped). The scroll-driven
        centre-of-viewport reveal (.in-view) was removed deliberately. */
-    .img-bw.finger {
+    .img-bw.finger,
+    .img-bw.tapped {
       filter: grayscale(0);
     }
   }
