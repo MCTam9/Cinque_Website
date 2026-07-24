@@ -60,7 +60,7 @@ export default function ShopLayout({
       <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 
       {/* Header — centre column, with rule beneath */}
-      <header className="mb-[30px] flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1 md:mb-0">
+      <header className="flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1">
         {titleHref ? (
           <Link href={titleHref} className="hover:text-redcurrent">
             <H1>SHOP</H1>
