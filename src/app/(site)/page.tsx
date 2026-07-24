@@ -83,7 +83,7 @@ export default async function HomePage() {
           alt="Cinque"
           width={351}
           height={96}
-          className="h-auto w-[260px] md:w-[351px]"
+          className="hidden h-auto w-[260px] md:block md:w-[351px]"
         />
         <H3 className="text-oslo md:text-right">
           {taglineLines.map((line, i) => (

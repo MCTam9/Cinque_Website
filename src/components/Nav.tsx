@@ -79,7 +79,7 @@ export default function Nav() {
       {/* Mobile panel — links stacked left, CART right on the last row,
           bottom rule inset to the 20px padding. */}
       {open && (
-        <div id="mobile-menu" className="bg-cararra px-5 md:hidden">
+        <div id="mobile-menu" className="animate-dropdown bg-cararra px-5 md:hidden">
           <ul className="flex flex-col gap-[20px] border-b border-graphite pb-[20px]">
             {LINKS.map((l, i) => (
               <li
