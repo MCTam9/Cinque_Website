@@ -1,13 +1,15 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
+import { crop2x3 } from '../imageCrop';
 
 /**
  * The Home page — a singleton (only one exists; edited in place, never created
  * or deleted). Staff edit the tagline and, for each section (Shop / Lookbook /
  * Exhibition / Studio), upload one or more images.
  *
- * Rendering adapts to how many images a section has:
- *   • 1–5 images → a grid whose column count follows the image count.
- *   • 6+ images → a slow auto-scrolling strip the visitor can also scroll.
+ * Rendering adapts to the viewport and to how many images a section has:
+ *   • mobile → a slow auto-scrolling strip showing ~2.5 images at a time.
+ *   • desktop, 1–5 images → a grid whose column count follows the count.
+ *   • desktop, 6+ images → the same auto-scrolling strip.
  * A section left empty falls back to the built-in Figma strip, so the page
  * always renders.
  */
@@ -17,11 +19,11 @@ const sectionImages = (name: string, title: string) =>
     title,
     type: 'array',
     description:
-      '1–5 images show as a grid (columns follow the count); 6+ becomes a slow auto-scrolling strip.',
+      'On phones these auto-scroll sideways, about 2.5 images at a time. On desktop 1–5 images become a grid (columns follow the count); 6+ auto-scroll. Images are cropped to 2:3.',
     of: [
       defineArrayMember({
         type: 'image',
-        options: { hotspot: true },
+        options: { hotspot: crop2x3 },
         fields: [
           defineField({
             name: 'alt',

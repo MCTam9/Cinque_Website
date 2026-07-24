@@ -1,5 +1,6 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 import { pageBuilderField } from '../objects/blocks';
+import { crop2x3 } from '../imageCrop';
 
 export const exhibition = defineType({
   name: 'exhibition',
@@ -41,7 +42,7 @@ export const exhibition = defineType({
       of: [
         defineArrayMember({
           type: 'image',
-          options: { hotspot: true },
+          options: { hotspot: crop2x3 },
           fields: [defineField({ name: 'alt', title: 'Alt Text', type: 'string' })],
         }),
       ],
