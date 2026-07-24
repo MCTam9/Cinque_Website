@@ -10,7 +10,7 @@ import JsonLd from '@/components/JsonLd';
 import { H2, P1, P2 } from '@/components/typography';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
 import RingSizeChart from '@/components/RingSizeChart';
-import type { CollectionRef, SanityImageRef, Variant } from '@/types';
+import type { CollectionRef, ProductCategory, SanityImageRef, Variant } from '@/types';
 
 export const revalidate = 60;
 
@@ -21,6 +21,7 @@ interface PDPProduct {
   title: string;
   slug: string;
   status: string;
+  category?: ProductCategory;
   edition?: string;
   careInstructions?: string;
   images?: SanityImageRef[];
@@ -105,7 +106,7 @@ export default async function ProductPage({
   const hasThumbs = imageUrls.length > 1;
 
   return (
-    <ShopLayout active="all">
+    <ShopLayout active={product.category ?? 'all'} filterable titleHref="/shop">
       <JsonLd
         data={{
           '@context': 'https://schema.org',

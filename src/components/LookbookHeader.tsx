@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { H1, P1 } from '@/components/typography';
-import { formatLabel } from '@/lib/products';
+
+export type DropLink = { slug: string; label: string };
 
 /**
  * Lookbook header (mobile): LOOKBOOK title with a SHOW ALL / HIDE toggle on the
@@ -14,7 +15,7 @@ export default function LookbookHeader({
   drops,
   active,
 }: {
-  drops: readonly string[];
+  drops: DropLink[];
   active: string;
 }) {
   const [open, setOpen] = useState(true);
@@ -39,16 +40,16 @@ export default function LookbookHeader({
       {open && (
         <ul className="mt-[10px] flex flex-col gap-[10px] md:hidden">
           {drops.map((d) => (
-            <li key={d}>
+            <li key={d.slug}>
               <Link
-                href={`/lookbook?drop=${d}`}
+                href={`/lookbook?drop=${d.slug}`}
                 className={`type-h3 ${
-                  d === active
+                  d.slug === active
                     ? 'text-redcurrent underline underline-offset-4'
                     : 'text-graphite'
                 }`}
               >
-                {formatLabel(d)}
+                {d.label}
               </Link>
             </li>
           ))}

@@ -2,25 +2,88 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { H2, H3, P1, P2 } from '@/components/typography';
+import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
-import LookbookHeader from '@/components/LookbookHeader';
+import LookbookHeader, { type DropLink } from '@/components/LookbookHeader';
+import { sanityClient } from '@/lib/sanity/client';
+import { lookbookDropsQuery } from '@/lib/sanity/queries';
+import { urlFor } from '@/lib/sanity/image';
+import type { LookbookDrop, SanityImageRef } from '@/types';
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Lookbook',
   description: 'Cinque® drops and the studio archive — one-of-a-kind and limited objects.',
 };
 
+// Built-in imagery / copy used when no drops have been added in Sanity yet, so
+// the page always renders (mirrors the Exhibitions page's stand-in pattern).
 const HAND = '/figma/lookbook-1-hand.png';
 const BENCH = '/figma/lookbook-2-bench-flatlay.png';
 const MACRO = '/figma/lookbook-3-macro-hallmark-bead.png';
-
-const DROPS = [
+const FALLBACK_IMAGES = [HAND, MACRO, BENCH, HAND, BENCH, MACRO, HAND];
+const FALLBACK_SLUGS = [
   '00_Archive',
   '01_Metal_Veil',
   '02_Shell_Relic',
   '03_Hastata',
   '04_Lost_Garden',
-] as const;
+];
+
+// The default archive copy, shown for a drop that has no intro of its own.
+function FallbackIntro() {
+  return (
+    <>
+      <P1>
+        Pieces held within the cloud of Cinque’s studio archive—one-of-a-kind and limited
+        objects not assigned to any formal collection.
+      </P1>
+      <P1>
+        All Cinque® pieces are individually made, cast and hallmarked (for silver and
+        carat-gold items only) in London. Due to the handmade nature, each piece is unique
+        and no exact replicas are produced.
+      </P1>
+      <P1>
+        <Link href="/studio#contact" className="underline underline-offset-4 hover:text-redcurrent">
+          Contact us
+        </Link>{' '}
+        to request a custom variation of an existing design. Further details regarding
+        timeline and quotation will follow.
+      </P1>
+    </>
+  );
+}
+
+type NormDrop = {
+  slug: string;
+  label: string;
+  intro?: unknown;
+  images: { src: string; alt: string }[];
+};
+
+function imgUrl(img: SanityImageRef): string {
+  return urlFor(img as never).width(600).height(900).fit('crop').url();
+}
+
+/** Normalize CMS drops, or fall back to the built-in archive when there are none. */
+function toNormDrops(cms: LookbookDrop[]): NormDrop[] {
+  if (cms.length > 0) {
+    return cms.map((d) => ({
+      slug: d.slug,
+      label: d.dropNumber ? `${d.dropNumber}/${d.title}` : d.title,
+      intro: d.intro,
+      images: (d.images ?? [])
+        .filter((i) => i.asset)
+        .map((i) => ({ src: imgUrl(i), alt: i.alt || d.title })),
+    }));
+  }
+  return FALLBACK_SLUGS.map((slug) => ({
+    slug,
+    label: formatLabel(slug),
+    images: FALLBACK_IMAGES.map((src) => ({ src, alt: 'Cinque piece' })),
+  }));
+}
 
 function LbImage({ src, alt }: { src: string; alt: string }) {
   return (
@@ -35,11 +98,25 @@ export default async function LookbookPage({
 }: {
   searchParams: Promise<{ drop?: string }>;
 }) {
+  let cms: LookbookDrop[] = [];
+  try {
+    cms = await sanityClient.fetch<LookbookDrop[]>(lookbookDropsQuery);
+  } catch {
+    cms = [];
+  }
+
+  const drops = toNormDrops(cms ?? []);
+  const dropLinks: DropLink[] = drops.map((d) => ({ slug: d.slug, label: d.label }));
+
   const { drop } = await searchParams;
-  const active = DROPS.includes(drop as (typeof DROPS)[number]) ? (drop as string) : DROPS[0];
-  const idx = DROPS.indexOf(active as (typeof DROPS)[number]);
-  const prev = idx > 0 ? DROPS[idx - 1] : null;
-  const next = idx < DROPS.length - 1 ? DROPS[idx + 1] : null;
+  const idx = Math.max(0, drops.findIndex((d) => d.slug === drop));
+  const activeIdx = drop && idx >= 0 ? idx : 0;
+  const activeDrop = drops[activeIdx];
+  const prev = activeIdx > 0 ? drops[activeIdx - 1] : null;
+  const next = activeIdx < drops.length - 1 ? drops[activeIdx + 1] : null;
+
+  // First image is featured; the rest fill the grid below it.
+  const [featured, ...rest] = activeDrop?.images ?? [];
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
@@ -47,23 +124,23 @@ export default async function LookbookPage({
       <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 
       {/* Header + rule (mobile: SHOW ALL / HIDE drop row below the title) */}
-      <LookbookHeader drops={DROPS} active={active} />
+      <LookbookHeader drops={dropLinks} active={activeDrop?.slug ?? ''} />
 
       {/* Drop sidebar (desktop only) */}
       <aside className="hidden pt-[10px] md:col-start-1 md:row-start-2 md:block md:pr-4">
         <P2 className="mb-[10px] text-oslo">DROP</P2>
         <ul className="flex flex-col gap-[10px]">
-          {DROPS.map((d) => (
-            <li key={d}>
+          {drops.map((d) => (
+            <li key={d.slug}>
               <Link
-                href={`/lookbook?drop=${d}`}
+                href={`/lookbook?drop=${d.slug}`}
                 className={`type-h3 transition-colors ${
-                  d === active
+                  d.slug === activeDrop?.slug
                     ? 'text-redcurrent underline underline-offset-4'
                     : 'text-graphite hover:text-redcurrent'
                 }`}
               >
-                {formatLabel(d)}
+                {d.label}
               </Link>
             </li>
           ))}
@@ -72,65 +149,55 @@ export default async function LookbookPage({
 
       {/* Editorial content */}
       <div className="pt-[10px] md:col-start-2 md:row-start-2">
-        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop {formatLabel(active)}</H2>
+        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop {activeDrop?.label}</H2>
 
-        {/* Row 1: copy + two small images | tall image */}
+        {/* Row 1: copy + up to two images | featured image */}
         <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
           <div className="flex flex-col gap-[10px]">
             <div className="flex flex-col gap-[20px] type-p1">
-              <P1>
-                Pieces held within the cloud of Cinque’s studio archive—one-of-a-kind and limited
-                objects not assigned to any formal collection.
-              </P1>
-              <P1>
-                All Cinque® pieces are individually made, cast and hallmarked (for silver and
-                carat-gold items only) in London. Due to the handmade nature, each piece is unique
-                and no exact replicas are produced.
-              </P1>
-              <P1>
-                <Link href="/studio#contact" className="underline underline-offset-4 hover:text-redcurrent">
-                  Contact us
-                </Link>{' '}
-                to request a custom variation of an existing design. Further details regarding
-                timeline and quotation will follow.
-              </P1>
+              {activeDrop?.intro ? (
+                <PortableText value={activeDrop.intro as never} />
+              ) : (
+                <FallbackIntro />
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-[10px]">
-              <LbImage src={MACRO} alt="Cinque piece — macro detail" />
-              <LbImage src={BENCH} alt="Cinque studio bench" />
+            {rest.length > 0 && (
+              <div className="grid grid-cols-2 gap-[10px]">
+                {rest.slice(0, 2).map((img, i) => (
+                  <LbImage key={`a-${i}`} src={img.src} alt={img.alt} />
+                ))}
+              </div>
+            )}
+          </div>
+          {/* featured image — shown first on mobile, right column on desktop */}
+          {featured && (
+            <div className="order-first md:order-none">
+              <LbImage src={featured.src} alt={featured.alt} />
             </div>
-          </div>
-          {/* tall image — shown first on mobile, right column on desktop */}
-          <div className="order-first md:order-none">
-            <LbImage src={HAND} alt="Cinque piece worn on the hand" />
-          </div>
+          )}
         </div>
 
-        {/* Row 2: three images */}
-        <div className="mb-[10px] grid grid-cols-2 gap-[10px] md:grid-cols-3">
-          <LbImage src={HAND} alt="Cinque piece" />
-          <LbImage src={BENCH} alt="Cinque studio bench" />
-          <LbImage src={MACRO} alt="Cinque piece — macro detail" />
-        </div>
-
-        {/* Row 3: two images */}
-        <div className="mb-[30px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
-          <LbImage src={HAND} alt="Cinque piece" />
-          <LbImage src={MACRO} alt="Cinque piece — macro detail" />
-        </div>
+        {/* Remaining images fill a grid */}
+        {rest.length > 2 && (
+          <div className="mb-[30px] grid grid-cols-2 gap-[10px] md:grid-cols-3">
+            {rest.slice(2).map((img, i) => (
+              <LbImage key={`b-${i}`} src={img.src} alt={img.alt} />
+            ))}
+          </div>
+        )}
 
         {/* Pagination between drops — both ends carry the drop title */}
         <nav className="flex items-center justify-between border-t border-graphite pt-[20px]">
           {prev ? (
-            <Link href={`/lookbook?drop=${prev}`}>
-              <H3 className="font-bold hover:text-redcurrent">&lt; {formatLabel(prev)}</H3>
+            <Link href={`/lookbook?drop=${prev.slug}`}>
+              <H3 className="font-bold hover:text-redcurrent">&lt; {prev.label}</H3>
             </Link>
           ) : (
             <span />
           )}
           {next ? (
-            <Link href={`/lookbook?drop=${next}`}>
-              <H3 className="font-bold hover:text-redcurrent">{formatLabel(next)} &gt;</H3>
+            <Link href={`/lookbook?drop=${next.slug}`}>
+              <H3 className="font-bold hover:text-redcurrent">{next.label} &gt;</H3>
             </Link>
           ) : (
             <span />

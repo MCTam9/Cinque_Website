@@ -39,6 +39,7 @@ export const productBySlugQuery = groq`
     title,
     "slug": slug.current,
     status,
+    category,
     edition,
     description,
     careInstructions,
@@ -124,5 +125,24 @@ export const pressQuery = groq`
   *[_type == "pressItem"] | order(publishDate desc) {
     _id, headline, publication, publishDate, excerpt, externalUrl,
     coverImage, body
+  }
+`;
+
+// All lookbook drops, newest drop first (Lookbook page + Home drop list).
+export const lookbookDropsQuery = groq`
+  *[_type == "lookbookDrop" && defined(slug.current)] | order(dropNumber desc) {
+    _id, title, dropNumber, "slug": slug.current, intro,
+    "images": images[]{ alt, asset }
+  }
+`;
+
+// The Home page singleton (tagline + four section strip images).
+export const homePageQuery = groq`
+  *[_type == "homePage"][0]{
+    tagline,
+    shopImage{ alt, asset },
+    lookbookImage{ alt, asset },
+    exhibitionImage{ alt, asset },
+    studioImage{ alt, asset }
   }
 `;

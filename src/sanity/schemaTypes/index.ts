@@ -13,6 +13,8 @@ import { order } from './documents/order';
 import { exhibition } from './documents/exhibition';
 import { pressItem } from './documents/pressItem';
 import { page } from './documents/page';
+import { lookbookDrop } from './documents/lookbookDrop';
+import { homePage } from './documents/homePage';
 import { stripeEvent } from './documents/stripeEvent';
 
 export const schemaTypes: SchemaTypeDefinition[] = [
@@ -28,5 +30,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   exhibition,
   pressItem,
   page,
+  lookbookDrop,
+  homePage,
   stripeEvent,
 ];
