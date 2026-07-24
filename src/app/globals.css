@@ -144,3 +144,11 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Keyboard focus indicator — shown only for keyboard / assistive-tech
+   navigation (:focus-visible), never on mouse clicks. Unlayered so it reliably
+   wins over Tailwind's utility outline resets on links, buttons and inputs. */
+:focus-visible {
+  outline: 2px solid #b35947; /* redcurrent */
+  outline-offset: 2px;
+}
