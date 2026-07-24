@@ -5,7 +5,7 @@ import Container from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
 import { H1, H3 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { homePageQuery, lookbookDropsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
@@ -39,17 +39,18 @@ const SECTIONS = [
 ] as const;
 
 export default async function HomePage() {
-  let home: HomePageDoc | null = null;
-  let drops: LookbookDrop[] = [];
-  try {
-    [home, drops] = await Promise.all([
-      sanityClient.fetch<HomePageDoc | null>(homePageQuery),
-      sanityClient.fetch<LookbookDrop[]>(lookbookDropsQuery),
-    ]);
-  } catch {
-    home = null;
-    drops = [];
-  }
+  const [home, drops] = await Promise.all([
+    sanityFetch<HomePageDoc | null>({
+      label: 'homePage',
+      query: homePageQuery,
+      fallback: null,
+    }),
+    sanityFetch<LookbookDrop[]>({
+      label: 'lookbookDrops',
+      query: lookbookDropsQuery,
+      fallback: [],
+    }),
+  ]);
 
   const tagline = home?.tagline?.trim() || DEFAULT_TAGLINE;
   const taglineLines = tagline.split('\n');

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { exhibitionBySlugQuery, exhibitionSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
 import { PortableText } from '@/components/PortableText';
@@ -20,18 +21,20 @@ interface ExhibitionDoc {
 }
 
 async function getDoc(slug: string): Promise<ExhibitionDoc | null> {
-  try {
-    return await sanityClient.fetch<ExhibitionDoc | null>(exhibitionBySlugQuery, { slug });
-  } catch {
-    return null;
-  }
+  return sanityFetch<ExhibitionDoc | null>({
+    label: `exhibition:${slug}`,
+    query: exhibitionBySlugQuery,
+    params: { slug },
+    fallback: null,
+  });
 }
 
 export async function generateStaticParams() {
   try {
     const slugs = await sanityClient.fetch<string[]>(exhibitionSlugsQuery);
     return slugs.map((slug) => ({ slug }));
-  } catch {
+  } catch (err) {
+    console.error('[sanity] exhibitionSlugs failed — no exhibition pages prerendered', err);
     return [];
   }
 }

@@ -4,7 +4,7 @@ import ProductGrid from '@/components/ProductGrid';
 import RingSizeChart from '@/components/RingSizeChart';
 import ShopLayout from '@/components/ShopLayout';
 import { P1 } from '@/components/typography';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { activeProductsQuery } from '@/lib/sanity/queries';
 import type { Product } from '@/types';
 
@@ -24,12 +24,11 @@ export default async function ShopPage({
   const { category } = await searchParams;
   const active = category && category !== 'all' ? category : 'all';
 
-  let products: Product[] = [];
-  try {
-    products = await sanityClient.fetch<Product[]>(activeProductsQuery);
-  } catch {
-    products = [];
-  }
+  const products = await sanityFetch<Product[]>({
+    label: 'activeProducts',
+    query: activeProductsQuery,
+    fallback: [],
+  });
   const filtered = active === 'all' ? products : products.filter((p) => p.category === active);
 
   return (
