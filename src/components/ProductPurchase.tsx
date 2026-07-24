@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
-import { P1, P2 } from '@/components/typography';
+import { P1 } from '@/components/typography';
 
 export interface PurchaseVariant {
   key: string;
@@ -30,9 +31,9 @@ export default function ProductPurchase({
   imageUrl?: string;
 }) {
   const addLine = useCart((s) => s.addLine);
+  const router = useRouter();
   const firstAvailable = variants.find((v) => v.inStock) ?? variants[0];
   const [selectedKey, setSelectedKey] = useState(firstAvailable?.key);
-  const [added, setAdded] = useState(false);
 
   const selected = variants.find((v) => v.key === selectedKey) ?? firstAvailable;
   const canAdd = Boolean(selected?.inStock);
@@ -48,8 +49,8 @@ export default function ProductPurchase({
       quantity: 1,
       imageUrl,
     });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    // Jump to the cart, which shows the "added" confirmation.
+    router.push(`/cart?added=${encodeURIComponent(title)}`);
   };
 
   return (
@@ -87,10 +88,8 @@ export default function ProductPurchase({
         disabled={!canAdd}
         className="type-h3 min-h-[40px] w-full border border-graphite text-graphite transition-colors hover:bg-graphite hover:text-cararra disabled:border-oslo disabled:text-oslo"
       >
-        {!canAdd ? 'Sold out' : added ? 'Added to cart ✓' : 'Add to cart'}
+        {canAdd ? 'Add to cart' : 'Sold out'}
       </button>
-
-      {added && <P2 className="text-oslo">Added — view your cart to check out.</P2>}
     </div>
   );
 }

@@ -16,7 +16,13 @@ export default function CartPage() {
 
   // Avoid hydration mismatch (cart is persisted client-side).
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [addedName, setAddedName] = useState<string | null>(null);
+  useEffect(() => {
+    setMounted(true);
+    // Read the "just added" item name from the URL (set by the PDP add-to-cart).
+    const added = new URLSearchParams(window.location.search).get('added');
+    if (added) setAddedName(added);
+  }, []);
 
   if (!mounted) {
     return (
@@ -43,7 +49,19 @@ export default function CartPage() {
 
   return (
     <Container className="py-[40px] md:py-[60px]">
-      <H1 className="mb-[30px]">CART</H1>
+      <H1 className={addedName ? 'mb-[10px]' : 'mb-[30px]'}>CART</H1>
+
+      {addedName && (
+        <div className="mb-[30px] flex flex-col gap-[10px]">
+          <P1>{addedName} has been added to your cart</P1>
+          <Link
+            href="/shop"
+            className="type-p1 w-fit underline underline-offset-4 hover:text-redcurrent"
+          >
+            Continue shopping
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_320px]">
         {/* Line items */}
@@ -104,17 +122,17 @@ export default function CartPage() {
         {/* Summary */}
         <aside className="flex h-fit flex-col gap-5 border border-oslo p-5">
           <div className="flex justify-between">
-            <P1>Subtotal</P1>
-            <P1>{formatGBP(subtotal)}</P1>
+            <span className="type-h3">Subtotal</span>
+            <span className="type-h3">{formatGBP(subtotal)}</span>
           </div>
-          <P2 className="text-oslo">Shipping calculated at checkout.</P2>
+          <P1 className="text-oslo">Shipping calculated at checkout.</P1>
           <Link
             href="/checkout"
-            className="type-p1 min-h-[48px] flex items-center justify-center bg-graphite text-cararra transition-colors hover:bg-redcurrent"
+            className="type-h3 min-h-[48px] flex items-center justify-center bg-graphite text-cararra transition-colors hover:bg-redcurrent"
           >
             Proceed to checkout
           </Link>
-          <Link href="/shop" className="type-p2 text-center text-oslo hover:text-graphite">
+          <Link href="/shop" className="type-p1 text-center text-oslo hover:text-graphite">
             Continue shopping
           </Link>
         </aside>
