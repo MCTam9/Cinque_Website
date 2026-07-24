@@ -37,6 +37,8 @@ are server-only and guarded with `server-only` imports.
 | Create checkout session | `src/app/api/checkout/route.ts` |
 | Checkout session status | `src/app/api/checkout/session/route.ts` |
 | Stripe webhook (fulfillment) | `src/app/api/webhooks/stripe/route.ts` |
+| **Unified Sanity webhook** (all automations) | `src/app/api/sanity/hook/route.ts` |
+| Webhook job handlers | `src/lib/sanity/webhookHandlers.ts`, `revalidatePaths.ts` |
 | Sanity → Stripe product/price sync | `src/app/api/sanity/sync-stripe/route.ts`, `src/lib/stripe/sync.ts` |
 | Sanity → Next revalidation | `src/app/api/revalidate/route.ts` |
 | Cart state (Zustand) | `src/store/cart.ts` |
@@ -65,19 +67,9 @@ When staff create or edit a product in the Studio, a Sanity webhook calls
 **Product** and an active **Price**, then writes `stripeProductId` /
 `stripePriceId` back onto the variant. Checkout then uses those Price IDs.
 
-**One-time setup — create the Sanity webhook** (Manage → *your project* → API →
-Webhooks → Create webhook):
-
-- **URL:** `https://<your-domain>/api/sanity/sync-stripe`
-- **Trigger on:** Create, Update  ·  **Filter:** `_type == "product"`
-- **Projection:**
-  ```groq
-  {
-    _type, _id, title, status,
-    variants[]{ _key, sku, metalType, priceGBP, stripeProductId, stripePriceId }
-  }
-  ```
-- **HTTP method:** POST  ·  **Secret:** the value of `SANITY_STRIPE_SYNC_SECRET`.
+This runs off the single unified webhook (see **Sanity webhook setup** below) —
+`/api/sanity/sync-stripe` is the same logic on a dedicated endpoint, for setups
+that give each job its own webhook.
 
 Notes:
 - Stripe Prices are immutable — changing `priceGBP` creates a **new** Price,
@@ -121,42 +113,70 @@ These remove manual/technical chores for non-technical staff:
 | **Dashboard views** | — | Studio opens on “Orders to fulfil” and “Low / out of stock” |
 | **On-demand revalidation** | Any content change | Refreshes only the affected pages (low hosting cost) |
 
-**Two more Sanity webhooks to configure** (same steps as the sync webhook
-above). None of the automations below run until their webhook exists in Sanity
-Manage — check **Manage → API → Webhooks** shows three entries, and use the
-delivery log there to confirm they return 200:
+### Sanity webhook setup
 
-- **Content changes → revalidation:** URL `/api/revalidate`, trigger on
-  Create/Update/Delete, **no filter** (one webhook covers every type), secret
-  `SANITY_REVALIDATE_SECRET`, projection:
-  ```groq
-  { _type, "slug": slug.current }
-  ```
-  `pathsFor()` in `src/app/api/revalidate/route.ts` maps each document type to
-  the routes that render it — add a case there whenever a new type gets a page,
-  or edits to it will never reach a cached route.
-- **Order updates → shipping email:** URL `/api/sanity/order-updated`, trigger
-  on Update, filter `_type == "order"`, secret `SANITY_ORDER_WEBHOOK_SECRET`,
-  projection:
-  ```groq
-  {
-    _type, _id, orderNumber, status,
-    "email": customer.email,
-    "carrier": fulfillment.carrier,
-    "tracking": fulfillment.trackingNumber,
-    "sentAt": fulfillment.shippedEmailSentAt
-  }
-  ```
-- **Products that predate the sync webhook** never got Stripe IDs. Back-fill
-  them once with `node scripts/sync-stripe-catalog.mjs --dry-run` to preview,
-  then without the flag to apply. It is idempotent, and it targets whichever
-  Stripe environment `STRIPE_SECRET_KEY` belongs to — re-run it with live keys
-  before going live.
-- The **refund** and **auto sold-out / low-stock** automations need no setup —
-  they run inside the existing Stripe webhook. Just ensure `charge.refunded` is
-  among the events your Stripe webhook endpoint subscribes to.
+Sanity's free plan allows **two** webhooks, and this app has three jobs to do on
+a content change. So there is one endpoint — `/api/sanity/hook` — that receives
+a union projection and dispatches on `_type`: it revalidates the affected
+routes, syncs products to Stripe, and sends shipping emails. One webhook, all
+three automations, one slot spare.
 
-You may reuse a single secret value across all three Sanity webhooks.
+**Create it** in Manage → *your project* → API → Webhooks → Create webhook:
+
+| Field | Value |
+| --- | --- |
+| URL | `https://<your-domain>/api/sanity/hook` |
+| Dataset | `production` |
+| Trigger on | Create, Update, Delete |
+| Filter | *(leave empty — one hook covers every type)* |
+| Drafts | off |
+| HTTP method | POST |
+| Secret | the value of `SANITY_WEBHOOK_SECRET` |
+
+Projection:
+
+```groq
+{
+  _type, _id, "slug": slug.current, title, status,
+  variants[]{ _key, sku, metalType, priceGBP, stripeProductId, stripePriceId },
+  orderNumber,
+  "email": customer.email,
+  "carrier": fulfillment.carrier,
+  "tracking": fulfillment.trackingNumber,
+  "sentAt": fulfillment.shippedEmailSentAt
+}
+```
+
+Fields that don't exist on the document that changed come through as `null`;
+each handler reads only its own. Deletes revalidate but never touch Stripe or
+send email (the route reads the `sanity-operation` header).
+
+**Nothing runs until this webhook exists.** Check the webhook's *Attempt log*
+in Manage for `200` responses — a `401` means the secret doesn't match, a `500`
+saying *"not configured"* means `SANITY_WEBHOOK_SECRET` is missing from the
+deployment.
+
+Where the logic lives: `src/lib/sanity/webhookHandlers.ts` (all three jobs) and
+`src/lib/sanity/revalidatePaths.ts` (type → routes). **Add a case to
+`pathsFor()` whenever a new document type gets a page**, or edits to it will
+never reach a cached route.
+
+**Splitting the jobs up** (paid plans): `/api/revalidate`,
+`/api/sanity/sync-stripe` and `/api/sanity/order-updated` are still live and
+call the same handlers. Give each its own webhook, filter and secret
+(`SANITY_REVALIDATE_SECRET`, `SANITY_STRIPE_SYNC_SECRET`,
+`SANITY_ORDER_WEBHOOK_SECRET`); the projections each need are documented at the
+top of the route files.
+
+**Other automations needing no setup:** refunds and auto sold-out / low-stock
+run inside the existing Stripe webhook — just ensure `charge.refunded` is among
+the events your Stripe endpoint subscribes to.
+
+**Products that predate the webhook** never got Stripe IDs. Back-fill them once
+with `node scripts/sync-stripe-catalog.mjs --dry-run` to preview, then without
+the flag to apply. It is idempotent, and it targets whichever Stripe
+environment `STRIPE_SECRET_KEY` belongs to — re-run it with live keys before
+going live.
 
 ## Testing the payment loop locally
 

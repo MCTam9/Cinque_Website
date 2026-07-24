@@ -9,6 +9,11 @@ const serverSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
   SANITY_API_WRITE_TOKEN: z.string().min(1),
+  // Secret for the single unified Sanity webhook (/api/sanity/hook), which
+  // covers revalidation + Stripe sync + shipping emails in one delivery —
+  // Sanity's free plan allows only two webhooks. The three per-job secrets
+  // below still work if you split the jobs across separate webhooks.
+  SANITY_WEBHOOK_SECRET: z.string().optional(),
   SANITY_REVALIDATE_SECRET: z.string().optional(),
   // Secret for the Sanity → Stripe product/price sync webhook.
   SANITY_STRIPE_SYNC_SECRET: z.string().optional(),
@@ -24,6 +29,7 @@ const parsed = serverSchema.safeParse({
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   SANITY_API_WRITE_TOKEN: process.env.SANITY_API_WRITE_TOKEN,
+  SANITY_WEBHOOK_SECRET: process.env.SANITY_WEBHOOK_SECRET,
   SANITY_REVALIDATE_SECRET: process.env.SANITY_REVALIDATE_SECRET,
   SANITY_STRIPE_SYNC_SECRET: process.env.SANITY_STRIPE_SYNC_SECRET,
   SANITY_ORDER_WEBHOOK_SECRET: process.env.SANITY_ORDER_WEBHOOK_SECRET,
