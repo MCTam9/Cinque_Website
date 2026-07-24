@@ -4,14 +4,15 @@ import { useEffect } from 'react';
 
 /**
  * Mobile colour reveal for `.img-bw` images (touch devices only). Since touch
- * has no hover, images start greyscale and colourise via two combined signals:
+ * has no hover, images start greyscale and colourise under a moving finger:
+ * the image directly beneath the touch point gets `.finger` (touchmove +
+ * elementFromPoint), which reveals its colour (see globals.css).
  *
- *   • in-view — an image crossing the centre band of the viewport (scroll) gets
- *     `.in-view` (IntersectionObserver).
- *   • finger  — the image directly under a moving finger gets `.finger`
- *     (touchmove + elementFromPoint).
+ * Deliberately touch-driven only. A scroll-position reveal (colourising
+ * whatever crossed the centre band of the viewport) used to run alongside this
+ * and was removed — it fired on every scroll regardless of intent, so the page
+ * colourised itself as you passed through rather than answering to the reader.
  *
- * Either signal reveals colour (see `.img-bw.in-view/.finger` in globals.css).
  * Desktop keeps the CSS hover behaviour; reduced-motion falls back to
  * always-colour and this effect no-ops. Mounted once in the site layout.
  */
@@ -21,28 +22,7 @@ export default function ImageColorReveal() {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!isTouch || reduce) return;
 
-    // 1) In-view reveal — colourise images crossing the centre ~40% band.
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) e.target.classList.toggle('in-view', e.isIntersecting);
-      },
-      { rootMargin: '-30% 0px -30% 0px', threshold: 0 }
-    );
-    document.querySelectorAll('.img-bw').forEach((el) => io.observe(el));
-
-    // Re-observe images added later (route changes, gallery / lookbook swaps).
-    const mo = new MutationObserver((muts) => {
-      for (const m of muts) {
-        m.addedNodes.forEach((n) => {
-          if (!(n instanceof Element)) return;
-          if (n.matches('.img-bw')) io.observe(n);
-          n.querySelectorAll('.img-bw').forEach((el) => io.observe(el));
-        });
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-
-    // 2) Finger reveal — colourise the .img-bw directly under the moving finger.
+    // Colourise the .img-bw directly under the moving finger.
     let fingerEl: Element | null = null;
     let queued = false;
     let x = 0;
@@ -76,8 +56,6 @@ export default function ImageColorReveal() {
     document.addEventListener('touchcancel', clearFinger, { passive: true });
 
     return () => {
-      io.disconnect();
-      mo.disconnect();
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', clearFinger);
       document.removeEventListener('touchcancel', clearFinger);
