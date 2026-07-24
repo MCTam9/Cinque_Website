@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { serverEnv } from '@/lib/serverEnv';
 import { sanityWriteClient } from '@/lib/sanity/writeClient';
+import { urlFor } from '@/lib/sanity/image';
 import { createShipment } from '@/lib/fulfillment/shipping';
 import { sendOrderConfirmation, sendLowStockAlert } from '@/lib/fulfillment/email';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
@@ -100,11 +101,17 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     const doc = await sanityWriteClient.fetch(
       `*[_type == "product" && _id == $pid][0]{
         _id, title,
+        "image": images[0],
         "variant": variants[_key == $vkey][0]{ _key, sku, priceGBP }
       }`,
       { pid: fl.p, vkey: fl.v }
     );
     if (!doc?.variant) continue;
+    // Square thumbnail for the confirmation email. Retina: request 2x (112px)
+    // for a 56px display. imageUrl is email-only — kept off the order snapshot.
+    const imageUrl = doc.image
+      ? urlFor(doc.image).width(112).height(112).fit('crop').url()
+      : null;
     orderLines.push({
       _key: `${fl.p}-${fl.v}`,
       _type: 'orderLine',
@@ -114,6 +121,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       titleSnapshot: doc.title as string,
       quantity: fl.q,
       unitPriceGBP: doc.variant.priceGBP as number,
+      imageUrl,
     });
   }
 
@@ -154,7 +162,8 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
           }
         : null,
     },
-    lines: orderLines,
+    // imageUrl is derived (email-only) — keep it out of the persisted snapshot.
+    lines: orderLines.map(({ imageUrl: _imageUrl, ...persisted }) => persisted),
     totalGBP: session.amount_total ?? 0,
     currency: session.currency ?? 'gbp',
     createdAt: now.toISOString(),
@@ -217,6 +226,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
         sku: l.sku,
         quantity: l.quantity,
         unitPriceGBP: l.unitPriceGBP,
+        imageUrl: l.imageUrl,
       })),
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',

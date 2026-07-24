@@ -1,6 +1,7 @@
 import 'server-only';
 import { Resend } from 'resend';
 import { serverEnv } from '@/lib/serverEnv';
+import { publicEnv } from '@/lib/env';
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -35,15 +36,75 @@ const money = (pence: number, currency: string) =>
     pence / 100
   );
 
+/**
+ * Brand tokens mirrored from tailwind.config.ts / globals.css so the emails read
+ * as the storefront: Letter Gothic is a monospace face, so we fall back to a
+ * Courier/monospace stack (web fonts are unreliable in mail clients but the
+ * mono character carries the brand). Squared corners, hairline borders, warm
+ * off-white ground — matching the site.
+ */
+const BRAND = {
+  cararra: '#F1F0ED', // warm off-white — page ground
+  graphite: '#4D4B4A', // primary text
+  oslo: '#A6A3A1', // secondary / muted
+  cloud: '#C9C8C4', // hairline borders
+  redcurrent: '#B35947', // terracotta accent
+  font: `'Courier New', Courier, ui-monospace, monospace`,
+} as const;
+
+// Absolute URL for the Cinque wordmark logo (PNG rendered from the brand SVG —
+// SVG isn't email-safe). Served from /public at the site origin, so it resolves
+// in production; on localhost it only loads for a client on the same host.
+const LOGO_URL = `${publicEnv.NEXT_PUBLIC_SITE_URL}/figma/cinque-logo.png`;
+
 function shell(title: string, bodyHtml: string): string {
-  // Minimal, email-client-safe wrapper. Restyle to match brand later.
-  return `<!doctype html><html><body style="font-family:Helvetica,Arial,sans-serif;color:#111;line-height:1.5;">
-    <div style="max-width:560px;margin:0 auto;padding:24px;">
-      <h1 style="font-size:20px;font-weight:600;">${escapeHtml(title)}</h1>
-      ${bodyHtml}
-      <p style="color:#888;font-size:12px;margin-top:32px;">Cinque</p>
-    </div>
-  </body></html>`;
+  // Email-client-safe, table-based layout. All styles inline; no web fonts, no
+  // rounded corners — an echo of the storefront's minimal monospace look.
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+</head>
+<body style="margin:0;padding:0;background:${BRAND.cararra};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.cararra};">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${BRAND.cararra};border:1px solid ${BRAND.cloud};">
+          <!-- Masthead — left-aligned logo lockup -->
+          <tr>
+            <td align="left" style="padding:32px 32px 0 32px;">
+              <img src="${LOGO_URL}" alt="Cinque" width="180" style="display:block;width:180px;max-width:62%;height:auto;border:0;outline:none;text-decoration:none;" />
+            </td>
+          </tr>
+          <!-- Title -->
+          <tr>
+            <td style="padding:28px 32px 0 32px;">
+              <h1 style="margin:0;font-family:${BRAND.font};font-size:20px;font-weight:400;letter-spacing:0.5px;color:${BRAND.graphite};">${escapeHtml(title)}</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:16px 32px 36px 32px;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">
+              ${bodyHtml}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:0 32px 32px 32px;">
+              <div style="border-top:1px solid ${BRAND.cloud};padding-top:20px;font-family:${BRAND.font};font-size:11px;line-height:18px;color:${BRAND.oslo};">
+                <a href="https://www.instagram.com/cinque.made" style="color:${BRAND.graphite};text-decoration:none;">Follow us on Instagram &middot; @cinque.made</a><br><br>
+                CINQUE &middot; <a href="https://cinque.studio" style="color:${BRAND.oslo};text-decoration:none;">cinque.studio</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
 export interface SendEmailResult {
@@ -90,7 +151,13 @@ async function send(args: {
 export interface OrderConfirmationInput {
   to?: string | null;
   orderNumber: string;
-  lines: Array<{ title: string; sku: string; quantity: number; unitPriceGBP: number }>;
+  lines: Array<{
+    title: string;
+    sku: string;
+    quantity: number;
+    unitPriceGBP: number;
+    imageUrl?: string | null;
+  }>;
   totalGBP: number;
   currency: string;
 }
@@ -103,22 +170,36 @@ export async function sendOrderConfirmation(
     return { ok: false, error: 'no recipient' };
   }
   const rows = input.lines
-    .map(
-      (l) =>
-        `<tr>
-          <td style="padding:6px 0;">${escapeHtml(l.title)} <span style="color:#888;">(${escapeHtml(l.sku)})</span> × ${l.quantity}</td>
-          <td style="padding:6px 0;text-align:right;">${money(l.unitPriceGBP * l.quantity, input.currency)}</td>
-        </tr>`
-    )
+    .map((l) => {
+      // Left-aligned product thumbnail. Retina: request 2x, display 56px square.
+      const thumb = l.imageUrl
+        ? `<td width="56" style="padding-right:14px;vertical-align:top;">
+             <img src="${escapeHtml(l.imageUrl)}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;border:1px solid ${BRAND.cloud};" />
+           </td>`
+        : '';
+      return `<tr>
+          <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};vertical-align:top;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              ${thumb}
+              <td style="vertical-align:top;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">${escapeHtml(l.title)}<br><span style="color:${BRAND.oslo};font-size:12px;">${escapeHtml(l.sku)} &times; ${l.quantity}</span></td>
+            </tr></table>
+          </td>
+          <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};text-align:right;vertical-align:top;white-space:nowrap;">${money(l.unitPriceGBP * l.quantity, input.currency)}</td>
+        </tr>`;
+    })
     .join('');
   const html = shell(
     'Thank you for your order',
-    `<p>Order <strong>${escapeHtml(input.orderNumber)}</strong> is confirmed.</p>
-     <table style="width:100%;border-collapse:collapse;margin:16px 0;">${rows}
-       <tr><td style="padding-top:12px;font-weight:600;">Total</td>
-       <td style="padding-top:12px;text-align:right;font-weight:600;">${money(input.totalGBP, input.currency)}</td></tr>
+    `<p style="margin:0 0 4px 0;">Order confirmed.</p>
+     <p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+       ${rows}
+       <tr>
+         <td style="padding:16px 0 0 0;font-weight:700;">Total</td>
+         <td style="padding:16px 0 0 0;text-align:right;font-weight:700;white-space:nowrap;">${money(input.totalGBP, input.currency)}</td>
+       </tr>
      </table>
-     <p>We'll email you again when it ships.</p>`
+     <p style="margin:28px 0 0 0;color:${BRAND.oslo};">We&rsquo;ll email you again when your order ships.</p>`
   );
   return send({ to: input.to, subject: `Your Cinque order ${input.orderNumber}`, html });
 }
@@ -199,7 +280,7 @@ export async function sendLowStockAlert(
     .map(
       (i) =>
         `<tr>
-          <td style="padding:4px 0;">${escapeHtml(i.productTitle)} <span style="color:#888;">(${escapeHtml(i.sku)})</span></td>
+          <td style="padding:4px 0;">${escapeHtml(i.productTitle)} <span style="color:${BRAND.oslo};">(${escapeHtml(i.sku)})</span></td>
           <td style="padding:4px 0;text-align:right;">${i.remaining} left (≤ ${i.threshold})</td>
         </tr>`
     )
