@@ -65,6 +65,8 @@ export default async function HomePage() {
 
   return (
     <Container className="py-[40px] md:py-[60px]">
+      {/* The page's single real heading; the logo below is decorative. */}
+      <h1 className="sr-only">Cinque</h1>
       <JsonLd
         data={{
           '@context': 'https://schema.org',
@@ -81,7 +83,7 @@ export default async function HomePage() {
       <section className="mb-[40px] flex flex-col gap-[30px] md:mb-[60px] md:flex-row md:items-center md:justify-between">
         <img
           src="/figma/cinque-logo.svg"
-          alt="Cinque"
+          alt=""
           width={351}
           height={96}
           className="hidden h-auto w-[260px] md:block md:w-[351px]"
@@ -131,7 +133,7 @@ export default async function HomePage() {
           return (
             <section key={s.href}>
               <Link href={s.href}>
-                <H1 className="mb-[10px] border-b border-oslo pb-[10px] hover:text-redcurrent">
+                <H1 as="h2" className="mb-[10px] border-b border-oslo pb-[10px] hover:text-redcurrent">
                   {s.label}
                 </H1>
               </Link>

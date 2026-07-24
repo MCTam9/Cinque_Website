@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { P2 } from '@/components/typography';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -45,20 +44,12 @@ export default function ContactForm() {
     }
   }
 
-  if (status === 'sent') {
-    return (
-      <P2 className="text-graphite">
-        Thank you — your message has been sent. We aim to respond within 2–3 working days.
-      </P2>
-    );
-  }
-
   // Underline-style inputs (bottom border only), matching the Figma Contact form.
   const field =
     'w-full border-0 border-b border-oslo bg-transparent px-0 py-2 type-p1 outline-none focus:border-graphite';
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       {/* Honeypot: visually hidden, off the tab order */}
       <div aria-hidden className="hidden">
         <label>
@@ -87,7 +78,17 @@ export default function ContactForm() {
         <textarea name="message" required maxLength={5000} rows={5} className={field} />
       </label>
 
-      {status === 'error' && <P2 className="text-redcurrent">{error}</P2>}
+      {/* Announced to assistive tech: polite for success, assertive for error. */}
+      <p role="status" aria-live="polite" className="type-p2 text-graphite empty:hidden">
+        {status === 'sent'
+          ? 'Thank you — your message has been sent. We aim to respond within 2–3 working days.'
+          : ''}
+      </p>
+      {status === 'error' && (
+        <p role="alert" className="type-p2 text-redcurrent">
+          {error}
+        </p>
+      )}
 
       <button
         type="submit"
