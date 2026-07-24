@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
+import { crop2x3 } from '../imageCrop';
 
 /**
  * A Lookbook drop — the editorial imagery + copy shown at /lookbook.
@@ -48,7 +49,7 @@ export const lookbookDrop = defineType({
       of: [
         defineArrayMember({
           type: 'image',
-          options: { hotspot: true },
+          options: { hotspot: crop2x3 },
           fields: [
             defineField({
               name: 'alt',

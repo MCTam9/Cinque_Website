@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
+import { cropProduct } from '../imageCrop';
 
 export const product = defineType({
   name: 'product',
@@ -107,7 +108,7 @@ export const product = defineType({
       of: [
         defineArrayMember({
           type: 'image',
-          options: { hotspot: true },
+          options: { hotspot: cropProduct },
           fields: [
             defineField({
               name: 'alt',
