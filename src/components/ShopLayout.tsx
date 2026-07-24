@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { H1, P2 } from '@/components/typography';
+import CategoryDisclosure from '@/components/CategoryDisclosure';
 
 /**
  * Shared Shop chrome (Figma): the SHOP heading + subtitle in the centre column
@@ -74,14 +75,9 @@ export default function ShopLayout({
           Contact us if you would like a bespoke commission
         </Link>
         {filterable && (
-          <details className="relative md:hidden">
-            <summary className="type-h3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-              CATEGORY
-            </summary>
-            <div className="animate-dropdown absolute right-0 top-full z-20 mt-[10px] border border-oslo bg-cararra px-[20px] py-[10px]">
-              <CategoryList active={active} />
-            </div>
-          </details>
+          <CategoryDisclosure className="md:hidden">
+            <CategoryList active={active} />
+          </CategoryDisclosure>
         )}
       </header>
 
