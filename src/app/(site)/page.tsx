@@ -139,14 +139,17 @@ export default async function HomePage() {
                 </H1>
               </Link>
 
-              {/* LOOKBOOK: per-drop quick links between the heading and imagery */}
+              {/* LOOKBOOK: per-drop quick links between the heading and imagery.
+                  Mobile scrolls them sideways rather than hiding them — five
+                  drop titles won't fit across a phone, but they're the fastest
+                  route into the lookbook so they shouldn't disappear. */}
               {'drops' in s && s.drops && (
-                <div className="mb-[10px] hidden grid-cols-5 gap-[10px] sm:grid">
+                <div className="no-scrollbar mb-[10px] flex gap-[10px] overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-x-visible">
                   {dropLinks.map((d) => (
                     <Link
                       key={d.slug}
                       href={`/lookbook?drop=${d.slug}`}
-                      className="type-h3 text-graphite hover:text-redcurrent"
+                      className="type-h3 shrink-0 whitespace-nowrap text-graphite hover:text-redcurrent sm:shrink sm:whitespace-normal"
                     >
                       {d.label}
                     </Link>

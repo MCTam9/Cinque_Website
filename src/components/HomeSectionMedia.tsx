@@ -7,11 +7,20 @@ import Image from 'next/image';
 export type MediaImage = { url: string; alt: string };
 
 /**
- * A home section's imagery. 1–5 images render as a grid whose desktop column
- * count follows the image count (2 columns on mobile). 6+ images render as a
- * slow, continuously auto-scrolling strip the visitor can also scroll by hand
- * (mouse wheel / drag / touch) — auto-scroll pauses briefly on interaction and
- * is disabled under prefers-reduced-motion. Every image links to the section.
+ * A home section's imagery.
+ *
+ * Mobile: always a slow, continuously auto-scrolling horizontal strip showing
+ * ~2.5 images at a time — 2.5 rather than a whole number so the cut-off third
+ * image reads as "there is more here" and invites the swipe.
+ *
+ * Desktop: 1–5 images become a grid whose column count follows the image
+ * count; 6+ stay a strip (a grid of many would shrink each image too far).
+ *
+ * The strip is one DOM tree in both cases: the image set is duplicated so the
+ * scroll can wrap seamlessly, and the duplicates are display:none in the
+ * desktop grid. Auto-scroll only runs when the container actually overflows,
+ * so it no-ops on the grid. It pauses briefly on manual interaction (wheel /
+ * drag / touch) and is disabled under prefers-reduced-motion.
  */
 export default function HomeSectionMedia({
   images,
@@ -22,47 +31,9 @@ export default function HomeSectionMedia({
   href: string;
   label: string;
 }) {
-  if (images.length === 0) return null;
-
-  if (images.length <= 5) {
-    return (
-      <div
-        className="grid grid-cols-2 gap-[10px] md:[grid-template-columns:repeat(var(--home-cols),minmax(0,1fr))]"
-        style={{ '--home-cols': images.length } as CSSProperties}
-      >
-        {images.map((img, i) => (
-          <Link
-            key={i}
-            href={href}
-            aria-label={label}
-            className="group relative block aspect-[2/3] overflow-hidden bg-cloud/30"
-          >
-            <Image
-              src={img.url}
-              alt={img.alt}
-              fill
-              sizes="(max-width: 768px) 50vw, 20vw"
-              className="img-bw object-cover transition-opacity group-hover:opacity-90"
-            />
-          </Link>
-        ))}
-      </div>
-    );
-  }
-
-  return <AutoScrollStrip images={images} href={href} label={label} />;
-}
-
-function AutoScrollStrip({
-  images,
-  href,
-  label,
-}: {
-  images: MediaImage[];
-  href: string;
-  label: string;
-}) {
   const ref = useRef<HTMLDivElement>(null);
+  // A grid on desktop only makes sense for a handful of images.
+  const asGrid = images.length <= 5;
   // Duplicate the set so the scroll can wrap seamlessly.
   const loop = [...images, ...images];
 
@@ -78,7 +49,9 @@ function AutoScrollStrip({
     let resume: ReturnType<typeof setTimeout>;
 
     const step = () => {
-      if (!paused) {
+      // Laid out as a grid (desktop, ≤5 images) there is nothing to scroll —
+      // keep ticking cheaply so a resize back to the strip picks up again.
+      if (!paused && el.scrollWidth > el.clientWidth + 1) {
         pos += SPEED;
         const half = el.scrollWidth / 2;
         if (half > 0 && pos >= half) pos -= half;
@@ -111,26 +84,49 @@ function AutoScrollStrip({
     };
   }, []);
 
+  if (images.length === 0) return null;
+
   return (
-    <div ref={ref} className="no-scrollbar flex gap-[10px] overflow-x-auto">
-      {loop.map((img, i) => (
-        <Link
-          key={i}
-          href={href}
-          aria-label={label}
-          aria-hidden={i >= images.length}
-          tabIndex={i >= images.length ? -1 : undefined}
-          className="group relative block aspect-[2/3] w-[45vw] shrink-0 overflow-hidden bg-cloud/30 sm:w-[220px]"
-        >
-          <Image
-            src={img.url}
-            alt={i < images.length ? img.alt : ''}
-            fill
-            sizes="(max-width: 768px) 45vw, 220px"
-            className="img-bw object-cover"
-          />
-        </Link>
-      ))}
+    <div
+      ref={ref}
+      className={`no-scrollbar flex gap-[10px] overflow-x-auto ${
+        asGrid
+          ? 'md:grid md:overflow-x-visible md:[grid-template-columns:repeat(var(--home-cols),minmax(0,1fr))]'
+          : ''
+      }`}
+      style={asGrid ? ({ '--home-cols': images.length } as CSSProperties) : undefined}
+    >
+      {loop.map((img, i) => {
+        const isDuplicate = i >= images.length;
+        return (
+          <Link
+            key={i}
+            href={href}
+            aria-label={label}
+            aria-hidden={isDuplicate}
+            tabIndex={isDuplicate ? -1 : undefined}
+            className={[
+              'group relative block aspect-[2/3] shrink-0 overflow-hidden bg-cloud/30',
+              // ~2.5 images across the padded viewport (100vw - 40px of page
+              // padding, minus the two 10px gaps that precede the third).
+              'w-[calc(40vw-24px)]',
+              asGrid ? 'md:w-auto md:shrink' : 'sm:w-[220px]',
+              // The wrap-around copies exist only for the scrolling strip.
+              isDuplicate && asGrid ? 'md:hidden' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <Image
+              src={img.url}
+              alt={isDuplicate ? '' : img.alt}
+              fill
+              sizes={asGrid ? '(max-width: 768px) 40vw, 20vw' : '(max-width: 640px) 40vw, 220px'}
+              className="img-bw object-cover transition-opacity group-hover:opacity-90"
+            />
+          </Link>
+        );
+      })}
     </div>
   );
 }
