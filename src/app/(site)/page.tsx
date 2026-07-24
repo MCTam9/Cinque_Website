@@ -38,6 +38,48 @@ const SECTIONS = [
   { href: '/studio', label: 'STUDIO', imageKey: 'studioImages', img: '/figma/home-studio.png', w: 1800, h: 652 },
 ] as const;
 
+type DropLink = { slug: string; label: string; cover?: SanityImageRef };
+
+/** Sanity CDN URL at the 2:3 crop every home card renders in. */
+function imageUrl(img: SanityImageRef): string {
+  return urlFor(img as never).width(600).height(900).fit('crop').url();
+}
+
+/**
+ * LOOKBOOK cards: each drop title travels with its own cover image so the two
+ * scroll as one, instead of a row of titles the reader has to match up against
+ * a separate row of pictures.
+ *
+ * Pairing is positional — the Home Page's LOOKBOOK images are uploaded newest
+ * drop first, the order `dropLinks` already comes back in. Reordering either
+ * list in the Studio therefore re-pairs them. A drop with no Home cover falls
+ * back to its own first lookbook image; extra Home images beyond the drop list
+ * still render, just without a title.
+ */
+function lookbookCards(
+  images: SanityImageRef[] | undefined,
+  dropLinks: DropLink[]
+): MediaImage[] {
+  const cards: MediaImage[] = dropLinks.flatMap((d, i) => {
+    const img = images?.[i] ?? d.cover;
+    if (!img) return [];
+    return [
+      {
+        url: imageUrl(img),
+        alt: img.alt || `${d.label} — Cinque`,
+        label: d.label,
+        href: `/lookbook?drop=${d.slug}`,
+      },
+    ];
+  });
+
+  for (const img of images?.slice(dropLinks.length) ?? []) {
+    cards.push({ url: imageUrl(img), alt: img.alt || 'LOOKBOOK — Cinque' });
+  }
+
+  return cards;
+}
+
 export default async function HomePage() {
   const [home, drops] = await Promise.all([
     sanityFetch<HomePageDoc | null>({
@@ -61,8 +103,14 @@ export default async function HomePage() {
       ? drops.map((d) => ({
           slug: d.slug,
           label: d.dropNumber ? `${d.dropNumber}/${d.title}` : d.title,
+          // Used only if the Home Page has no cover uploaded for this drop.
+          cover: d.images?.find((i) => i.asset),
         }))
-      : DEFAULT_DROPS.map((slug) => ({ slug, label: formatLabel(slug) }));
+      : DEFAULT_DROPS.map((slug) => ({
+          slug,
+          label: formatLabel(slug),
+          cover: undefined as SanityImageRef | undefined,
+        }));
 
   return (
     <Container className="py-[40px] md:py-[60px]">
@@ -107,16 +155,20 @@ export default async function HomePage() {
             | undefined
           )?.filter((i) => i.asset);
 
-          const mediaImages: MediaImage[] = (cmsImages ?? []).map((i) => ({
-            url: urlFor(i as never).width(600).height(900).fit('crop').url(),
-            alt: i.alt || `${s.label} — Cinque`,
-          }));
+          const isLookbook = 'drops' in s && s.drops;
+
+          const mediaImages: MediaImage[] = isLookbook
+            ? lookbookCards(cmsImages, dropLinks)
+            : (cmsImages ?? []).map((i) => ({
+                url: imageUrl(i),
+                alt: i.alt || `${s.label} — Cinque`,
+              }));
 
           // Media: CMS gallery (grid or auto-scroll) if uploaded, else the
           // built-in Figma fallback strip (a single image linking to the page).
           const media =
             mediaImages.length > 0 ? (
-              <HomeSectionMedia images={mediaImages} href={s.href} label={s.label} />
+              <HomeSectionMedia images={mediaImages} href={s.href} sectionLabel={s.label} />
             ) : (
               <Link href={s.href} aria-label={s.label}>
                 <Image
@@ -139,24 +191,9 @@ export default async function HomePage() {
                 </H1>
               </Link>
 
-              {/* LOOKBOOK: per-drop quick links between the heading and imagery.
-                  Mobile scrolls them sideways rather than hiding them — five
-                  drop titles won't fit across a phone, but they're the fastest
-                  route into the lookbook so they shouldn't disappear. */}
-              {'drops' in s && s.drops && (
-                <div className="no-scrollbar mb-[10px] flex gap-[10px] overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-x-visible">
-                  {dropLinks.map((d) => (
-                    <Link
-                      key={d.slug}
-                      href={`/lookbook?drop=${d.slug}`}
-                      className="type-h3 shrink-0 whitespace-nowrap text-graphite hover:text-redcurrent sm:shrink sm:whitespace-normal"
-                    >
-                      {d.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
+              {/* LOOKBOOK's per-drop links are no longer a separate row: each
+                  drop title now sits on its own card above its cover image
+                  (see `lookbookCards`), so title and picture scroll together. */}
               {media}
             </section>
           );

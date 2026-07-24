@@ -4,14 +4,22 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export type MediaImage = { url: string; alt: string };
+export type MediaImage = {
+  url: string;
+  alt: string;
+  /** Caption travelling with this image, e.g. a drop title on LOOKBOOK. */
+  label?: string;
+  /** Per-image destination; falls back to the section's own link. */
+  href?: string;
+};
 
 /**
- * A home section's imagery.
+ * A home section's imagery. Each image is a card — caption above, picture
+ * below — so a label and its picture move as one unit in every layout rather
+ * than living in a separate row that has to be read across.
  *
- * Mobile: always a slow, continuously auto-scrolling horizontal strip showing
- * ~2.5 images at a time — 2.5 rather than a whole number so the cut-off third
- * image reads as "there is more here" and invites the swipe.
+ * Mobile: a slow, continuously auto-scrolling horizontal strip showing 2 cards
+ * at a time.
  *
  * Desktop: 1–5 images become a grid whose column count follows the image
  * count; 6+ stay a strip (a grid of many would shrink each image too far).
@@ -25,11 +33,11 @@ export type MediaImage = { url: string; alt: string };
 export default function HomeSectionMedia({
   images,
   href,
-  label,
+  sectionLabel,
 }: {
   images: MediaImage[];
   href: string;
-  label: string;
+  sectionLabel: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // A grid on desktop only makes sense for a handful of images.
@@ -101,15 +109,17 @@ export default function HomeSectionMedia({
         return (
           <Link
             key={i}
-            href={href}
-            aria-label={label}
+            href={img.href ?? href}
+            // With a visible caption the link names itself; without one it
+            // needs the section name.
+            aria-label={img.label ? undefined : sectionLabel}
             aria-hidden={isDuplicate}
             tabIndex={isDuplicate ? -1 : undefined}
             className={[
-              'group relative block aspect-[2/3] shrink-0 overflow-hidden bg-cloud/30',
-              // ~2.5 images across the padded viewport (100vw - 40px of page
-              // padding, minus the two 10px gaps that precede the third).
-              'w-[calc(40vw-24px)]',
+              'group block shrink-0',
+              // Exactly 2 cards across the padded viewport (100vw - 40px of
+              // page padding, minus the single 10px gap between them).
+              'w-[calc(50vw-25px)]',
               asGrid ? 'md:w-auto md:shrink' : 'sm:w-[220px]',
               // The wrap-around copies exist only for the scrolling strip.
               isDuplicate && asGrid ? 'md:hidden' : '',
@@ -117,13 +127,20 @@ export default function HomeSectionMedia({
               .filter(Boolean)
               .join(' ')}
           >
-            <Image
-              src={img.url}
-              alt={isDuplicate ? '' : img.alt}
-              fill
-              sizes={asGrid ? '(max-width: 768px) 40vw, 20vw' : '(max-width: 640px) 40vw, 220px'}
-              className="img-bw object-cover transition-opacity group-hover:opacity-90"
-            />
+            {img.label && (
+              <div className="type-h3 mb-[10px] truncate text-graphite transition-colors group-hover:text-redcurrent">
+                {img.label}
+              </div>
+            )}
+            <div className="relative aspect-[2/3] overflow-hidden bg-cloud/30">
+              <Image
+                src={img.url}
+                alt={isDuplicate ? '' : img.alt}
+                fill
+                sizes={asGrid ? '(max-width: 768px) 50vw, 20vw' : '(max-width: 640px) 50vw, 220px'}
+                className="img-bw object-cover transition-opacity group-hover:opacity-90"
+              />
+            </div>
           </Link>
         );
       })}
