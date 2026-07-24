@@ -1,41 +1,37 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { parseBody } from 'next-sanity/webhook';
 import { serverEnv } from '@/lib/serverEnv';
-import { sanityWriteClient } from '@/lib/sanity/writeClient';
-import { syncProductToStripe, type SyncProductInput } from '@/lib/stripe/sync';
+import { syncProduct, type SanityWebhookBody } from '@/lib/sanity/webhookHandlers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * Sanity → Stripe product/price sync.
+ * Sanity → Stripe product/price sync, on its own endpoint.
  *
- * Configure a Sanity webhook (Manage → API → Webhooks) that:
- *  - triggers on create/update for `_type == "product"`
- *  - is signed with SANITY_STRIPE_SYNC_SECRET
- *  - POSTs here with this projection:
+ * On Sanity's free plan (two webhooks) you don't need this: /api/sanity/hook
+ * runs the same `syncProduct` for product documents. This endpoint stays for
+ * setups that split the jobs across separate webhooks.
  *
- *      {
- *        _type, _id, title, status,
- *        variants[]{ _key, sku, metalType, priceGBP, stripeProductId, stripePriceId }
- *      }
+ *   Trigger:    create/update, filter `_type == "product"`
+ *   Secret:     SANITY_STRIPE_SYNC_SECRET
+ *   Projection: { _type, _id, title, status,
+ *                 variants[]{ _key, sku, metalType, priceGBP,
+ *                             stripeProductId, stripePriceId } }
  *
- * The sync creates/updates Stripe Products + Prices and writes the resulting
- * IDs back onto the variants. It is loop-safe: the write-back only happens when
- * an ID actually changed, so the follow-up webhook delivery is a no-op.
+ * Loop-safe: IDs are written back only when one actually changed, so the
+ * follow-up webhook delivery is a no-op.
  */
 export async function POST(req: NextRequest) {
-  const secret = serverEnv.SANITY_STRIPE_SYNC_SECRET;
+  const secret = serverEnv.SANITY_STRIPE_SYNC_SECRET || serverEnv.SANITY_WEBHOOK_SECRET;
   if (!secret) {
     console.error('[sync-stripe] SANITY_STRIPE_SYNC_SECRET is not configured');
     return NextResponse.json({ error: 'Sync not configured.' }, { status: 500 });
   }
 
-  let payload: (SyncProductInput & { _type?: string }) | null = null;
+  let payload: SanityWebhookBody | null = null;
   try {
-    const { isValidSignature, body } = await parseBody<
-      SyncProductInput & { _type?: string }
-    >(req, secret);
+    const { isValidSignature, body } = await parseBody<SanityWebhookBody>(req, secret);
     if (!isValidSignature) {
       return NextResponse.json({ error: 'Invalid signature.' }, { status: 401 });
     }
@@ -51,24 +47,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const patches = await syncProductToStripe(payload);
-
-    if (patches.length > 0) {
-      const tx = sanityWriteClient.transaction();
-      for (const p of patches) {
-        const set: Record<string, string> = {};
-        if (p.stripeProductId) {
-          set[`variants[_key=="${p._key}"].stripeProductId`] = p.stripeProductId;
-        }
-        if (p.stripePriceId) {
-          set[`variants[_key=="${p._key}"].stripePriceId`] = p.stripePriceId;
-        }
-        tx.patch(payload._id, (patch) => patch.set(set));
-      }
-      await tx.commit({ autoGenerateArrayKeys: false });
-    }
-
-    return NextResponse.json({ synced: true, updatedVariants: patches.length });
+    const updatedVariants = await syncProduct(payload);
+    return NextResponse.json({ synced: true, updatedVariants });
   } catch (err) {
     console.error('[sync-stripe] sync failed', err);
     // 500 → Sanity retries the webhook delivery.
