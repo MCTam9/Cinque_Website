@@ -78,7 +78,7 @@ export default function ShopLayout({
             <summary className="type-h3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               CATEGORY
             </summary>
-            <div className="absolute right-0 top-full z-20 mt-[10px] border border-oslo bg-cararra px-[20px] py-[10px]">
+            <div className="animate-dropdown absolute right-0 top-full z-20 mt-[10px] border border-oslo bg-cararra px-[20px] py-[10px]">
               <CategoryList active={active} />
             </div>
           </details>

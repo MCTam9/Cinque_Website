@@ -118,6 +118,14 @@ export default async function LookbookPage({
   // First image is featured; the rest fill the grid below it.
   const [featured, ...rest] = activeDrop?.images ?? [];
 
+  // Title breaks after the drop number on mobile ("Drop 04/" / "Lost Garden"),
+  // staying on one line from md up. Falls back to a single line if there's no
+  // drop number to split on.
+  const label = activeDrop?.label ?? '';
+  const slashIdx = label.indexOf('/');
+  const numberPart = slashIdx === -1 ? '' : label.slice(0, slashIdx + 1);
+  const titlePart = slashIdx === -1 ? label : label.slice(slashIdx + 1);
+
   return (
     <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
       {/* Rule above sidebar */}
@@ -149,7 +157,17 @@ export default async function LookbookPage({
 
       {/* Editorial content */}
       <div className="pt-[10px] md:col-start-2 md:row-start-2">
-        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop {activeDrop?.label}</H2>
+        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">
+          {numberPart ? (
+            <>
+              Drop {numberPart}
+              <br className="md:hidden" />
+              {titlePart}
+            </>
+          ) : (
+            <>Drop {label}</>
+          )}
+        </H2>
 
         {/* Row 1: copy + up to two images | featured image */}
         <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">

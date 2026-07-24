@@ -38,7 +38,7 @@ export default function LookbookHeader({
       </div>
 
       {open && (
-        <ul className="mt-[10px] flex flex-col gap-[10px] md:hidden">
+        <ul className="animate-dropdown mt-[10px] flex flex-col gap-[10px] md:hidden">
           {drops.map((d) => (
             <li key={d.slug}>
               <Link
