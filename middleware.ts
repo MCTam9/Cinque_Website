@@ -10,6 +10,16 @@ import { NextRequest, NextResponse } from 'next/server';
  *  2. /admin (relaxed): the Sanity Studio is a client app that needs
  *     'unsafe-inline'/'unsafe-eval'/blob: workers and *.sanity.io. A strict
  *     nonce policy would white-screen it, so it gets its own scoped policy.
+ *
+ * CACHING — read before "optimising" this file. The nonce is minted per
+ * request and passed down via request headers (Next reads it from the CSP
+ * header to nonce its own inline bootstrap scripts). A per-request nonce means
+ * HTML can never be shared from the CDN cache, so every page is rendered on
+ * demand and `export const revalidate` on the storefront pages is largely
+ * moot. That is a deliberate trade: it costs one render per view, and in
+ * exchange CMS edits are visible on the next request with no revalidation
+ * step at all. Removing the nonce would restore full-route caching — and
+ * reintroduce stale-content windows — so only do it knowingly.
  */
 
 function buildStorefrontCsp(nonce: string): string {
@@ -41,7 +51,9 @@ function buildStudioCsp(): string {
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https://cdn.sanity.io https://*.sanity.io`,
     `font-src 'self' data:`,
-    `connect-src 'self' https://*.sanity.io wss://*.sanity.io https://*.api.sanity.io`,
+    // sanity-cdn.com is where the Studio fetches its auto-update manifest;
+    // without it the Studio logs a CSP error on every load.
+    `connect-src 'self' https://*.sanity.io wss://*.sanity.io https://*.api.sanity.io https://*.sanity-cdn.com`,
     `worker-src 'self' blob:`,
     `frame-ancestors 'none'`,
     `base-uri 'self'`,

@@ -5,7 +5,7 @@ import Container from '@/components/Container';
 import { H1, H2, P1 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { exhibitionsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import type { SanityImageRef } from '@/types';
@@ -137,12 +137,11 @@ function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
 }
 
 export default async function ExhibitionsPage() {
-  let items: ExhibitionDoc[] = [];
-  try {
-    items = await sanityClient.fetch<ExhibitionDoc[]>(exhibitionsQuery);
-  } catch {
-    items = [];
-  }
+  const items = await sanityFetch<ExhibitionDoc[]>({
+    label: 'exhibitions',
+    query: exhibitionsQuery,
+    fallback: [],
+  });
 
   return (
     <Container className="py-[40px] md:py-[60px]">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { pageBySlugQuery, pageSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
 import Container from '@/components/Container';
@@ -16,18 +17,20 @@ type PageDoc = {
 };
 
 async function getDoc(slug: string): Promise<PageDoc | null> {
-  try {
-    return await sanityClient.fetch<PageDoc | null>(pageBySlugQuery, { slug });
-  } catch {
-    return null;
-  }
+  return sanityFetch<PageDoc | null>({
+    label: `page:${slug}`,
+    query: pageBySlugQuery,
+    params: { slug },
+    fallback: null,
+  });
 }
 
 export async function generateStaticParams() {
   try {
     const slugs = await sanityClient.fetch<string[]>(pageSlugsQuery);
     return slugs.map((slug) => ({ slug }));
-  } catch {
+  } catch (err) {
+    console.error('[sanity] pageSlugs failed — no generic pages prerendered', err);
     return [];
   }
 }

@@ -13,7 +13,8 @@ npm run dev
 ```
 
 - Storefront: http://localhost:3000
-- Sanity Studio (dashboard): http://localhost:3000/studio
+- Sanity Studio (dashboard): http://localhost:3000/admin
+  (`/studio` is the public brand page, not the CMS)
 
 ## Environment
 
@@ -27,9 +28,11 @@ are server-only and guarded with `server-only` imports.
 | --- | --- |
 | Sanity schemas | `src/sanity/schemaTypes/` |
 | Studio config / desk | `sanity.config.ts`, `src/sanity/structure.ts` |
-| Embedded Studio route | `src/app/studio/[[...tool]]/page.tsx` |
+| Embedded Studio route | `src/app/admin/[[...tool]]/page.tsx` |
 | GROQ queries | `src/lib/sanity/queries.ts` |
 | Sanity clients (read / write) | `src/lib/sanity/client.ts`, `writeClient.ts` |
+| Logged, degrade-gracefully reads | `src/lib/sanity/fetch.ts` |
+| Stripe catalog backfill (one-off) | `scripts/sync-stripe-catalog.mjs` |
 | Stripe SDK (server) | `src/lib/stripe.ts` |
 | Create checkout session | `src/app/api/checkout/route.ts` |
 | Checkout session status | `src/app/api/checkout/session/route.ts` |
@@ -39,14 +42,14 @@ are server-only and guarded with `server-only` imports.
 | Cart state (Zustand) | `src/store/cart.ts` |
 | Embedded Checkout component | `src/components/checkout/EmbeddedCheckout.tsx` |
 | Safe rich text | `src/components/PortableText.tsx` |
-| CSP (nonce, /studio-scoped) | `middleware.ts` |
+| CSP (nonce, /admin-scoped) | `middleware.ts` |
 | Post-purchase stubs | `src/lib/fulfillment/{shipping,email}.ts` |
 
 ## Security posture
 
 - **CSP** applied in `middleware.ts`: strict nonce-based policy for the
   storefront (scripts only from `'self'` + nonce + `js.stripe.com`, plus the
-  Stripe iframe/API), a separate scoped policy for `/studio`.
+  Stripe iframe/API), a separate scoped policy for `/admin`.
 - **No `dangerouslySetInnerHTML`** anywhere — CMS rich text renders via
   `@portabletext/react`.
 - **Raw-body webhook verification** — the Stripe webhook uses `req.text()` and
@@ -118,8 +121,20 @@ These remove manual/technical chores for non-technical staff:
 | **Dashboard views** | — | Studio opens on “Orders to fulfil” and “Low / out of stock” |
 | **On-demand revalidation** | Any content change | Refreshes only the affected pages (low hosting cost) |
 
-**Two more Sanity webhooks to configure** (same steps as the sync webhook above):
+**Two more Sanity webhooks to configure** (same steps as the sync webhook
+above). None of the automations below run until their webhook exists in Sanity
+Manage — check **Manage → API → Webhooks** shows three entries, and use the
+delivery log there to confirm they return 200:
 
+- **Content changes → revalidation:** URL `/api/revalidate`, trigger on
+  Create/Update/Delete, **no filter** (one webhook covers every type), secret
+  `SANITY_REVALIDATE_SECRET`, projection:
+  ```groq
+  { _type, "slug": slug.current }
+  ```
+  `pathsFor()` in `src/app/api/revalidate/route.ts` maps each document type to
+  the routes that render it — add a case there whenever a new type gets a page,
+  or edits to it will never reach a cached route.
 - **Order updates → shipping email:** URL `/api/sanity/order-updated`, trigger
   on Update, filter `_type == "order"`, secret `SANITY_ORDER_WEBHOOK_SECRET`,
   projection:
@@ -132,6 +147,11 @@ These remove manual/technical chores for non-technical staff:
     "sentAt": fulfillment.shippedEmailSentAt
   }
   ```
+- **Products that predate the sync webhook** never got Stripe IDs. Back-fill
+  them once with `node scripts/sync-stripe-catalog.mjs --dry-run` to preview,
+  then without the flag to apply. It is idempotent, and it targets whichever
+  Stripe environment `STRIPE_SECRET_KEY` belongs to — re-run it with live keys
+  before going live.
 - The **refund** and **auto sold-out / low-stock** automations need no setup —
   they run inside the existing Stripe webhook. Just ensure `charge.refunded` is
   among the events your Stripe webhook endpoint subscribes to.

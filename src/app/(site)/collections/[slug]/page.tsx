@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { collectionBySlugQuery, collectionSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
 import Container from '@/components/Container';
@@ -16,18 +17,20 @@ interface CollectionDoc {
 }
 
 async function getDoc(slug: string): Promise<CollectionDoc | null> {
-  try {
-    return await sanityClient.fetch<CollectionDoc | null>(collectionBySlugQuery, { slug });
-  } catch {
-    return null;
-  }
+  return sanityFetch<CollectionDoc | null>({
+    label: `collection:${slug}`,
+    query: collectionBySlugQuery,
+    params: { slug },
+    fallback: null,
+  });
 }
 
 export async function generateStaticParams() {
   try {
     const slugs = await sanityClient.fetch<string[]>(collectionSlugsQuery);
     return slugs.map((slug) => ({ slug }));
-  } catch {
+  } catch (err) {
+    console.error('[sanity] collectionSlugs failed — no collection pages prerendered', err);
     return [];
   }
 }

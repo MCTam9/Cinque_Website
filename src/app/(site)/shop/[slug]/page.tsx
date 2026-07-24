@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import { metalLabel, formatLabel } from '@/lib/products';
@@ -31,18 +32,20 @@ interface PDPProduct {
 }
 
 async function getProduct(slug: string): Promise<PDPProduct | null> {
-  try {
-    return await sanityClient.fetch<PDPProduct | null>(productBySlugQuery, { slug });
-  } catch {
-    return null;
-  }
+  return sanityFetch<PDPProduct | null>({
+    label: `product:${slug}`,
+    query: productBySlugQuery,
+    params: { slug },
+    fallback: null,
+  });
 }
 
 export async function generateStaticParams() {
   try {
     const slugs = await sanityClient.fetch<string[]>(productSlugsQuery);
     return slugs.map((slug) => ({ slug }));
-  } catch {
+  } catch (err) {
+    console.error('[sanity] productSlugs failed — no product pages prerendered', err);
     return [];
   }
 }

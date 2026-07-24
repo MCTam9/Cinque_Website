@@ -137,8 +137,11 @@ export const lookbookDropsQuery = groq`
 `;
 
 // The Home page singleton (tagline + per-section image galleries).
+// Matched by _id, not just _type: the Studio edits the fixed `homePage`
+// document (src/sanity/structure.ts), so a stray second homePage doc can never
+// win the `[0]` pick.
 export const homePageQuery = groq`
-  *[_type == "homePage"][0]{
+  *[_id == "homePage"][0]{
     tagline,
     "shopImages": shopImages[]{ alt, asset },
     "lookbookImages": lookbookImages[]{ alt, asset },

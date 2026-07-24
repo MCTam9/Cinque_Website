@@ -5,7 +5,7 @@ import { H2, H3, P1, P2 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
 import LookbookHeader, { type DropLink } from '@/components/LookbookHeader';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/fetch';
 import { lookbookDropsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import type { LookbookDrop, SanityImageRef } from '@/types';
@@ -98,12 +98,11 @@ export default async function LookbookPage({
 }: {
   searchParams: Promise<{ drop?: string }>;
 }) {
-  let cms: LookbookDrop[] = [];
-  try {
-    cms = await sanityClient.fetch<LookbookDrop[]>(lookbookDropsQuery);
-  } catch {
-    cms = [];
-  }
+  const cms = await sanityFetch<LookbookDrop[]>({
+    label: 'lookbookDrops',
+    query: lookbookDropsQuery,
+    fallback: [],
+  });
 
   const drops = toNormDrops(cms ?? []);
   const dropLinks: DropLink[] = drops.map((d) => ({ slug: d.slug, label: d.label }));
