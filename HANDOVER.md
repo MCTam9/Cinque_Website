@@ -7,7 +7,7 @@ Working notes for the next session. Covers the current state of the **Figma → 
 ## 1. Project at a glance
 
 - **Repo:** `cinque-storefront` (Next.js 15 App Router · React 18 · TypeScript · Tailwind)
-- **CMS:** Sanity (`sanity.config.ts`, Studio embedded at `/studio`). Docs: `product`, `collection`, `exhibition`, `pressItem`, `page`, `order`, `stripeEvent`.
+- **CMS:** Sanity (`sanity.config.ts`, Studio embedded at `/studio`). Docs: `product`, `collection`, `press`, `page`, `order`, `stripeEvent`.
 - **Commerce:** Stripe embedded checkout, webhooks, Stripe↔Sanity sync; cart via Zustand (`src/store/cart.ts`); fulfilment email via Resend.
 - **Brand:** Cinque® — fine/art jewellery, founder Cindy Liu. London, W2. Works with photographer Vincent Tam.
 - ⚠️ **Not a git repo yet** — no version control initialized.
@@ -40,10 +40,10 @@ Working notes for the next session. Covers the current state of the **Figma → 
 ## 4. Figma templates present
 
 5 desktop page frames + a product-detail template:
-- **Home** — logo, tagline, 4 category blocks (Shop/Lookbook/Exhibition/Studio)
+- **Home** — logo, tagline, 4 category blocks (Shop/Lookbook/Press/Studio)
 - **Shop** — 3×2 product grid, category sidebar, footer
 - **Lookbook** — Drop_00_Archive editorial layout
-- **Exhibition** — Date/Location/Description rows (London Craft Week, Blackdot Gallery), Scura Magazine press feature
+- **Press** — Date/Location/Description rows (London Craft Week, Blackdot Gallery), Scura Magazine press feature
 - **Studio** — About bio + contact/commission form
 - **PDP** (product card template) — Lace Fork Pendant, £200, Add to cart
 
@@ -53,7 +53,7 @@ No mobile frames yet.
 
 ### ✅ Nav — DONE (component with variants)
 - Component set `nav` (#27:856). Selected-state styling correct: **H3_Selected bold + Red `#B35947` + underline**; default H3 medium / Graphite.
-- Per-page mapping correct: Home→Default, Shop→SHOP, Lookbook→LOOKBOOK, Exhibition→EXHIBITION, Studio→STUDIO.
+- Per-page mapping correct: Home→Default, Shop→SHOP, Lookbook→LOOKBOOK, Press→PRESS, Studio→STUDIO.
 - **Open items on nav:**
   1. **Variant property names inconsistent** — default is `Property 1=Default`, others are `Selected=SHOP/...`. This trips Figma's "conflicting variant properties" warning. Fix: rename the property to `Selected` for all, default value → `Selected=None`.
   2. **Shop's nav instance is loose on the canvas**, not nested inside the Shop frame (all other pages' navs are nested). Drag it into the Shop frame, reset to x:0,y:0.

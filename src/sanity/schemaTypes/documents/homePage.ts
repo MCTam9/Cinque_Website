@@ -4,7 +4,7 @@ import { crop2x3 } from '../imageCrop';
 /**
  * The Home page — a singleton (only one exists; edited in place, never created
  * or deleted). Staff edit the tagline and, for each section (Shop / Lookbook /
- * Exhibition / Studio), upload one or more images.
+ * Press / Studio), upload one or more images.
  *
  * Each section is one row of images, sized to how many it has:
  *   • mobile → the first 4, up to 4 columns; captions hidden.
@@ -55,7 +55,7 @@ export const homePage = defineType({
       'lookbookImages',
       'LOOKBOOK images (one per drop, newest first)'
     ),
-    sectionImages('exhibitionImages', 'EXHIBITION images'),
+    sectionImages('pressImages', 'PRESS images'),
     sectionImages('studioImages', 'STUDIO images'),
   ],
   preview: {

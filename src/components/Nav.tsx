@@ -8,7 +8,7 @@ import { useCart } from '@/store/cart';
 const LINKS = [
   { label: 'SHOP', href: '/shop' },
   { label: 'LOOKBOOK', href: '/lookbook' },
-  { label: 'EXHIBITION', href: '/exhibitions' },
+  { label: 'PRESS', href: '/press' },
   { label: 'STUDIO', href: '/studio' },
 ] as const;
 

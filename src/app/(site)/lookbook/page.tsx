@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 // Built-in imagery / copy used when no drops have been added in Sanity yet, so
-// the page always renders (mirrors the Exhibitions page's stand-in pattern).
+// the page always renders (mirrors the Press page's stand-in pattern).
 const HAND = '/figma/lookbook-1-hand.png';
 const BENCH = '/figma/lookbook-2-bench-flatlay.png';
 const MACRO = '/figma/lookbook-3-macro-hallmark-bead.png';

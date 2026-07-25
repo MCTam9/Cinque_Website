@@ -34,7 +34,7 @@ const DEFAULT_DROPS = [
 const SECTIONS = [
   { href: '/shop', label: 'SHOP', imageKey: 'shopImages', img: '/figma/home-shop.png', w: 1800, h: 653 },
   { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', img: '/figma/home-lookbook.png', w: 1800, h: 516, drops: true },
-  { href: '/exhibitions', label: 'EXHIBITION', imageKey: 'exhibitionImages', img: '/figma/home-exhibition.png', w: 1800, h: 652 },
+  { href: '/press', label: 'PRESS', imageKey: 'pressImages', img: '/figma/home-exhibition.png', w: 1800, h: 652 },
   { href: '/studio', label: 'STUDIO', imageKey: 'studioImages', img: '/figma/home-studio.png', w: 1800, h: 652 },
 ] as const;
 

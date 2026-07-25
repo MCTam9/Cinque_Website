@@ -2,9 +2,12 @@ import { defineArrayMember, defineField, defineType } from 'sanity';
 import { pageBuilderField } from '../objects/blocks';
 import { crop2x3 } from '../imageCrop';
 
-export const exhibition = defineType({
-  name: 'exhibition',
-  title: 'Exhibition',
+// Merges what were once two separate types — Exhibition (gallery shows) and
+// the never-shipped Press Item (press-clipping mentions) — into one. Venue
+// and Publication are both optional so an entry can be either kind, or both.
+export const press = defineType({
+  name: 'press',
+  title: 'Press',
   type: 'document',
   fields: [
     defineField({
@@ -21,10 +24,11 @@ export const exhibition = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({ name: 'venue', title: 'Venue', type: 'string' }),
+    defineField({ name: 'publication', title: 'Publication', type: 'string' }),
     defineField({ name: 'location', title: 'Location', type: 'string' }),
     defineField({
       name: 'startDate',
-      title: 'Start Date',
+      title: 'Date',
       type: 'date',
       validation: (rule) => rule.required(),
     }),
@@ -49,7 +53,7 @@ export const exhibition = defineType({
     }),
     defineField({ name: 'externalUrl', title: 'External URL', type: 'url' }),
     // Optional richer page composed from stackable image/text blocks.
-    pageBuilderField('content', 'Exhibition page content'),
+    pageBuilderField('content', 'Press page content'),
   ],
   orderings: [
     {
@@ -59,7 +63,11 @@ export const exhibition = defineType({
     },
   ],
   preview: {
-    select: { title: 'title', venue: 'venue', media: 'images.0' },
-    prepare: ({ title, venue, media }) => ({ title, subtitle: venue, media }),
+    select: { title: 'title', venue: 'venue', publication: 'publication', media: 'images.0' },
+    prepare: ({ title, venue, publication, media }) => ({
+      title,
+      subtitle: venue || publication,
+      media,
+    }),
   },
 });

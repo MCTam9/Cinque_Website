@@ -91,16 +91,16 @@ export const collectionSlugsQuery = groq`
   *[_type == "collection" && defined(slug.current)].slug.current
 `;
 
-export const exhibitionBySlugQuery = groq`
-  *[_type == "exhibition" && slug.current == $slug][0]{
-    _id, title, venue, location, startDate, endDate, description,
+export const pressBySlugQuery = groq`
+  *[_type == "press" && slug.current == $slug][0]{
+    _id, title, venue, publication, location, startDate, endDate, description,
     "images": images[]{ alt, asset }, externalUrl,
     ${pageContentProjection}
   }
 `;
 
-export const exhibitionSlugsQuery = groq`
-  *[_type == "exhibition" && defined(slug.current)].slug.current
+export const pressSlugsQuery = groq`
+  *[_type == "press" && defined(slug.current)].slug.current
 `;
 
 export const pageBySlugQuery = groq`
@@ -114,17 +114,10 @@ export const pageSlugsQuery = groq`
   *[_type == "page" && published == true && defined(slug.current)].slug.current
 `;
 
-export const exhibitionsQuery = groq`
-  *[_type == "exhibition"] | order(startDate desc) {
-    _id, title, "slug": slug.current, venue, location, startDate, endDate, description,
-    "images": images[]{ alt, asset }, externalUrl
-  }
-`;
-
 export const pressQuery = groq`
-  *[_type == "pressItem"] | order(publishDate desc) {
-    _id, headline, publication, publishDate, excerpt, externalUrl,
-    coverImage, body
+  *[_type == "press"] | order(startDate desc) {
+    _id, title, "slug": slug.current, venue, publication, location, startDate, endDate, description,
+    "images": images[]{ alt, asset }, externalUrl
   }
 `;
 
@@ -145,7 +138,7 @@ export const homePageQuery = groq`
     tagline,
     "shopImages": shopImages[]{ alt, asset },
     "lookbookImages": lookbookImages[]{ alt, asset },
-    "exhibitionImages": exhibitionImages[]{ alt, asset },
+    "pressImages": pressImages[]{ alt, asset },
     "studioImages": studioImages[]{ alt, asset }
   }
 `;

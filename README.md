@@ -86,12 +86,12 @@ Non-technical staff compose pages by stacking reorderable blocks in the Studio �
 no developer needed:
 
 - **Blocks:** Hero, Image + Text, Gallery, Text (`src/sanity/schemaTypes/objects/blocks.ts`).
-- **Where they're available:** every **Collection/Drop** and **Exhibition** has a
+- **Where they're available:** every **Collection/Drop** and **Press** entry has a
   page-content field, and there's a generic **Page** type (About, Stockists, …).
 - **Rendered by:** `src/components/PageBuilder.tsx` maps each block to a React
   component — swap each placeholder for the matching **Figma-exported component**
   (keep the props) and the whole CMS→page pipeline just works.
-- **Routes:** `/collections/[slug]`, `/exhibitions/[slug]`, `/pages/[slug]`.
+- **Routes:** `/collections/[slug]`, `/press/[slug]`, `/pages/[slug]`.
   Generic pages only render when marked **Visible on site**.
 
 To add a new drop page: create a Collection, give it a slug, stack blocks, and

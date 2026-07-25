@@ -2,7 +2,7 @@ import { defineArrayMember, defineField, defineType } from 'sanity';
 
 /**
  * Page-builder content blocks. These let non-technical staff compose a page
- * (a drop, an exhibition, an About page…) by stacking and reordering simple
+ * (a drop, a press entry, an About page…) by stacking and reordering simple
  * image + text sections — no developer needed. Each block type maps 1:1 to a
  * React component in <PageBuilder>, which you swap for the Figma-exported
  * component of the same name.
@@ -139,7 +139,7 @@ export const pageBuilderBlocks = [heroBlock, imageTextBlock, galleryBlock, richT
 
 /**
  * Reusable "page builder" array field. Add it to any document that should be
- * composable from blocks (collection, exhibition, page).
+ * composable from blocks (collection, press, page).
  */
 export const pageBuilderField = (name = 'content', title = 'Page content') =>
   defineField({

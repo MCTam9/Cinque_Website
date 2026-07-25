@@ -29,16 +29,12 @@ export function pathsFor(type: string, slug?: string): string[] {
     case 'collection':
       return slug ? ['/shop', `/collections/${slug}`] : ['/shop'];
 
-    // Exhibitions render in full on the listing page as well as their own.
-    case 'exhibition':
-      return slug ? ['/exhibitions', `/exhibitions/${slug}`] : ['/exhibitions'];
+    // Press entries render in full on the listing page as well as their own.
+    case 'press':
+      return slug ? ['/press', `/press/${slug}`] : ['/press'];
 
     case 'page':
       return slug ? [`/pages/${slug}`] : [];
-
-    // No route renders press items yet — add one here when /press ships.
-    case 'pressItem':
-      return [];
 
     // order / stripeEvent and anything else is not rendered publicly.
     default:
