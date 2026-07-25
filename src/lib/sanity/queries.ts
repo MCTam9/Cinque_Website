@@ -159,6 +159,7 @@ export const studioPageQuery = groq`
     responseTime,
     address,
     bespokeImage{ alt, asset },
+    "bespokeImages": bespokeImages[]{ alt, asset },
     bespokeIntro,
     bespokeProcessLabel,
     bespokeSteps[]{ number, title, body },
