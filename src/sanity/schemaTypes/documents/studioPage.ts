@@ -1,5 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
-import { crop5x7, crop16x9 } from '../imageCrop';
+import { crop5x7, crop21x9 } from '../imageCrop';
 
 /**
  * The Studio page (/studio) — a singleton, like Home: only one exists, edited
@@ -16,6 +16,7 @@ export const studioPage = defineType({
   groups: [
     { name: 'about', title: 'About', default: true },
     { name: 'contact', title: 'Contact' },
+    { name: 'bespoke', title: 'Bespoke' },
     { name: 'seo', title: 'SEO' },
   ],
   fields: [
@@ -65,9 +66,9 @@ export const studioPage = defineType({
       title: 'Wide band image',
       type: 'image',
       group: 'about',
-      options: { hotspot: crop16x9 },
+      options: { hotspot: crop21x9 },
       description:
-        'The full-width 16:9 band below About. Desktop only — phones skip it.',
+        'The full-width 21:9 band below About. Desktop only — phones skip it.',
       fields: [
         defineField({
           name: 'alt',
@@ -124,6 +125,72 @@ export const studioPage = defineType({
       rows: 3,
       group: 'contact',
       description: 'Each line break shows as a new line.',
+    }),
+
+    // ── Bespoke (below Contact) ──
+    defineField({
+      name: 'bespokeIntro',
+      title: 'Bespoke intro',
+      type: 'array',
+      group: 'bespoke',
+      of: [defineArrayMember({ type: 'block' })],
+      description: 'The opening paragraphs, above the commission process steps.',
+    }),
+    defineField({
+      name: 'bespokeProcessLabel',
+      title: 'Process heading',
+      type: 'string',
+      group: 'bespoke',
+      description: 'e.g. "Bespoke Commission Process".',
+    }),
+    defineField({
+      name: 'bespokeSteps',
+      title: 'Commission process steps',
+      type: 'array',
+      group: 'bespoke',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'bespokeStep',
+          fields: [
+            defineField({
+              name: 'number',
+              title: 'Number',
+              type: 'string',
+              description: 'e.g. "01".',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'title',
+              title: 'Title',
+              type: 'string',
+              description: 'e.g. "Conversation".',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'body',
+              title: 'Body',
+              type: 'array',
+              of: [defineArrayMember({ type: 'block' })],
+            }),
+          ],
+          preview: {
+            select: { number: 'number', title: 'title' },
+            prepare: ({ number, title }) => ({
+              title: number ? `${number} ${title}` : title,
+            }),
+          },
+        }),
+      ],
+    }),
+    defineField({
+      name: 'bespokeClosing',
+      title: 'Closing line',
+      type: 'array',
+      group: 'bespoke',
+      of: [defineArrayMember({ type: 'block' })],
+      description:
+        'The final call to action below the process steps, e.g. "Contact us to begin a bespoke commission…".',
     }),
 
     // ── SEO ──

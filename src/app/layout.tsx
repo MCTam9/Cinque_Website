@@ -22,8 +22,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Cinque — Jewellery & Object Maker',
-    template: '%s · Cinque',
+    default: 'Cinque / Jewellery Studio',
+    template: '%s / Cinque',
   },
   description:
     'Cinque® — jewellery and object maker. Sealing memories into a tactile archive. Individually made, cast and hallmarked in London.',

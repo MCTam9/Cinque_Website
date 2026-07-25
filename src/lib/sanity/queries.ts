@@ -158,6 +158,10 @@ export const studioPageQuery = groq`
     commissionChecklist,
     responseTime,
     address,
+    bespokeIntro,
+    bespokeProcessLabel,
+    bespokeSteps[]{ number, title, body },
+    bespokeClosing,
     seoDescription
   }
 `;
