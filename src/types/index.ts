@@ -68,6 +68,25 @@ export interface HomePageDoc {
   studioImages?: SanityImageRef[];
 }
 
+/**
+ * The Studio page singleton (/studio). Every field is optional — the page
+ * falls back to its built-in copy and imagery for anything left blank.
+ */
+export interface StudioPageDoc {
+  label?: string;
+  about?: unknown; // Portable Text
+  instagramUrl?: string;
+  portrait?: SanityImageRef;
+  bandImage?: SanityImageRef;
+  contactIntro?: string;
+  email?: string;
+  commissionNote?: string;
+  commissionChecklist?: string[];
+  responseTime?: string;
+  address?: string;
+  seoDescription?: string;
+}
+
 export interface Product {
   _id: string;
   title: string;

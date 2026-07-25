@@ -149,3 +149,22 @@ export const homePageQuery = groq`
     "studioImages": studioImages[]{ alt, asset }
   }
 `;
+
+// The Studio page singleton (/studio). Matched by _id for the same reason as
+// homePage above: the Studio edits one fixed document.
+export const studioPageQuery = groq`
+  *[_id == "studioPage"][0]{
+    label,
+    about,
+    instagramUrl,
+    portrait{ alt, asset },
+    bandImage{ alt, asset },
+    contactIntro,
+    email,
+    commissionNote,
+    commissionChecklist,
+    responseTime,
+    address,
+    seoDescription
+  }
+`;

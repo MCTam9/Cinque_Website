@@ -15,6 +15,7 @@ import { pressItem } from './documents/pressItem';
 import { page } from './documents/page';
 import { lookbookDrop } from './documents/lookbookDrop';
 import { homePage } from './documents/homePage';
+import { studioPage } from './documents/studioPage';
 import { stripeEvent } from './documents/stripeEvent';
 
 export const schemaTypes: SchemaTypeDefinition[] = [
@@ -32,5 +33,6 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   page,
   lookbookDrop,
   homePage,
+  studioPage,
   stripeEvent,
 ];

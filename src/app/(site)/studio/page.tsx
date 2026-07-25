@@ -1,18 +1,101 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Container from '@/components/Container';
 import ContactForm from '@/components/ContactForm';
-import { H1, H2, P1, P2 } from '@/components/typography';
+import { PortableText } from '@/components/PortableText';
+import { H1, H2, P1 } from '@/components/typography';
+import { sanityFetch } from '@/lib/sanity/fetch';
+import { studioPageQuery } from '@/lib/sanity/queries';
+import { urlFor } from '@/lib/sanity/image';
+import type { SanityImageRef, StudioPageDoc } from '@/types';
 
-export const metadata: Metadata = {
-  title: 'Studio',
-  description:
-    'Cinque® founder Cindy Liu — jewellery and object making as a form of memory archive. Handmade and cast in London.',
-};
+export const revalidate = 60;
 
 const INSTAGRAM = 'https://www.instagram.com/cinque.made';
 
-export default function StudioPage() {
+/**
+ * Built-in copy, shown for any field the Studio Page document leaves blank (or
+ * whenever Sanity is unreachable) — so /studio always renders in full.
+ */
+const DEFAULTS = {
+  seoDescription:
+    'Cinque® founder Cindy Liu — jewellery and object making as a form of memory archive. Handmade and cast in London.',
+  label: '[Cinque: five]',
+  about: [
+    'Cinque founder Cindy Liu, with backgrounds in architecture and metalsmithing, practises jewellery and object making as a form of memory archive.',
+    'Through wax and metal forming, Cinque transforms natural and cultural relics into tangible, wearable pieces—sealing ephemeral moments into the material permanence of metalwork. Each piece evokes new interpretations of memory, activated through the touch of skin. Cinque® uses this instinctive, tactile connection to express delicate, transient memories through the warmth of the five fingers—hence the name Cinque, meaning “five.”',
+    'Handmade and cast in London, Cinque’s pieces create new connections and tangible interpretations of memories, accessed from the touch of skin.',
+    'Cinque works closely with photographer and multi-disciplinary designer Vincent Tam to explore the dialogue between object, image and documentation.',
+  ],
+  portrait: '/figma/lookbook-2-bench-flatlay.png',
+  bandImage: '/figma/home-studio.png',
+  contactIntro:
+    'For bespoke commissions, custom variations, or general enquiries, please email:',
+  email: 'cindy@cinque.studio',
+  commissionNote: 'For bespoke commissions,\nkindly include:',
+  commissionChecklist: [
+    'Desired timeline',
+    'Budget range (if known)',
+    'Any existing stone or piece to incorporate',
+  ],
+  responseTime: 'We aim to respond within 2–3 working days.',
+  address: 'Cinque® Studio\nLondon, W2',
+};
+
+function getStudioPage() {
+  return sanityFetch<StudioPageDoc | null>({
+    label: 'studioPage',
+    query: studioPageQuery,
+    fallback: null,
+  });
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const studio = await getStudioPage();
+  return {
+    title: 'Studio',
+    description: studio?.seoDescription?.trim() || DEFAULTS.seoDescription,
+  };
+}
+
+/** A Sanity image at the given frame, or `null` if none is uploaded. */
+function cropped(img: SanityImageRef | undefined, w: number, h: number) {
+  if (!img?.asset) return null;
+  return urlFor(img as never).width(w).height(h).fit('crop').url();
+}
+
+/** Renders text with its line breaks intact, as typed in the Studio. */
+function Lines({ text, className = '' }: { text: string; className?: string }) {
+  return (
+    <P1 className={className}>
+      {text.split('\n').map((line, i, all) => (
+        <Fragment key={i}>
+          {line}
+          {i < all.length - 1 && <br />}
+        </Fragment>
+      ))}
+    </P1>
+  );
+}
+
+export default async function StudioPage() {
+  const studio = await getStudioPage();
+
+  const label = studio?.label?.trim() || DEFAULTS.label;
+  const instagram = studio?.instagramUrl?.trim() || INSTAGRAM;
+  const portrait = cropped(studio?.portrait, 500, 700);
+  const band = cropped(studio?.bandImage, 1600, 900);
+  const contactIntro = studio?.contactIntro?.trim() || DEFAULTS.contactIntro;
+  const email = studio?.email?.trim() || DEFAULTS.email;
+  const commissionNote = studio?.commissionNote?.trim() || DEFAULTS.commissionNote;
+  const checklist =
+    studio?.commissionChecklist?.filter((l) => l?.trim()) ?? [];
+  const commissionChecklist =
+    checklist.length > 0 ? checklist : DEFAULTS.commissionChecklist;
+  const responseTime = studio?.responseTime?.trim() || DEFAULTS.responseTime;
+  const address = studio?.address?.trim() || DEFAULTS.address;
+
   return (
     <Container className="py-[40px] md:py-[60px]">
       <H1 className="mb-[10px] border-b border-oslo pb-[10px]">STUDIO</H1>
@@ -21,28 +104,17 @@ export default function StudioPage() {
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">About</H2>
       <section className="mb-[60px] grid grid-cols-1 gap-[30px] md:grid-cols-3">
         <div className="flex flex-col gap-[20px] md:col-span-2">
-          <P1 className="text-oslo">[Cinque: five]</P1>
-          <P1>
-            Cinque founder Cindy Liu, with backgrounds in architecture and metalsmithing, practises
-            jewellery and object making as a form of memory archive.
-          </P1>
-          <P1>
-            Through wax and metal forming, Cinque transforms natural and cultural relics into
-            tangible, wearable pieces—sealing ephemeral moments into the material permanence of
-            metalwork. Each piece evokes new interpretations of memory, activated through the touch
-            of skin. Cinque® uses this instinctive, tactile connection to express delicate, transient
-            memories through the warmth of the five fingers—hence the name Cinque, meaning “five.”
-          </P1>
-          <P1>
-            Handmade and cast in London, Cinque’s pieces create new connections and tangible
-            interpretations of memories, accessed from the touch of skin.
-          </P1>
-          <P1>
-            Cinque works closely with photographer and multi-disciplinary designer Vincent Tam to
-            explore the dialogue between object, image and documentation.
-          </P1>
+          <P1 className="text-oslo">{label}</P1>
+          {/* Rich text from the CMS, or the copy the page shipped with. */}
+          <div className="flex flex-col gap-[20px] type-p1">
+            {studio?.about ? (
+              <PortableText value={studio.about as never} />
+            ) : (
+              DEFAULTS.about.map((para, i) => <P1 key={i}>{para}</P1>)
+            )}
+          </div>
           <a
-            href={INSTAGRAM}
+            href={instagram}
             target="_blank"
             rel="noopener noreferrer"
             className="type-p1 mt-[10px] w-fit underline underline-offset-4 hover:text-redcurrent"
@@ -52,8 +124,8 @@ export default function StudioPage() {
         </div>
         <div className="group relative aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30">
           <Image
-            src="/figma/lookbook-2-bench-flatlay.png"
-            alt="Cinque studio"
+            src={portrait ?? DEFAULTS.portrait}
+            alt={studio?.portrait?.alt || 'Cinque studio'}
             fill
             sizes="(max-width: 768px) 100vw, 25vw"
             className="img-bw object-cover"
@@ -64,8 +136,8 @@ export default function StudioPage() {
       {/* Full-width studio flatlay band (desktop only) */}
       <div className="group relative mb-[60px] hidden aspect-[16/9] w-full overflow-hidden bg-cloud/30 md:block">
         <Image
-          src="/figma/home-studio.png"
-          alt="Cinque studio flatlay"
+          src={band ?? DEFAULTS.bandImage}
+          alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
           fill
           sizes="(max-width: 768px) 100vw, 900px"
           className="img-bw object-cover"
@@ -79,28 +151,23 @@ export default function StudioPage() {
           <ContactForm />
         </div>
         <div className="flex flex-col gap-[20px] text-graphite">
-          <P1 className="text-graphite">
-            For bespoke commissions, custom variations, or general enquiries, please email:
-          </P1>
+          <Lines text={contactIntro} className="text-graphite" />
           <a
-            href="mailto:cindy@cinque.studio"
+            href={`mailto:${email}`}
             className="type-p1 w-fit text-graphite underline underline-offset-4 hover:text-redcurrent"
           >
-            cindy@cinque.studio
+            {email}
           </a>
           <div className="type-p1 text-graphite">
-            <P1 className="text-graphite">For bespoke commissions,</P1>
-            <P1 className="mb-[10px] text-graphite">kindly include:</P1>
-            <P1 className="text-graphite">Desired timeline</P1>
-            <P1 className="text-graphite">Budget range (if known)</P1>
-            <P1 className="text-graphite">Any existing stone or piece to incorporate</P1>
+            <Lines text={commissionNote} className="mb-[10px] text-graphite" />
+            {commissionChecklist.map((item, i) => (
+              <P1 key={i} className="text-graphite">
+                {item}
+              </P1>
+            ))}
           </div>
-          <P1 className="text-graphite">We aim to respond within 2–3 working days.</P1>
-          <P1 className="text-graphite">
-            Cinque® Studio
-            <br />
-            London, W2
-          </P1>
+          <Lines text={responseTime} className="text-graphite" />
+          <Lines text={address} className="text-graphite" />
         </div>
       </section>
     </Container>

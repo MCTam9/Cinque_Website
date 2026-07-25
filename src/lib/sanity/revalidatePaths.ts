@@ -11,6 +11,10 @@ export function pathsFor(type: string, slug?: string): string[] {
     case 'homePage':
       return ['/'];
 
+    // The Studio singleton: About copy, imagery and contact details.
+    case 'studioPage':
+      return ['/studio'];
+
     // Drops power the Lookbook page and the drop links on Home.
     case 'lookbookDrop':
       return ['/', '/lookbook'];

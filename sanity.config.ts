@@ -24,14 +24,17 @@ export default defineConfig({
     // Vision lets staff/devs run GROQ queries. Safe to keep; remove for prod-lockdown.
     visionTool({ defaultApiVersion: '2024-10-01' }),
   ],
-  // Hide internal, programmatically-managed docs from the global create menu.
+  // Hide internal, programmatically-managed docs from the global create menu,
+  // along with the singletons (Home / Studio) — those are edited in place from
+  // the desk, and a second copy would never be read.
   document: {
     newDocumentOptions: (prev) =>
       prev.filter(
         (item) =>
           item.templateId !== 'stripeEvent' &&
           item.templateId !== 'order' &&
-          item.templateId !== 'homePage'
+          item.templateId !== 'homePage' &&
+          item.templateId !== 'studioPage'
       ),
   },
 });

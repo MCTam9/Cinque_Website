@@ -6,12 +6,11 @@ import { crop2x3 } from '../imageCrop';
  * or deleted). Staff edit the tagline and, for each section (Shop / Lookbook /
  * Exhibition / Studio), upload one or more images.
  *
- * Rendering adapts to the viewport and to how many images a section has:
- *   • mobile → a slow auto-scrolling strip showing ~2.5 images at a time.
- *   • desktop, 1–5 images → a grid whose column count follows the count.
- *   • desktop, 6+ images → the same auto-scrolling strip.
- * A section left empty falls back to the built-in Figma strip, so the page
- * always renders.
+ * Each section is one row of images, sized to how many it has:
+ *   • mobile → the first 4, up to 4 columns; captions hidden.
+ *   • desktop → the first 5, up to 5 columns, each captioned.
+ * Anything beyond those counts never renders. A section left empty falls back
+ * to the built-in Figma strip, so the page always renders.
  */
 const sectionImages = (name: string, title: string) =>
   defineField({
@@ -19,7 +18,7 @@ const sectionImages = (name: string, title: string) =>
     title,
     type: 'array',
     description:
-      'On phones these auto-scroll sideways, two at a time. On desktop 1–5 images become a grid (columns follow the count); 6+ auto-scroll. Images are cropped to 2:3.',
+      'One row on the Home page: the first 4 show on phones, the first 5 on desktop — any beyond that are not shown. Images are cropped to 2:3.',
     of: [
       defineArrayMember({
         type: 'image',
