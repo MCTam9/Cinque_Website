@@ -1,10 +1,11 @@
 import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import Link from 'next/link';
 import Container from '@/components/Container';
 import ContactForm from '@/components/ContactForm';
 import { PortableText } from '@/components/PortableText';
-import { H1, H2, P1 } from '@/components/typography';
+import { H1, H2, H3, P1 } from '@/components/typography';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { studioPageQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
@@ -41,6 +42,44 @@ const DEFAULTS = {
   ],
   responseTime: 'We aim to respond within 2–3 working days.',
   address: 'Cinque® Studio\nLondon, W2',
+  bespokeIntro: [
+    'At Cinque, each jewellery piece is conceived as a quiet archive of meaning — shaped with care and made to hold memory in precious metal.',
+    'Developed in close dialogue and crafted in London, each piece emerges through drawing, material exploration, and meticulous making.',
+  ],
+  bespokeProcessLabel: 'Bespoke Commission Process',
+  bespokeSteps: [
+    {
+      number: '01',
+      title: 'Conversation',
+      body: [
+        'Each commission begins with a private consultation, held in London or online. We discuss intention, proportion, material direction, and timeline.',
+        'Engagement commissions typically require 8–12 weeks from confirmation.',
+      ],
+    },
+    {
+      number: '02',
+      title: 'Design Development',
+      body: [
+        'A proposal is developed through drawing and material study. Stone options are sourced through trusted ethical suppliers and shared alongside considered design variations.',
+        'The design is refined in close dialogue until resolved.',
+      ],
+    },
+    {
+      number: '03',
+      title: 'Making',
+      body: [
+        'Once approved, the ring is carved, cast, and finished by hand in London. Traditional goldsmithing techniques are combined with digital precision where appropriate.',
+        'Each piece is individually hallmarked.',
+      ],
+    },
+    {
+      number: '04',
+      title: 'Completion',
+      body: [
+        'The finished piece is presented with relevant documentation and stone certification where applicable — ready to carry forward its next chapter.',
+      ],
+    },
+  ],
 };
 
 function getStudioPage() {
@@ -79,6 +118,19 @@ function Lines({ text, className = '' }: { text: string; className?: string }) {
   );
 }
 
+/** The built-in closing CTA, shown until the Studio sets its own. */
+function BespokeClosingFallback() {
+  return (
+    <P1 className="text-oslo">
+      <Link href="/studio#contact" className="underline underline-offset-4 hover:text-redcurrent">
+        Contact us
+      </Link>{' '}
+      to begin a bespoke commission. Further details regarding design, timeline, and quotation
+      will follow.
+    </P1>
+  );
+}
+
 export default async function StudioPage() {
   const studio = await getStudioPage();
 
@@ -95,6 +147,9 @@ export default async function StudioPage() {
     checklist.length > 0 ? checklist : DEFAULTS.commissionChecklist;
   const responseTime = studio?.responseTime?.trim() || DEFAULTS.responseTime;
   const address = studio?.address?.trim() || DEFAULTS.address;
+  const bespokeProcessLabel =
+    studio?.bespokeProcessLabel?.trim() || DEFAULTS.bespokeProcessLabel;
+  const bespokeSteps = studio?.bespokeSteps?.length ? studio.bespokeSteps : null;
 
   return (
     <Container className="py-[40px] md:py-[60px]">
@@ -146,7 +201,7 @@ export default async function StudioPage() {
 
       {/* Contact */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Contact</H2>
-      <section id="contact" className="grid grid-cols-1 gap-[30px] md:grid-cols-3">
+      <section id="contact" className="mb-[60px] grid grid-cols-1 gap-[30px] md:grid-cols-3">
         <div className="md:col-span-2">
           <ContactForm />
         </div>
@@ -168,6 +223,46 @@ export default async function StudioPage() {
           </div>
           <Lines text={responseTime} className="text-graphite" />
           <Lines text={address} className="text-graphite" />
+        </div>
+      </section>
+
+      {/* Bespoke */}
+      <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Bespoke</H2>
+      <section className="grid grid-cols-1 gap-[30px] md:grid-cols-3">
+        <div className="flex flex-col gap-[30px] md:col-span-2">
+          <div className="flex flex-col gap-[20px] type-p1">
+            {studio?.bespokeIntro ? (
+              <PortableText value={studio.bespokeIntro as never} />
+            ) : (
+              DEFAULTS.bespokeIntro.map((para, i) => <P1 key={i}>{para}</P1>)
+            )}
+          </div>
+
+          <div className="flex flex-col gap-[20px]">
+            <H3 className="font-bold">{bespokeProcessLabel}</H3>
+            {(bespokeSteps ?? DEFAULTS.bespokeSteps).map((step, i) => (
+              <div key={i} className="flex flex-col gap-[10px]">
+                <H3 className="font-bold">
+                  {step.number} {step.title}
+                </H3>
+                <div className="flex flex-col gap-[10px] type-p1">
+                  {bespokeSteps ? (
+                    <PortableText value={step.body as never} />
+                  ) : (
+                    (step.body as string[]).map((para, j) => <P1 key={j}>{para}</P1>)
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {studio?.bespokeClosing ? (
+            <div className="type-p1">
+              <PortableText value={studio.bespokeClosing as never} />
+            </div>
+          ) : (
+            <BespokeClosingFallback />
+          )}
         </div>
       </section>
     </Container>
