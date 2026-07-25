@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { shellGrid } from '@/components/Container';
 import { H1, P2 } from '@/components/typography';
 import CategoryDisclosure from '@/components/CategoryDisclosure';
 
@@ -55,7 +56,7 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
+    <div className={`${shellGrid} py-[40px] md:py-[60px]`}>
       {/* Rule above the sidebar (left gutter) — aligns with the header rule */}
       <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 

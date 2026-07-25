@@ -141,7 +141,7 @@ export default async function ProductPage({
         </div>
 
         {/* Info */}
-        <div className="mt-[30px] flex flex-col gap-5 md:col-start-3 md:row-start-2 md:mt-0">
+        <div className="mt-[30px] flex flex-col gap-[20px] md:col-start-3 md:row-start-2 md:mt-0">
           <dl className="flex justify-between type-p1">
             <div className="flex flex-col gap-0.5 text-oslo">
               {drop && <dt>Drop</dt>}
@@ -190,7 +190,7 @@ export default async function ProductPage({
 
       {/* Ring size chart — only relevant for rings */}
       {product.category === 'rings' && (
-        <div className="mt-[60px]">
+        <div className="mt-[40px] md:mt-[60px]">
           <RingSizeChart />
         </div>
       )}

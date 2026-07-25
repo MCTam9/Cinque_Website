@@ -25,9 +25,10 @@ const config: Config = {
         mono: ['var(--font-letter-gothic)', 'ui-monospace', 'Courier New', 'monospace'],
       },
       maxWidth: {
-        // Canon content column (Figma: 900px centred inside a 1440 canvas).
-        content: '900px',
-        // Full desktop frame width.
+        // Full desktop frame width (Figma canvas). Applied by `shellGrid` in
+        // components/Container.tsx and matched by the Nav and Footer, so every
+        // rule and column stays aligned on wider-than-frame monitors. The canon
+        // 900px content column is the grid's centre track, not a max-width.
         frame: '1440px',
       },
     },

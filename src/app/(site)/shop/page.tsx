@@ -35,18 +35,15 @@ export default async function ShopPage({
     <ShopLayout active={active} filterable>
       {filtered.length === 0 && active !== 'all' ? (
         <div>
-          <P1 className="mb-5 text-oslo">No pieces in this category right now.</P1>
-          <Link
-            href="/shop"
-            className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
-          >
+          <P1 className="mb-[20px] text-oslo">No pieces in this category right now.</P1>
+          <Link href="/shop" className="btn">
             Browse all
           </Link>
         </div>
       ) : (
         <ProductGrid products={filtered} />
       )}
-      <div className="mt-[60px]">
+      <div className="mt-[40px] md:mt-[60px]">
         <RingSizeChart />
       </div>
     </ShopLayout>

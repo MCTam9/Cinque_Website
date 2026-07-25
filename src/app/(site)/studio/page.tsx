@@ -175,7 +175,7 @@ export default async function StudioPage() {
 
       {/* About */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">About</H2>
-      <section className="mb-[60px] grid grid-cols-1 gap-[30px] md:grid-cols-3">
+      <section className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
         <div className="flex flex-col gap-[20px] md:col-span-2">
           <P1 className="text-oslo">{label}</P1>
           {/* Rich text from the CMS, or the copy the page shipped with. */}
@@ -195,7 +195,9 @@ export default async function StudioPage() {
             Follow us on Instagram
           </a>
         </div>
-        <div className="group relative aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30">
+        {/* Mobile leads with the portrait, directly under the About rule and
+            above the copy; on desktop it returns to the right-hand column. */}
+        <div className="group relative order-first aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30 md:order-none">
           <Image
             src={portrait ?? DEFAULTS.portrait}
             alt={studio?.portrait?.alt || 'Cinque studio'}
@@ -206,8 +208,8 @@ export default async function StudioPage() {
         </div>
       </section>
 
-      {/* Full-width studio flatlay band (desktop only) */}
-      <div className="group relative mb-[60px] hidden aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:block">
+      {/* Full-width studio flatlay band, closing the About section */}
+      <div className="group relative mb-[40px] aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:mb-[60px]">
         <Image
           src={band ?? DEFAULTS.bandImage}
           alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
@@ -219,7 +221,7 @@ export default async function StudioPage() {
 
       {/* Contact */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Contact</H2>
-      <section id="contact" className="mb-[60px] grid grid-cols-1 gap-[30px] md:grid-cols-3">
+      <section id="contact" className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
         <div className="md:col-span-2">
           <ContactForm />
         </div>

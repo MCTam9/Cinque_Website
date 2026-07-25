@@ -27,11 +27,14 @@ export default function LookbookHeader({
         <P1 className="hidden text-right text-oslo md:block">
           Individually made, cast and hallmarked in London.
         </P1>
+        {/* Padding gives the label a 44px tap target; the matching negative
+            margin keeps its layout box the size of the text, so the row's
+            baseline alignment is unchanged. */}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="type-h3 text-graphite md:hidden"
+          className="type-h3 -m-[13px] p-[13px] text-graphite md:hidden"
         >
           {open ? 'HIDE' : 'SHOW ALL'}
         </button>

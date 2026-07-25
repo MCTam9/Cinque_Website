@@ -42,7 +42,9 @@ export default function CategoryDisclosure({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="type-h3 cursor-pointer"
+        // Padding gives the label a 44px tap target; the negative margin keeps
+        // its layout box text-sized so the header row doesn't shift.
+        className="type-h3 -m-[13px] cursor-pointer p-[13px]"
       >
         {label}
       </button>

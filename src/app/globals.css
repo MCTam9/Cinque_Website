@@ -73,11 +73,18 @@
       line-height: 16px;
     }
   }
+
+  /* Outlined button — the site's only button treatment. Used on links
+     (<Link>/<a>) and <button> alike, so it lives here as a class rather than a
+     component: 404 / error pages, empty cart & shop, checkout and its return. */
+  .btn {
+    @apply type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra;
+  }
 }
 
 /* ───────────────────────────────────────────────────────────────
    Image treatment — black & white, colour on hover.
-   Applied by the <HoverImage> component. On touch devices (no hover)
+   Applied via the `img-bw` class on images. On touch devices (no hover)
    images show in colour. Respects reduced-motion.
    ─────────────────────────────────────────────────────────────── */
 @layer utilities {

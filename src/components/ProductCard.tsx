@@ -33,7 +33,7 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2.5 p-2.5">
+      <div className="flex flex-1 flex-col gap-[10px] p-[10px]">
         <span className="type-h3 border-b border-oslo/60 pb-[10px] group-hover:text-redcurrent">
           {product.title}
         </span>

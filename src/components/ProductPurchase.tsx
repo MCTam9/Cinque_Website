@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
-import { P1 } from '@/components/typography';
+import { H3 } from '@/components/typography';
 
 export interface PurchaseVariant {
   key: string;
@@ -54,7 +54,7 @@ export default function ProductPurchase({
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-[20px]">
       <div className="flex items-end justify-between">
         <div className="flex flex-wrap gap-[10px]">
           {variants.map((v) => {
@@ -79,7 +79,7 @@ export default function ProductPurchase({
             );
           })}
         </div>
-        <P1 className="text-lg">{selected ? formatGBP(selected.priceGBP) : '—'}</P1>
+        <H3 as="p">{selected ? formatGBP(selected.priceGBP) : '—'}</H3>
       </div>
 
       <button

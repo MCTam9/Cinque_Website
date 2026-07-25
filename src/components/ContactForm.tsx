@@ -49,7 +49,7 @@ export default function ContactForm() {
     'w-full border-0 border-b border-oslo bg-transparent px-0 py-2 type-p1 outline-none focus:border-graphite';
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-[20px]">
       {/* Honeypot: visually hidden, off the tab order */}
       <div aria-hidden className="hidden">
         <label>

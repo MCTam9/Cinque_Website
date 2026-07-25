@@ -38,10 +38,20 @@ const STANDINS = [
   '/figma/lookbook-3-macro-hallmark-bead.png',
 ];
 
-function ExhImage({ src, hideOnMobile = false }: { src: string; hideOnMobile?: boolean }) {
+/**
+ * A press photo. `full` marks the one that spans both mobile columns (the first
+ * of an entry), so its `sizes` hint matches the width it actually renders at.
+ */
+function ExhImage({ src, full = false }: { src: string; full?: boolean }) {
   return (
-    <div className={`group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30 ${hideOnMobile ? 'max-md:hidden' : ''}`}>
-      <Image src={src} alt="Cinque press piece" fill sizes="(max-width: 768px) 50vw, 300px" className="img-bw object-cover" />
+    <div className="group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
+      <Image
+        src={src}
+        alt="Cinque press piece"
+        fill
+        sizes={`(max-width: 768px) ${full ? '100vw' : '50vw'}, 300px`}
+        className="img-bw object-cover"
+      />
     </div>
   );
 }
@@ -61,7 +71,7 @@ function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
   const date = [formatMonth(ex.startDate), formatMonth(ex.endDate)].filter(Boolean).join(' – ');
 
   const meta = (
-    <dl className="flex justify-between gap-4 type-p1">
+    <dl className="flex justify-between gap-[20px] type-p1">
       <div className="flex flex-col text-oslo">
         {date && <dt>Date</dt>}
         {ex.location && <dt>Location</dt>}
@@ -74,7 +84,7 @@ function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
   );
 
   return (
-    <article className={last ? '' : 'mb-[60px]'}>
+    <article className={last ? '' : 'mb-[40px] md:mb-[60px]'}>
       {/* Header — title (+ venue/publication: right over a shared rule on desktop, left below on mobile) */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
         <H2 className="border-b border-oslo pb-[10px] md:col-span-2">
@@ -128,7 +138,7 @@ function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
               key={`${src}-${i}`}
               className={i === 0 ? 'col-span-2 md:col-span-1' : ''}
             >
-              <ExhImage src={src} />
+              <ExhImage src={src} full={i === 0} />
             </div>
           ))}
         </div>
