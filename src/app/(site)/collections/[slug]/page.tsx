@@ -13,6 +13,7 @@ export const revalidate = 60;
 interface CollectionDoc {
   title: string;
   dropNumber?: number;
+  lookbookDrop?: { title: string; slug: string };
   content?: PageBlock[];
 }
 
@@ -65,6 +66,14 @@ export default async function CollectionPage({
           <P2 className="text-oslo">Drop {String(doc.dropNumber).padStart(2, '0')}</P2>
         )}
         <H1>{doc.title}</H1>
+        {doc.lookbookDrop && (
+          <Link
+            href={`/lookbook?drop=${doc.lookbookDrop.slug}`}
+            className="type-p1 w-fit text-oslo underline underline-offset-4 hover:text-redcurrent"
+          >
+            View in Lookbook
+          </Link>
+        )}
       </header>
       <PageBuilder blocks={doc.content} />
     </Container>

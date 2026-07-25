@@ -30,6 +30,13 @@ export const collection = defineType({
       type: 'datetime',
     }),
     defineField({
+      name: 'lookbookDrop',
+      title: 'Lookbook Drop',
+      type: 'reference',
+      to: [{ type: 'lookbookDrop' }],
+      description: 'The editorial Lookbook drop this collection pairs with, if any.',
+    }),
+    defineField({
       name: 'narrative',
       title: 'Narrative',
       type: 'array',
