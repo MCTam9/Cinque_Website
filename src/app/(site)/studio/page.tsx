@@ -31,6 +31,7 @@ const DEFAULTS = {
   ],
   portrait: '/figma/lookbook-2-bench-flatlay.png',
   bandImage: '/figma/home-studio.png',
+  bespokeImage: '/figma/lookbook-3-macro-hallmark-bead.png',
   contactIntro:
     'For bespoke commissions, custom variations, or general enquiries, please email:',
   email: 'cindy@cinque.studio',
@@ -150,6 +151,7 @@ export default async function StudioPage() {
   const bespokeProcessLabel =
     studio?.bespokeProcessLabel?.trim() || DEFAULTS.bespokeProcessLabel;
   const bespokeSteps = studio?.bespokeSteps?.length ? studio.bespokeSteps : null;
+  const bespokeImage = cropped(studio?.bespokeImage, 500, 700);
 
   return (
     <Container className="py-[40px] md:py-[60px]">
@@ -263,6 +265,15 @@ export default async function StudioPage() {
           ) : (
             <BespokeClosingFallback />
           )}
+        </div>
+        <div className="group relative aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30">
+          <Image
+            src={bespokeImage ?? DEFAULTS.bespokeImage}
+            alt={studio?.bespokeImage?.alt || 'Cinque bespoke commission'}
+            fill
+            sizes="(max-width: 768px) 100vw, 25vw"
+            className="img-bw object-cover"
+          />
         </div>
       </section>
     </Container>

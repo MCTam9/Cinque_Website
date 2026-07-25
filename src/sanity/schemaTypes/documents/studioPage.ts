@@ -129,6 +129,22 @@ export const studioPage = defineType({
 
     // ── Bespoke (below Contact) ──
     defineField({
+      name: 'bespokeImage',
+      title: 'Bespoke image',
+      type: 'image',
+      group: 'bespoke',
+      options: { hotspot: crop5x7 },
+      description: 'Beside the Bespoke copy, cropped to a 5:7 portrait — same treatment as the About portrait.',
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text',
+          type: 'string',
+          description: 'Describes the image for accessibility and SEO.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'bespokeIntro',
       title: 'Bespoke intro',
       type: 'array',
