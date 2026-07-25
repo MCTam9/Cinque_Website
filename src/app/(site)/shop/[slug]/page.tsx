@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { sanityClient } from '@/lib/sanity/client';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
+import { productBySlugQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import { metalLabel, formatLabel } from '@/lib/products';
 import ShopLayout from '@/components/ShopLayout';
@@ -14,7 +13,13 @@ import ProductGallery from '@/components/ProductGallery';
 import RingSizeChart from '@/components/RingSizeChart';
 import type { CollectionRef, ProductCategory, SanityImageRef, Variant } from '@/types';
 
-export const revalidate = 60;
+// JsonLd reads the per-request CSP nonce via next/headers(), a dynamic API.
+// Combined with generateStaticParams below, that mix intermittently throws
+// DYNAMIC_SERVER_USAGE in Vercel's ISR path (worked in `next build`/`next
+// start` locally, 500'd in production). Forcing dynamic rendering matches
+// what middleware.ts already says is true anyway — the nonce means this
+// route can't really be statically cached — and removes the conflict.
+export const dynamic = 'force-dynamic';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -38,16 +43,6 @@ async function getProduct(slug: string): Promise<PDPProduct | null> {
     params: { slug },
     fallback: null,
   });
-}
-
-export async function generateStaticParams() {
-  try {
-    const slugs = await sanityClient.fetch<string[]>(productSlugsQuery);
-    return slugs.map((slug) => ({ slug }));
-  } catch (err) {
-    console.error('[sanity] productSlugs failed — no product pages prerendered', err);
-    return [];
-  }
 }
 
 export async function generateMetadata({
