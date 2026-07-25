@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Container from '@/components/Container';
+import Container, { statusPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 
 /**
@@ -10,7 +10,7 @@ import { H1, P1 } from '@/components/typography';
  */
 export default function SiteError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <Container className="py-[60px] md:py-[80px]">
+    <Container className={statusPadY}>
       <H1 className="mb-[20px]">Something went wrong</H1>
       <P1 className="mb-[30px] text-oslo">
         We hit an unexpected problem. Please try again, or head back to the shop.

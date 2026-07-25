@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import { H1, H2, P1 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
@@ -155,7 +155,7 @@ export default async function PressPage() {
   });
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <H1 className="mb-[10px] border-b border-oslo pb-[10px]">PRESS</H1>
 
       {items.length === 0 ? (

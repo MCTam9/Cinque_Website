@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Container from '@/components/Container';
+import Container, { statusPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 
 /**
@@ -10,7 +10,7 @@ import { H1, P1 } from '@/components/typography';
  */
 export default function SiteNotFound() {
   return (
-    <Container className="py-[60px] md:py-[80px]">
+    <Container className={statusPadY}>
       <H1 className="mb-[20px]">Page not found</H1>
       <P1 className="mb-[30px] text-oslo">
         The page you&rsquo;re looking for doesn&rsquo;t exist or may have moved.

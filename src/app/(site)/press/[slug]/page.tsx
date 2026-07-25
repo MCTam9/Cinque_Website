@@ -6,7 +6,7 @@ import { sanityFetch } from '@/lib/sanity/fetch';
 import { pressBySlugQuery, pressSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
 import { PortableText } from '@/components/PortableText';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 
@@ -66,7 +66,7 @@ export default async function PressDetailPage({
   if (!doc) notFound();
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <Link
         href="/press"
         className="type-p1 mb-[20px] inline-block text-oslo hover:text-redcurrent"

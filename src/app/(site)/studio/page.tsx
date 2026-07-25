@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import ContactForm from '@/components/ContactForm';
 import { PortableText } from '@/components/PortableText';
 import { H1, H2, H3, P1 } from '@/components/typography';
@@ -170,7 +170,7 @@ export default async function StudioPage() {
       : DEFAULTS.bespokeImages.map((src) => ({ src, alt: 'Cinque bespoke commission' }));
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <H1 className="mb-[10px] border-b border-oslo pb-[10px]">STUDIO</H1>
 
       {/* About */}

@@ -1,4 +1,4 @@
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 
 /**
  * Shared prose layout for static legal/utility pages (Shipping, Privacy,
@@ -9,7 +9,7 @@ import Container from '@/components/Container';
  */
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <article className="mx-auto flex max-w-2xl flex-col gap-[20px] [&_h2]:mt-[20px] [&_p]:text-graphite">
         {children}
       </article>

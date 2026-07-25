@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { shellGrid } from '@/components/Container';
+import { contentPadY, shellGrid } from '@/components/Container';
 import { H2, H3, P1, P2 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
@@ -145,7 +145,7 @@ export default async function LookbookPage({
   const titlePart = slashIdx === -1 ? label : label.slice(slashIdx + 1);
 
   return (
-    <div className={`${shellGrid} py-[40px] md:py-[60px]`}>
+    <div className={`${shellGrid} ${contentPadY}`}>
       {/* Rule above sidebar */}
       <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 

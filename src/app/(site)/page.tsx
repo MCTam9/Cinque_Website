@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
 import { H1, H3 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
@@ -113,7 +113,7 @@ export default async function HomePage() {
         }));
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       {/* The page's single real heading; the logo below is decorative. */}
       <h1 className="sr-only">Cinque</h1>
       <JsonLd

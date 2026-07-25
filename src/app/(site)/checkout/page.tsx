@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCart } from '@/store/cart';
 import { EmbeddedCheckout } from '@/components/checkout/EmbeddedCheckout';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 
 /**
@@ -21,7 +21,7 @@ export default function CheckoutPage() {
 
   if (checkoutLines.length === 0) {
     return (
-      <Container className="py-[40px] md:py-[60px]">
+      <Container className={contentPadY}>
         <H1 className="mb-[20px]">CHECKOUT</H1>
         <P1 className="mb-[20px] text-oslo">Your cart is empty.</P1>
         <Link href="/shop" className="btn">
@@ -32,7 +32,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <H1 className="mb-[30px]">CHECKOUT</H1>
       <EmbeddedCheckout lines={checkoutLines} />
     </Container>
