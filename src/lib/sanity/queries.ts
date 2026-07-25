@@ -83,6 +83,7 @@ export const collectionBySlugQuery = groq`
   *[_type == "collection" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, dropNumber, releaseDate, narrative,
     heroImage{ alt, asset },
+    "lookbookDrop": lookbookDrop->{ title, "slug": slug.current },
     ${pageContentProjection}
   }
 `;
