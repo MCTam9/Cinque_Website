@@ -1,26 +1,30 @@
 import 'server-only';
-import { Resend } from 'resend';
 import { serverEnv } from '@/lib/serverEnv';
 import { publicEnv } from '@/lib/env';
 
 /**
  * ─────────────────────────────────────────────────────────────
- * TRANSACTIONAL EMAIL — Resend
+ * TRANSACTIONAL EMAIL — Postmark
  * ─────────────────────────────────────────────────────────────
- * Three senders: order confirmation, shipping confirmation, and an internal
- * low-stock alert. All are best-effort: if Resend isn't configured (no API
- * key), they log and no-op so local dev and the webhooks still work.
+ * Four senders: order confirmation, shipping confirmation, a public
+ * contact-form relay, and an internal low-stock alert. All are best-effort: if
+ * Postmark isn't configured (no server token), they log and no-op so local dev
+ * and the webhooks still work.
+ *
+ * Postmark rather than Resend because Resend's domain verification requires an
+ * MX record on a `send.` subdomain, and Wix — which hosts this domain's DNS —
+ * cannot create subdomain MX records. Postmark verifies with a DKIM TXT and a
+ * Return-Path CNAME, both of which Wix supports. If DNS ever moves off Wix
+ * that constraint disappears, but there's no reason to switch back.
+ *
+ * The REST API is called directly with `fetch` rather than via Postmark's SDK —
+ * the payload is five fields, so the dependency buys nothing.
  *
  * HTML is assembled server-side as email markup (not browser DOM), and every
  * value that originates from a customer is HTML-escaped before interpolation.
  */
 
-let client: Resend | null = null;
-function resend(): Resend | null {
-  if (!serverEnv.RESEND_API_KEY) return null;
-  if (!client) client = new Resend(serverEnv.RESEND_API_KEY);
-  return client;
-}
+const POSTMARK_ENDPOINT = 'https://api.postmarkapp.com/email';
 
 function escapeHtml(input: string): string {
   return input
@@ -119,28 +123,47 @@ async function send(args: {
   html: string;
   replyTo?: string;
 }): Promise<SendEmailResult> {
-  const r = resend();
-  const from = serverEnv.RESEND_FROM_EMAIL;
-  if (!r || !from) {
-    console.info('[email] Resend not configured — skipping send', {
+  const token = serverEnv.POSTMARK_SERVER_TOKEN;
+  const from = serverEnv.EMAIL_FROM;
+  if (!token || !from) {
+    console.info('[email] Postmark not configured — skipping send', {
       to: args.to,
       subject: args.subject,
     });
     return { ok: false, error: 'email not configured' };
   }
   try {
-    const { data, error } = await r.emails.send({
-      from,
-      to: args.to,
-      subject: args.subject,
-      html: args.html,
-      replyTo: args.replyTo,
+    const res = await fetch(POSTMARK_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-Postmark-Server-Token': token,
+      },
+      body: JSON.stringify({
+        From: from,
+        To: args.to,
+        Subject: args.subject,
+        HtmlBody: args.html,
+        ReplyTo: args.replyTo,
+        MessageStream: 'outbound',
+      }),
     });
-    if (error) {
-      console.error('[email] send failed', error);
-      return { ok: false, error: error.message };
+    // Postmark signals failure two ways: a non-2xx status, or a 200 carrying a
+    // non-zero ErrorCode. Check both, or partial failures read as successes.
+    const body = (await res.json().catch(() => null)) as
+      | { ErrorCode?: number; Message?: string; MessageID?: string }
+      | null;
+    if (!res.ok || !body || (body.ErrorCode ?? 0) !== 0) {
+      const reason = body?.Message ?? `HTTP ${res.status}`;
+      console.error('[email] send failed', {
+        status: res.status,
+        errorCode: body?.ErrorCode,
+        message: reason,
+      });
+      return { ok: false, error: reason };
     }
-    return { ok: true, id: data?.id };
+    return { ok: true, id: body.MessageID };
   } catch (err) {
     console.error('[email] send threw', err);
     return { ok: false, error: 'send exception' };
