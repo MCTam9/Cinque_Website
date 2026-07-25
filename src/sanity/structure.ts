@@ -13,12 +13,18 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title('Cinque')
     .items([
-      // ── Home page: a singleton, edited in place ──
+      // ── Pages that exist exactly once: singletons, edited in place ──
       S.listItem()
         .title('Home Page')
         .id('homePage')
         .child(
           S.document().schemaType('homePage').documentId('homePage')
+        ),
+      S.listItem()
+        .title('Studio Page')
+        .id('studioPage')
+        .child(
+          S.document().schemaType('studioPage').documentId('studioPage')
         ),
 
       // ── Orders: what needs action first ──
