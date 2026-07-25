@@ -85,7 +85,7 @@ export default async function StudioPage() {
   const label = studio?.label?.trim() || DEFAULTS.label;
   const instagram = studio?.instagramUrl?.trim() || INSTAGRAM;
   const portrait = cropped(studio?.portrait, 500, 700);
-  const band = cropped(studio?.bandImage, 1600, 900);
+  const band = cropped(studio?.bandImage, 2100, 900);
   const contactIntro = studio?.contactIntro?.trim() || DEFAULTS.contactIntro;
   const email = studio?.email?.trim() || DEFAULTS.email;
   const commissionNote = studio?.commissionNote?.trim() || DEFAULTS.commissionNote;
@@ -134,7 +134,7 @@ export default async function StudioPage() {
       </section>
 
       {/* Full-width studio flatlay band (desktop only) */}
-      <div className="group relative mb-[60px] hidden aspect-[16/9] w-full overflow-hidden bg-cloud/30 md:block">
+      <div className="group relative mb-[60px] hidden aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:block">
         <Image
           src={band ?? DEFAULTS.bandImage}
           alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
