@@ -39,12 +39,9 @@ export default function CartPage() {
   if (lines.length === 0) {
     return (
       <Container className="py-[40px] md:py-[60px]">
-        <H1 className="mb-5">CART</H1>
-        <P1 className="mb-5 text-oslo">Your cart is empty.</P1>
-        <Link
-          href="/shop"
-          className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
-        >
+        <H1 className="mb-[20px]">CART</H1>
+        <P1 className="mb-[20px] text-oslo">Your cart is empty.</P1>
+        <Link href="/shop" className="btn">
           Continue shopping
         </Link>
       </Container>
@@ -67,11 +64,11 @@ export default function CartPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-[30px] md:grid-cols-[1fr_320px] md:gap-[40px]">
         {/* Line items */}
         <ul className="flex flex-col divide-y divide-oslo/40 border-y border-oslo/40">
           {lines.map((l) => (
-            <li key={`${l.productId}-${l.variantKey}`} className="flex gap-5 py-4">
+            <li key={`${l.productId}-${l.variantKey}`} className="flex gap-[20px] py-[20px]">
               <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-cloud/30">
                 {l.imageUrl && (
                   <Image
@@ -88,7 +85,7 @@ export default function CartPage() {
                 <P1>{l.title}</P1>
                 <P2 className="text-oslo">{l.sku}</P2>
 
-                <div className="mt-auto flex items-center gap-3">
+                <div className="mt-auto flex items-center gap-[10px]">
                   <div className="flex items-center border border-oslo">
                     <button
                       type="button"
@@ -97,7 +94,7 @@ export default function CartPage() {
                       onClick={() =>
                         updateQuantity(l.productId, l.variantKey, Math.max(1, l.quantity - 1))
                       }
-                      className="min-h-[36px] min-w-[36px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
+                      className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
                     >
                       −
                     </button>
@@ -109,7 +106,7 @@ export default function CartPage() {
                       onClick={() =>
                         updateQuantity(l.productId, l.variantKey, Math.min(MAX_QTY, l.quantity + 1))
                       }
-                      className="min-h-[36px] min-w-[36px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
+                      className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
                     >
                       +
                     </button>
@@ -130,7 +127,7 @@ export default function CartPage() {
         </ul>
 
         {/* Summary */}
-        <aside className="flex h-fit flex-col gap-5 border border-oslo p-5">
+        <aside className="flex h-fit flex-col gap-[20px] border border-oslo p-[20px]">
           <div className="flex justify-between">
             <span className="type-h3">Subtotal</span>
             <span className="type-h3">{formatGBP(subtotal)}</span>

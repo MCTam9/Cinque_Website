@@ -57,12 +57,9 @@ export function EmbeddedCheckout({ lines }: { lines: CheckoutRequestLine[] }) {
   if (error) {
     return (
       <div className="border border-graphite p-6">
-        <P1 className="mb-2 font-bold">We couldn&rsquo;t start checkout</P1>
-        <P1 className="mb-5 text-graphite">{error}</P1>
-        <Link
-          href="/cart"
-          className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
-        >
+        <P1 className="mb-[10px] font-bold">We couldn&rsquo;t start checkout</P1>
+        <P1 className="mb-[20px] text-graphite">{error}</P1>
+        <Link href="/cart" className="btn">
           Return to cart
         </Link>
       </div>

@@ -74,7 +74,9 @@ export default function HomeSectionMedia({
               src={img.url}
               alt={img.alt}
               fill
-              sizes="(max-width: 768px) 33vw, 20vw"
+              sizes={`(max-width: 768px) ${Math.round(
+                100 / Math.min(shown.length, MOBILE_MAX)
+              )}vw, ${Math.round(100 / shown.length)}vw`}
               className="img-bw object-cover transition-opacity group-hover:opacity-90"
             />
           </div>

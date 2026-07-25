@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { shellGrid } from '@/components/Container';
 import { H2, H3, P1, P2 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
@@ -85,10 +86,28 @@ function toNormDrops(cms: LookbookDrop[]): NormDrop[] {
   }));
 }
 
-function LbImage({ src, alt }: { src: string; alt: string }) {
+/**
+ * A lookbook photo. The featured image is full-width on mobile; every other one
+ * sits in a 2- or 3-up grid, so `sizes` follows the width it renders at.
+ */
+function LbImage({
+  src,
+  alt,
+  mobileWidth = '50vw',
+}: {
+  src: string;
+  alt: string;
+  mobileWidth?: '100vw' | '50vw';
+}) {
   return (
     <div className="group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
-      <Image src={src} alt={alt} fill sizes="(max-width: 768px) 100vw, 300px" className="img-bw object-cover" />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={`(max-width: 768px) ${mobileWidth}, 300px`}
+        className="img-bw object-cover"
+      />
     </div>
   );
 }
@@ -126,7 +145,7 @@ export default async function LookbookPage({
   const titlePart = slashIdx === -1 ? label : label.slice(slashIdx + 1);
 
   return (
-    <div className="grid w-full grid-cols-1 gap-x-[10px] px-5 py-[40px] md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)] md:py-[60px]">
+    <div className={`${shellGrid} py-[40px] md:py-[60px]`}>
       {/* Rule above sidebar */}
       <div className="hidden border-b border-oslo md:col-start-1 md:row-start-1 md:block" />
 
@@ -168,9 +187,11 @@ export default async function LookbookPage({
           )}
         </H2>
 
-        {/* Row 1: copy + up to two images | featured image */}
-        <div className="mb-[10px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
-          <div className="flex flex-col gap-[10px]">
+        {/* Row 1: copy + up to two images | featured image. On mobile these
+            stack, so they take the 20px text↔image spacing used elsewhere; from
+            md up the 10px grid gutter applies. */}
+        <div className="mb-[10px] grid grid-cols-1 gap-[20px] md:grid-cols-2 md:gap-[10px]">
+          <div className="flex flex-col gap-[20px] md:gap-[10px]">
             <div className="flex flex-col gap-[20px] type-p1">
               {activeDrop?.intro ? (
                 <PortableText value={activeDrop.intro as never} />
@@ -191,7 +212,7 @@ export default async function LookbookPage({
           {/* featured image — shown first on mobile, right column on desktop */}
           {featured && (
             <div className="order-first md:order-none">
-              <LbImage src={featured.src} alt={featured.alt} />
+              <LbImage src={featured.src} alt={featured.alt} mobileWidth="100vw" />
             </div>
           )}
         </div>

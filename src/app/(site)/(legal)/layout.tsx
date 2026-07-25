@@ -10,7 +10,7 @@ import Container from '@/components/Container';
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
     <Container className="py-[40px] md:py-[60px]">
-      <article className="mx-auto flex max-w-2xl flex-col gap-5 [&_h2]:mt-5 [&_p]:text-graphite">
+      <article className="mx-auto flex max-w-2xl flex-col gap-[20px] [&_h2]:mt-[20px] [&_p]:text-graphite">
         {children}
       </article>
     </Container>

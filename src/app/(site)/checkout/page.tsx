@@ -22,12 +22,9 @@ export default function CheckoutPage() {
   if (checkoutLines.length === 0) {
     return (
       <Container className="py-[40px] md:py-[60px]">
-        <H1 className="mb-5">CHECKOUT</H1>
-        <P1 className="mb-5 text-oslo">Your cart is empty.</P1>
-        <Link
-          href="/shop"
-          className="type-p1 inline-block border border-graphite px-6 py-3 transition-colors hover:bg-graphite hover:text-cararra"
-        >
+        <H1 className="mb-[20px]">CHECKOUT</H1>
+        <P1 className="mb-[20px] text-oslo">Your cart is empty.</P1>
+        <Link href="/shop" className="btn">
           Continue shopping
         </Link>
       </Container>

@@ -35,7 +35,7 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-50 bg-cararra">
-      <div className="relative h-[70px] px-5">
+      <div className="relative mx-auto h-[70px] max-w-frame px-5">
         {/* Rule line — inset to the 20px padding; links sit 10px above it. */}
         <div className="pointer-events-none absolute inset-x-5 top-[48px] border-b border-graphite" />
 
@@ -45,10 +45,13 @@ export default function Nav() {
           <img src="/figma/cinque-wordmark.svg" alt="Cinque" width={165} height={45} className="h-[46px] w-auto" />
         </Link>
 
-        {/* Links — centred on the page, evenly distributed in equal slots. */}
+        {/* Links — centred on the page, evenly distributed in equal slots. The
+            slot width scales with the viewport so the row clears the wordmark on
+            the left and CART on the right at every width; it reaches its full
+            160px (the Figma value) from 1280px up. */}
         <ul className="absolute left-1/2 top-[18px] hidden -translate-x-1/2 md:flex">
           {LINKS.map((l) => (
-            <li key={l.href} className="w-[160px] text-center">
+            <li key={l.href} className="w-[clamp(96px,12.5vw,160px)] text-center">
               <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
                 {l.label}
               </Link>
@@ -66,10 +69,12 @@ export default function Nav() {
           {cartLabel}
         </Link>
 
-        {/* Hamburger (mobile). */}
+        {/* Hamburger (mobile). Offsets are pulled back by the 13px padding that
+            gives the label a 44px tap target, so it still reads at right-5 /
+            top-[18px] — in line with CART on desktop. */}
         <button
           type="button"
-          className="type-h3 absolute right-5 top-[18px] text-graphite md:hidden"
+          className="type-h3 absolute right-[7px] top-[5px] p-[13px] text-graphite md:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
