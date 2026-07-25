@@ -21,6 +21,14 @@ const nextConfig = {
       // Exhibition renamed to Press (and merged with the unused Press Item type).
       { source: '/exhibitions', destination: '/press', permanent: true },
       { source: '/exhibitions/:slug', destination: '/press/:slug', permanent: true },
+      // Canonical host is the bare apex — www is a separate Vercel domain
+      // pointed at this same project, not a framework default.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.cinque.studio' }],
+        destination: 'https://cinque.studio/:path*',
+        permanent: true,
+      },
     ];
   },
   // NOTE: The Content-Security-Policy is intentionally NOT set here.
