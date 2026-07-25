@@ -17,6 +17,14 @@ export const variant = defineType({
       name: 'sku',
       title: 'SKU',
       type: 'string',
+      description:
+        '{Drop}-{Category}-{ProductCode}-{Metal}[-{Size}], e.g. 01-NEC-LFP-SS-M ' +
+        '(Drop 01, Necklace, Lace Fork Pendant, Sterling Silver, size M). ' +
+        'Category: RIN/EAR/NEC/OBJ. Metal: 9G/18G/SS/PT/GV/BR. Drop is the ' +
+        "drop's two-digit number (00 for one-offs not tied to a drop). " +
+        'ProductCode is a 3-letter mnemonic for the product — pick one not ' +
+        'already used by another product. Append Size only if the variant has ' +
+        'one; every SKU must be unique across the whole catalog.',
       validation: (rule) => rule.required(),
     }),
     defineField({

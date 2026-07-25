@@ -80,6 +80,22 @@ Notes:
 - **Backfill existing products:** just re-publish them — the update fires the
   same webhook and syncs them.
 
+### SKU convention
+
+`{Drop}-{Category}-{ProductCode}-{Metal}[-{Size}]`, e.g. `01-NEC-LFP-SS-M` for
+the Lace Fork Pendant (Drop 01, Necklace, Sterling Silver, size M).
+
+- **Drop** — the variant's drop's two-digit number (`00` for one-offs not tied
+  to a drop).
+- **Category** — `RIN` / `EAR` / `NEC` / `OBJ`.
+- **ProductCode** — a 3-letter mnemonic for the product, unique across the
+  catalog (check existing SKUs before picking one).
+- **Metal** — `9G` / `18G` / `SS` / `PT` / `GV` / `BR`.
+- **Size** — appended only when the variant has one.
+
+Every SKU must be unique catalog-wide. Documented on the SKU field itself in
+Studio (`src/sanity/schemaTypes/objects/variant.ts`).
+
 ## Page builder (staff add pages with images + text)
 
 Non-technical staff compose pages by stacking reorderable blocks in the Studio —
