@@ -114,17 +114,30 @@ export async function POST(req: Request) {
     );
   }
 
+  // `branding_settings` is supported at our pinned apiVersion (verified
+  // directly against the API) but missing from the installed stripe SDK's
+  // (17.7.0) type definitions — extend the param type rather than upgrade
+  // the SDK for this.
+  type SessionCreateParamsWithBranding =
+    import('stripe').Stripe.Checkout.SessionCreateParams & {
+      branding_settings?: { background_color?: string };
+    };
+
   try {
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
       mode: 'payment',
       line_items: lineItems,
       return_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+      // Embedded Checkout renders in a Stripe-owned iframe — host CSS can't
+      // reach it (same-origin policy), so the background is set server-side
+      // to match the site's cararra background instead of Stripe's default white.
+      branding_settings: { background_color: '#F1F0ED' },
       automatic_tax: { enabled: false },
       shipping_address_collection: { allowed_countries: ['GB', 'US', 'FR', 'DE', 'IE'] },
       phone_number_collection: { enabled: true },
       metadata: { cart: cartMeta },
-    });
+    } as SessionCreateParamsWithBranding);
 
     return NextResponse.json({ clientSecret: session.client_secret });
   } catch (err) {
