@@ -26,11 +26,13 @@ export const product = defineType({
       options: { source: 'title', maxLength: 96 },
       validation: (rule) => rule.required(),
     }),
+    // Field key stays `collection` (not `drop`) to avoid touching every
+    // query/component that reads `product.collection`.
     defineField({
       name: 'collection',
-      title: 'Collection / Drop',
+      title: 'Drop',
       type: 'reference',
-      to: [{ type: 'collection' }],
+      to: [{ type: 'drop' }],
       group: 'content',
     }),
     defineField({

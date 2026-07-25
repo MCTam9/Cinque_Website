@@ -46,7 +46,7 @@ export interface SanityImageRef {
 export interface CollectionRef {
   title?: string;
   slug?: string;
-  dropNumber?: number;
+  dropNumber?: string;
 }
 
 /** A Lookbook drop (editorial imagery + copy shown at /lookbook). */

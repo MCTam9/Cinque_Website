@@ -15,19 +15,18 @@ export function pathsFor(type: string, slug?: string): string[] {
     case 'studioPage':
       return ['/studio'];
 
-    // Drops power the Lookbook page and the drop links on Home.
-    case 'lookbookDrop':
-      return ['/', '/lookbook'];
-
     // Products appear in the catalog grid and on their own detail page.
     // NOTE: the catalog lives at /shop (it moved from /products) — revalidating
     // the old path is a silent no-op; the redirect does not forward it.
     case 'product':
       return slug ? ['/shop', `/shop/${slug}`] : ['/shop'];
 
-    // Collections label product cards and have their own page-builder page.
-    case 'collection':
-      return slug ? ['/shop', `/collections/${slug}`] : ['/shop'];
+    // A Drop powers the Lookbook page, the Home drop list, the Shop grid
+    // (via the product's reference), and its own page-builder page.
+    case 'drop':
+      return slug
+        ? ['/', '/shop', '/lookbook', `/collections/${slug}`]
+        : ['/', '/shop', '/lookbook'];
 
     // Press entries render in full on the listing page as well as their own.
     case 'press':
