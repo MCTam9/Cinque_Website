@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { publicEnv } from '@/lib/env';
-import Container from '@/components/Container';
+import Container, { statusPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 import ClearCartOnMount from '@/components/checkout/ClearCartOnMount';
 
@@ -49,7 +49,7 @@ export default async function CheckoutReturnPage({
   // 1) Confirmed & paid → thank you, clear the cart, offer onward navigation.
   if (paid) {
     return (
-      <Container className="py-[60px] md:py-[80px]">
+      <Container className={statusPadY}>
         <ClearCartOnMount />
         <H1 className="mb-[20px]">Thank you</H1>
         <P1 className="mb-[10px]">
@@ -68,7 +68,7 @@ export default async function CheckoutReturnPage({
   //    don't clear the cart, point to email/contact.
   if (lookupFailed || data?.status === 'complete') {
     return (
-      <Container className="py-[60px] md:py-[80px]">
+      <Container className={statusPadY}>
         <H1 className="mb-[20px]">Order received</H1>
         <P1 className="mb-[10px]">
           We&rsquo;re confirming your payment. If it went through, a confirmation email will
@@ -91,7 +91,7 @@ export default async function CheckoutReturnPage({
 
   // 3) Session expired (or otherwise not completed) → no order, no charge.
   return (
-    <Container className="py-[60px] md:py-[80px]">
+    <Container className={statusPadY}>
       <H1 className="mb-[20px]">Payment not completed</H1>
       <P1 className="mb-[10px]">
         Your payment wasn&rsquo;t completed, so no order was placed and you haven&rsquo;t been

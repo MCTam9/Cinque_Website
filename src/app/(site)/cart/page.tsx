@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
 
 // Per-line quantity cap — mirrors the checkout API's limit so the cart can't
@@ -30,7 +30,7 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <Container className="py-[40px] md:py-[60px]">
+      <Container className={contentPadY}>
         <H1>CART</H1>
       </Container>
     );
@@ -38,7 +38,7 @@ export default function CartPage() {
 
   if (lines.length === 0) {
     return (
-      <Container className="py-[40px] md:py-[60px]">
+      <Container className={contentPadY}>
         <H1 className="mb-[20px]">CART</H1>
         <P1 className="mb-[20px] text-oslo">Your cart is empty.</P1>
         <Link href="/shop" className="btn">
@@ -49,7 +49,7 @@ export default function CartPage() {
   }
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <H1 className={addedName ? 'mb-[10px]' : 'mb-[30px]'}>CART</H1>
 
       {addedName && (

@@ -5,7 +5,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { collectionBySlugQuery, collectionSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
-import Container from '@/components/Container';
+import Container, { contentPadY } from '@/components/Container';
 import { H1, P2 } from '@/components/typography';
 
 export const revalidate = 60;
@@ -57,7 +57,7 @@ export default async function CollectionPage({
   if (!doc) notFound();
 
   return (
-    <Container className="py-[40px] md:py-[60px]">
+    <Container className={contentPadY}>
       <Link href="/shop" className="type-p1 mb-[20px] inline-block text-oslo hover:text-redcurrent">
         ← Shop
       </Link>

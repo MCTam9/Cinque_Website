@@ -12,11 +12,22 @@ import type { ElementType, ReactNode } from 'react';
  * left gutter (Shop's category rail, Lookbook's drop rail) apply `shellGrid`
  * themselves and place every child with `md:col-start-*` / `md:row-start-*`.
  *
- * Vertical padding is the caller's: content pages use `py-[40px] md:py-[60px]`,
- * sparse status pages (404, errors, checkout return) use `py-[60px] md:py-[80px]`.
+ * Vertical padding is the caller's — pass `contentPadY` or `statusPadY` below.
  */
 export const shellGrid =
   'mx-auto grid w-full max-w-frame grid-cols-1 gap-x-[10px] px-5 md:grid-cols-[minmax(0,0.25fr)_minmax(0,1fr)_minmax(0,0.25fr)]';
+
+/**
+ * Vertical page padding, in two flavours.
+ *
+ * Mobile sits tight under the nav — the nav's own rule already leaves 22px of
+ * air below it, so a large top padding read as a gap rather than as spacing.
+ * Both open up from md, where the nav is further from the content.
+ */
+export const contentPadY = 'pt-[10px] pb-[40px] md:py-[60px]';
+
+/** Sparse status pages (404, errors, checkout return) carry more air. */
+export const statusPadY = 'pt-[30px] pb-[60px] md:py-[80px]';
 
 export default function Container({
   children,
