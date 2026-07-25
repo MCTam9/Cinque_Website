@@ -59,11 +59,12 @@ export const structure: StructureResolver = (S) =>
               '_type == "product" && count(variants[!(allowBackorder == true) && stockQuantity <= coalesce(lowStockThreshold, 0)]) > 0'
             )
         ),
-      S.documentTypeListItem('collection').title('Collections / Drops'),
 
       // ── Editorial ──
+      // A Drop is entered once here and used by both the Shop catalog
+      // (Products link to it) and the Lookbook page.
       S.divider().title('Editorial'),
-      S.documentTypeListItem('lookbookDrop').title('Lookbook Drops'),
+      S.documentTypeListItem('drop').title('Drops'),
       S.documentTypeListItem('press').title('Press'),
       S.documentTypeListItem('page').title('Pages'),
     ]);

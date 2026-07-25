@@ -99,7 +99,7 @@ export default async function ProductPage({
 
   const drop =
     product.collection?.title &&
-    (typeof product.collection.dropNumber === 'number'
+    (product.collection.dropNumber
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
   const material = metalLabel(product.variants?.[0]?.metalType);

@@ -24,9 +24,9 @@ export const activeProductsQuery = groq`
   }
 `;
 
-// All collections / drops, newest drop first (Lookbook listing).
+// All drops, newest first (Shop grid cards).
 export const collectionsQuery = groq`
-  *[_type == "collection" && defined(slug.current)] | order(dropNumber desc) {
+  *[_type == "drop" && defined(slug.current)] | order(dropNumber desc) {
     _id, title, "slug": slug.current, dropNumber, releaseDate,
     heroImage{ alt, asset }
   }
@@ -80,16 +80,15 @@ const pageContentProjection = groq`
 `;
 
 export const collectionBySlugQuery = groq`
-  *[_type == "collection" && slug.current == $slug][0]{
-    _id, title, "slug": slug.current, dropNumber, releaseDate, narrative,
+  *[_type == "drop" && slug.current == $slug][0]{
+    _id, title, "slug": slug.current, dropNumber, releaseDate,
     heroImage{ alt, asset },
-    "lookbookDrop": lookbookDrop->{ title, "slug": slug.current },
     ${pageContentProjection}
   }
 `;
 
 export const collectionSlugsQuery = groq`
-  *[_type == "collection" && defined(slug.current)].slug.current
+  *[_type == "drop" && defined(slug.current)].slug.current
 `;
 
 export const pressBySlugQuery = groq`
@@ -122,9 +121,9 @@ export const pressQuery = groq`
   }
 `;
 
-// All lookbook drops, newest drop first (Lookbook page + Home drop list).
+// All drops, newest first (Lookbook page + Home drop list).
 export const lookbookDropsQuery = groq`
-  *[_type == "lookbookDrop" && defined(slug.current)] | order(dropNumber desc) {
+  *[_type == "drop" && defined(slug.current)] | order(dropNumber desc) {
     _id, title, dropNumber, "slug": slug.current, intro,
     "images": images[]{ alt, asset }
   }

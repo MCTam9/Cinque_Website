@@ -45,7 +45,7 @@ function variantIsAvailable(v: Variant): boolean {
 function dropLabel(collection?: Product['collection']): string | undefined {
   if (!collection?.title) return undefined;
   const name = collection.title.trim();
-  if (typeof collection.dropNumber === 'number') {
+  if (collection.dropNumber) {
     return `${String(collection.dropNumber).padStart(2, '0')}/${name}`;
   }
   return name;
