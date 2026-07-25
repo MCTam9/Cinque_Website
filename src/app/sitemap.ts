@@ -3,7 +3,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import {
   productSlugsQuery,
   collectionSlugsQuery,
-  exhibitionSlugsQuery,
+  pressSlugsQuery,
 } from '@/lib/sanity/queries';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -17,17 +17,17 @@ async function safeSlugs(query: string): Promise<string[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, collections, exhibitions] = await Promise.all([
+  const [products, collections, press] = await Promise.all([
     safeSlugs(productSlugsQuery),
     safeSlugs(collectionSlugsQuery),
-    safeSlugs(exhibitionSlugsQuery),
+    safeSlugs(pressSlugsQuery),
   ]);
 
   const staticRoutes = [
     '',
     '/shop',
     '/lookbook',
-    '/exhibitions',
+    '/press',
     '/studio',
     '/shipping',
     '/privacy',
@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes.map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: 'weekly' as const })),
     ...products.map((slug) => ({ url: `${siteUrl}/shop/${slug}` })),
     ...collections.map((slug) => ({ url: `${siteUrl}/collections/${slug}` })),
-    ...exhibitions.map((slug) => ({ url: `${siteUrl}/exhibitions/${slug}` })),
+    ...press.map((slug) => ({ url: `${siteUrl}/press/${slug}` })),
   ];
 
   return entries;

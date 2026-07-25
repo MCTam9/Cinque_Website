@@ -5,7 +5,7 @@ import type { HotspotOptions } from 'sanity';
  *
  * Sanity's built-in previews are 3:4 / Square / 16:9 / Panorama — none of which
  * is the **2:3 portrait** this site actually renders images at (home galleries,
- * lookbook, exhibitions, product cards). Staff were therefore cropping against
+ * lookbook, press, product cards). Staff were therefore cropping against
  * frames the storefront never uses. Passing `previews` replaces that default
  * list, so each field advertises the shapes it is really cut to.
  *

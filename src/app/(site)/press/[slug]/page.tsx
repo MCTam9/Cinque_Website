@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { exhibitionBySlugQuery, exhibitionSlugsQuery } from '@/lib/sanity/queries';
+import { pressBySlugQuery, pressSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
 import { PortableText } from '@/components/PortableText';
 import Container from '@/components/Container';
@@ -12,18 +12,19 @@ import { formatLabel } from '@/lib/products';
 
 export const revalidate = 60;
 
-interface ExhibitionDoc {
+interface PressDoc {
   title: string;
   venue?: string;
+  publication?: string;
   location?: string;
   description?: unknown;
   content?: PageBlock[];
 }
 
-async function getDoc(slug: string): Promise<ExhibitionDoc | null> {
-  return sanityFetch<ExhibitionDoc | null>({
-    label: `exhibition:${slug}`,
-    query: exhibitionBySlugQuery,
+async function getDoc(slug: string): Promise<PressDoc | null> {
+  return sanityFetch<PressDoc | null>({
+    label: `press:${slug}`,
+    query: pressBySlugQuery,
     params: { slug },
     fallback: null,
   });
@@ -31,10 +32,10 @@ async function getDoc(slug: string): Promise<ExhibitionDoc | null> {
 
 export async function generateStaticParams() {
   try {
-    const slugs = await sanityClient.fetch<string[]>(exhibitionSlugsQuery);
+    const slugs = await sanityClient.fetch<string[]>(pressSlugsQuery);
     return slugs.map((slug) => ({ slug }));
   } catch (err) {
-    console.error('[sanity] exhibitionSlugs failed — no exhibition pages prerendered', err);
+    console.error('[sanity] pressSlugs failed — no press pages prerendered', err);
     return [];
   }
 }
@@ -46,14 +47,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const doc = await getDoc(slug);
-  if (!doc) return { title: 'Exhibition' };
+  if (!doc) return { title: 'Press' };
   return {
     title: formatLabel(doc.title),
-    description: `${formatLabel(doc.title)} — a Cinque® exhibition${doc.venue ? ` at ${doc.venue}` : ''}.`,
+    description: `${formatLabel(doc.title)} — Cinque® press${
+      doc.venue ? ` at ${doc.venue}` : doc.publication ? `, ${doc.publication}` : ''
+    }.`,
   };
 }
 
-export default async function ExhibitionPage({
+export default async function PressDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -65,15 +68,17 @@ export default async function ExhibitionPage({
   return (
     <Container className="py-[40px] md:py-[60px]">
       <Link
-        href="/exhibitions"
+        href="/press"
         className="type-p1 mb-[20px] inline-block text-oslo hover:text-redcurrent"
       >
-        ← Exhibitions
+        ← Press
       </Link>
       <header className="mb-[30px] flex flex-col gap-[10px]">
         <H1>{formatLabel(doc.title)}</H1>
-        {(doc.venue || doc.location) && (
-          <P1 className="text-oslo">{[doc.venue, doc.location].filter(Boolean).join(', ')}</P1>
+        {(doc.venue || doc.publication || doc.location) && (
+          <P1 className="text-oslo">
+            {[doc.venue, doc.publication, doc.location].filter(Boolean).join(', ')}
+          </P1>
         )}
         {Boolean(doc.description) && (
           <div className="type-p1 mt-[10px] flex max-w-2xl flex-col gap-[10px]">

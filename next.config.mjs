@@ -18,6 +18,9 @@ const nextConfig = {
       { source: '/products/:slug', destination: '/shop/:slug', permanent: true },
       // Contact lives in the Studio page's #contact section now.
       { source: '/contact', destination: '/studio', permanent: true },
+      // Exhibition renamed to Press (and merged with the unused Press Item type).
+      { source: '/exhibitions', destination: '/press', permanent: true },
+      { source: '/exhibitions/:slug', destination: '/press/:slug', permanent: true },
     ];
   },
   // NOTE: The Content-Security-Policy is intentionally NOT set here.

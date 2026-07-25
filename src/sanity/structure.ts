@@ -64,7 +64,6 @@ export const structure: StructureResolver = (S) =>
       // ── Editorial ──
       S.divider().title('Editorial'),
       S.documentTypeListItem('lookbookDrop').title('Lookbook Drops'),
-      S.documentTypeListItem('exhibition').title('Exhibitions'),
-      S.documentTypeListItem('pressItem').title('Press'),
+      S.documentTypeListItem('press').title('Press'),
       S.documentTypeListItem('page').title('Pages'),
     ]);

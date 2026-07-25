@@ -10,8 +10,7 @@ import { pageBuilderBlocks } from './objects/blocks';
 import { product } from './documents/product';
 import { collection } from './documents/collection';
 import { order } from './documents/order';
-import { exhibition } from './documents/exhibition';
-import { pressItem } from './documents/pressItem';
+import { press } from './documents/press';
 import { page } from './documents/page';
 import { lookbookDrop } from './documents/lookbookDrop';
 import { homePage } from './documents/homePage';
@@ -28,8 +27,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   product,
   collection,
   order,
-  exhibition,
-  pressItem,
+  press,
   page,
   lookbookDrop,
   homePage,

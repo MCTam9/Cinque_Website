@@ -6,22 +6,23 @@ import { H1, H2, P1 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { exhibitionsQuery } from '@/lib/sanity/queries';
+import { pressQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import type { SanityImageRef } from '@/types';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'Exhibition',
-  description: 'Cinque® exhibitions, shows and installations.',
+  title: 'Press',
+  description: 'Cinque® press, shows and installations.',
 };
 
-interface ExhibitionDoc {
+interface PressDoc {
   _id: string;
   title: string;
   slug?: string;
   venue?: string;
+  publication?: string;
   location?: string;
   startDate?: string;
   endDate?: string;
@@ -30,7 +31,7 @@ interface ExhibitionDoc {
   externalUrl?: string;
 }
 
-// Fallback imagery when an exhibition has no photos yet.
+// Fallback imagery when a press entry has no photos yet.
 const STANDINS = [
   '/figma/lookbook-1-hand.png',
   '/figma/lookbook-2-bench-flatlay.png',
@@ -40,7 +41,7 @@ const STANDINS = [
 function ExhImage({ src, hideOnMobile = false }: { src: string; hideOnMobile?: boolean }) {
   return (
     <div className={`group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30 ${hideOnMobile ? 'max-md:hidden' : ''}`}>
-      <Image src={src} alt="Cinque exhibition piece" fill sizes="(max-width: 768px) 50vw, 300px" className="img-bw object-cover" />
+      <Image src={src} alt="Cinque press piece" fill sizes="(max-width: 768px) 50vw, 300px" className="img-bw object-cover" />
     </div>
   );
 }
@@ -49,7 +50,7 @@ function formatMonth(iso?: string): string {
   return iso ? iso.slice(0, 7) : '';
 }
 
-function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
+function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
   const images =
     ex.images && ex.images.length
       ? ex.images
@@ -74,20 +75,20 @@ function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
 
   return (
     <article className={last ? '' : 'mb-[60px]'}>
-      {/* Header — title (+ venue: right over a shared rule on desktop, left below on mobile) */}
+      {/* Header — title (+ venue/publication: right over a shared rule on desktop, left below on mobile) */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
         <H2 className="border-b border-oslo pb-[10px] md:col-span-2">
           {ex.slug ? (
-            <Link href={`/exhibitions/${ex.slug}`} className="hover:text-redcurrent">
+            <Link href={`/press/${ex.slug}`} className="hover:text-redcurrent">
               {formatLabel(ex.title)}
             </Link>
           ) : (
             formatLabel(ex.title)
           )}
         </H2>
-        {ex.venue && (
+        {(ex.venue || ex.publication) && (
           <P1 className="text-oslo md:border-b md:border-oslo md:pb-[10px] md:text-right">
-            {ex.venue}
+            {[ex.venue, ex.publication].filter(Boolean).join(' · ')}
           </P1>
         )}
       </div>
@@ -136,19 +137,19 @@ function Entry({ ex, last }: { ex: ExhibitionDoc; last: boolean }) {
   );
 }
 
-export default async function ExhibitionsPage() {
-  const items = await sanityFetch<ExhibitionDoc[]>({
-    label: 'exhibitions',
-    query: exhibitionsQuery,
+export default async function PressPage() {
+  const items = await sanityFetch<PressDoc[]>({
+    label: 'press',
+    query: pressQuery,
     fallback: [],
   });
 
   return (
     <Container className="py-[40px] md:py-[60px]">
-      <H1 className="mb-[10px] border-b border-oslo pb-[10px]">EXHIBITION</H1>
+      <H1 className="mb-[10px] border-b border-oslo pb-[10px]">PRESS</H1>
 
       {items.length === 0 ? (
-        <P1 className="text-oslo">No exhibitions listed yet. Please check back soon.</P1>
+        <P1 className="text-oslo">No press listed yet. Please check back soon.</P1>
       ) : (
         items.map((ex, i) => <Entry key={ex._id} ex={ex} last={i === items.length - 1} />)
       )}

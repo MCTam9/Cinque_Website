@@ -15,7 +15,7 @@ interface FetchArgs<T> {
  * fails — but never silently.
  *
  * Every storefront page degrades gracefully when Sanity is unreachable (Figma
- * strips on Home, "No exhibitions listed yet", and so on). Without a log line
+ * strips on Home, "No press listed yet", and so on). Without a log line
  * that failure is indistinguishable from "nothing has been published yet",
  * which is exactly how a revoked token or a mistyped dataset stays invisible
  * for weeks. This logs once, loudly, then degrades.
