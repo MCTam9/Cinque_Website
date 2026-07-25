@@ -164,8 +164,9 @@ export default async function HomePage() {
                 alt: i.alt || `${s.label} — Cinque`,
               }));
 
-          // Media: CMS gallery (grid or auto-scroll) if uploaded, else the
-          // built-in Figma fallback strip (a single image linking to the page).
+          // Media: CMS gallery (a grid, capped at 4 images on mobile / 5 on
+          // desktop) if uploaded, else the built-in Figma fallback strip (a
+          // single image linking to the page).
           const media =
             mediaImages.length > 0 ? (
               <HomeSectionMedia images={mediaImages} href={s.href} sectionLabel={s.label} />
@@ -192,8 +193,8 @@ export default async function HomePage() {
               </Link>
 
               {/* LOOKBOOK's per-drop links are no longer a separate row: each
-                  drop title now sits on its own card above its cover image
-                  (see `lookbookCards`), so title and picture scroll together. */}
+                  drop title sits on its own card above its cover image (see
+                  `lookbookCards`). Mobile shows the covers only. */}
               {media}
             </section>
           );
