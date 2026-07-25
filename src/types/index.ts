@@ -85,6 +85,7 @@ export interface StudioPageDoc {
   responseTime?: string;
   address?: string;
   bespokeImage?: SanityImageRef;
+  bespokeImages?: SanityImageRef[];
   bespokeIntro?: unknown; // Portable Text
   bespokeProcessLabel?: string;
   bespokeSteps?: { number: string; title: string; body?: unknown }[];

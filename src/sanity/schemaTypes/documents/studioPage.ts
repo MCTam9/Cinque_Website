@@ -1,5 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
-import { crop5x7, crop21x9 } from '../imageCrop';
+import { crop2x3, crop5x7, crop21x9 } from '../imageCrop';
 
 /**
  * The Studio page (/studio) — a singleton, like Home: only one exists, edited
@@ -128,6 +128,28 @@ export const studioPage = defineType({
     }),
 
     // ── Bespoke (below Contact) ──
+    defineField({
+      name: 'bespokeImages',
+      title: 'Bespoke image row',
+      type: 'array',
+      group: 'bespoke',
+      description:
+        'A row of 4 images directly below the Bespoke heading, cropped to 2:3. Only the first 4 show.',
+      of: [
+        defineArrayMember({
+          type: 'image',
+          options: { hotspot: crop2x3 },
+          fields: [
+            defineField({
+              name: 'alt',
+              title: 'Alt text',
+              type: 'string',
+              description: 'Describes the image for accessibility and SEO.',
+            }),
+          ],
+        }),
+      ],
+    }),
     defineField({
       name: 'bespokeImage',
       title: 'Bespoke image',
