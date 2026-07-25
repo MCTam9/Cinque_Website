@@ -84,6 +84,7 @@ export interface StudioPageDoc {
   commissionChecklist?: string[];
   responseTime?: string;
   address?: string;
+  bespokeImage?: SanityImageRef;
   bespokeIntro?: unknown; // Portable Text
   bespokeProcessLabel?: string;
   bespokeSteps?: { number: string; title: string; body?: unknown }[];

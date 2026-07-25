@@ -158,6 +158,7 @@ export const studioPageQuery = groq`
     commissionChecklist,
     responseTime,
     address,
+    bespokeImage{ alt, asset },
     bespokeIntro,
     bespokeProcessLabel,
     bespokeSteps[]{ number, title, body },
