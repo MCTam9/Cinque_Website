@@ -84,29 +84,38 @@ export default function Nav() {
       </div>
 
       {/* Mobile panel — links stacked left, CART right on the last row,
-          bottom rule inset to the 20px padding. */}
-      {open && (
-        <div id="mobile-menu" className="animate-dropdown bg-cararra px-5 md:hidden">
-          <ul className="flex flex-col gap-[20px] border-b border-graphite pb-[20px]">
-            {LINKS.map((l, i) => (
-              <li
-                key={l.href}
-                className={i === 0 ? 'flex items-center justify-between' : ''}
-              >
-                <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
-                  {l.label}
-                </Link>
-                {/* CART sits on the right of the first (SHOP) row, aligned with it. */}
-                {i === 0 && (
-                  <Link href="/cart" className={linkClass(isActive(pathname, '/cart'))}>
-                    {cartLabel}
+          bottom rule inset to the 20px padding. Kept mounted so it can
+          animate shut as well as open (see .dropdown-panel). Three
+          nested divs, each load-bearing: the outer one holds md:hidden,
+          so the panel's `display: grid` can't override it and leak the
+          menu onto desktop; the middle one is the clipper, kept bare so
+          the collapse reaches flush zero and the closed menu adds no
+          height to the header; the rule and padding ride on the list
+          inside it. */}
+      <div className="px-5 md:hidden">
+        <div id="mobile-menu" data-open={open} className="dropdown-panel bg-cararra">
+          <div>
+            <ul className="flex flex-col gap-[20px] border-b border-graphite pb-[20px]">
+              {LINKS.map((l, i) => (
+                <li
+                  key={l.href}
+                  className={i === 0 ? 'flex items-center justify-between' : ''}
+                >
+                  <Link href={l.href} className={linkClass(isActive(pathname, l.href))}>
+                    {l.label}
                   </Link>
-                )}
-              </li>
-            ))}
-          </ul>
+                  {/* CART sits on the right of the first (SHOP) row, aligned with it. */}
+                  {i === 0 && (
+                    <Link href="/cart" className={linkClass(isActive(pathname, '/cart'))}>
+                      {cartLabel}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }

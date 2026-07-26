@@ -40,24 +40,35 @@ export default function LookbookHeader({
         </button>
       </div>
 
-      {open && (
-        <ul className="animate-dropdown mt-[10px] flex flex-col gap-[10px] md:hidden">
-          {drops.map((d) => (
-            <li key={d.slug}>
-              <Link
-                href={`/lookbook?drop=${d.slug}`}
-                className={`type-h3 ${
-                  d.slug === active
-                    ? 'text-redcurrent underline underline-offset-4'
-                    : 'text-graphite'
-                }`}
-              >
-                {d.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Kept mounted so HIDE collapses the list rather than dropping it
+          (see .dropdown-panel). md:hidden goes on the outer wrapper so it
+          beats the panel's `display: grid`, and the 10px above the list is
+          padding on the list itself — inside the bare clipper, so it
+          collapses away with everything else instead of leaving a gap
+          under the title. Open on first render, which is a plain state,
+          so nothing animates on load. */}
+      <div className="md:hidden">
+        <div data-open={open} className="dropdown-panel">
+          <div>
+            <ul className="flex flex-col gap-[10px] pt-[10px]">
+              {drops.map((d) => (
+                <li key={d.slug}>
+                  <Link
+                    href={`/lookbook?drop=${d.slug}`}
+                    className={`type-h3 ${
+                      d.slug === active
+                        ? 'text-redcurrent underline underline-offset-4'
+                        : 'text-graphite'
+                    }`}
+                  >
+                    {d.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
     </header>
   );
 }

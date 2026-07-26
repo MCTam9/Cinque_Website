@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Mobile CATEGORY dropdown. Replaces a native <details> so the panel is
- * conditionally mounted on open — that's what lets the shared `.animate-dropdown`
- * reveal fire each time (a <details> keeps its panel in the DOM, so the CSS
- * animation never re-triggers). Closes on outside click, Escape, or selection.
+ * Mobile CATEGORY dropdown. Replaces a native <details> so the panel's open
+ * state is ours to drive — <details> gives no way to animate the close, since
+ * it snaps `display` on the panel. Here the panel stays mounted and the shared
+ * `.dropdown-overlay` transitions it both ways off `data-open`. Closes on
+ * outside click, Escape, or selection.
  */
 export default function CategoryDisclosure({
   label = 'CATEGORY',
@@ -48,14 +49,18 @@ export default function CategoryDisclosure({
       >
         {label}
       </button>
-      {open && (
-        <div
-          onClick={() => setOpen(false)}
-          className="animate-dropdown absolute right-0 top-full z-20 mt-[10px] border border-oslo bg-cararra px-[20px] py-[10px]"
-        >
-          {children}
-        </div>
-      )}
+      {/* Floating, so there's no page below to displace and no height to
+          animate — it fades and slides, in both directions (see
+          .dropdown-overlay). Collapsed it's `visibility: hidden`, which
+          is what keeps it from swallowing clicks on the row beneath it
+          and its links out of the tab order. */}
+      <div
+        onClick={() => setOpen(false)}
+        data-open={open}
+        className="dropdown-overlay absolute right-0 top-full z-20 mt-[10px] border border-oslo bg-cararra px-[20px] py-[10px]"
+      >
+        {children}
+      </div>
     </div>
   );
 }
