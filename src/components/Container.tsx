@@ -4,9 +4,9 @@ import type { ElementType, ReactNode } from 'react';
  * The canonical page shell, shared by every page. Reproduces the Figma Shop-page
  * grid:
  *   grid-template-columns: minmax(0,0.25fr) minmax(0,1fr) minmax(0,0.25fr)
- * — a fluid centre column with 0.25fr side gutters — centred and capped at the
- * 1440 frame so it stays aligned with the nav and footer on wide monitors. On
- * mobile it collapses to a single full-width column with 20px page padding.
+ * — a fluid centre column with 0.25fr side gutters — centred and capped at
+ * `max-w-frame` so it stays aligned with the nav and footer on wide monitors.
+ * On mobile it collapses to a single full-width column with 20px page padding.
  *
  * `Container` places its children in the centre column. Pages that also need the
  * left gutter (Shop's category rail, Lookbook's drop rail) apply `shellGrid`
