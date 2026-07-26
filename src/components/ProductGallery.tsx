@@ -24,9 +24,11 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
   const hasThumbs = images.length > 1;
   const main = images[Math.min(active, images.length - 1)];
 
+  // The active outline is drawn *inside* the thumb box: the desktop column
+  // scrolls, and an outset ring would be clipped against its edges.
   const thumbClass = (i: number) =>
     `group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30 ${
-      i === active ? 'ring-1 ring-graphite' : ''
+      i === active ? 'outline outline-1 outline-offset-[-1px] outline-graphite' : ''
     }`;
 
   return (
