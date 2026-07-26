@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { H1, H2, P1, P2 } from '@/components/typography';
+import { H1, H3, P1, P2 } from '@/components/typography';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         information you provide.
       </P1>
 
-      <H2 className="font-bold">Information we collect</H2>
+      <H3 as="h2" className="font-bold">Information we collect</H3>
       <P1>
         We collect the details you give us directly — your name, email address, and any message
         you send via our contact form — and the information needed to fulfil an order, including
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
         processed by our payment provider; we never see or store full card numbers.
       </P1>
 
-      <H2 className="font-bold">How we use it</H2>
+      <H3 as="h2" className="font-bold">How we use it</H3>
       <P1>
         We use your information to respond to enquiries, process and deliver orders, send order and
         shipping confirmations, and meet our legal and accounting obligations. Our legal bases are
@@ -34,20 +34,20 @@ export default function PrivacyPage() {
         compliance with legal duties.
       </P1>
 
-      <H2 className="font-bold">Sharing &amp; processors</H2>
+      <H3 as="h2" className="font-bold">Sharing &amp; processors</H3>
       <P1>
         We share data only with the service providers that help us run the store: Stripe (payment
         processing), Resend (transactional and enquiry email), and Sanity (content and order
         records). Each processes data on our behalf under its own terms. We do not sell your data.
       </P1>
 
-      <H2 className="font-bold">Retention</H2>
+      <H3 as="h2" className="font-bold">Retention</H3>
       <P1>
         We keep enquiry emails for as long as needed to handle your request, and order records for
         as long as required by tax and accounting law.
       </P1>
 
-      <H2 className="font-bold">Your rights</H2>
+      <H3 as="h2" className="font-bold">Your rights</H3>
       <P1>
         Under UK GDPR you have the right to access, correct, or erase your personal data, to
         restrict or object to processing, and to data portability. To exercise any of these rights,
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
         . You may also complain to the Information Commissioner’s Office (ico.org.uk).
       </P1>
 
-      <H2 className="font-bold">Cookies</H2>
+      <H3 as="h2" className="font-bold">Cookies</H3>
       <P1>
         This site uses only the cookies and local storage necessary for it to function, such as
         remembering the contents of your cart. We do not use third-party advertising cookies.
