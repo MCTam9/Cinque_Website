@@ -130,6 +130,9 @@ export default async function HomePage() {
 
       {/* Hero: logo left, tagline vertically centred with it */}
       <section className="mb-[40px] flex flex-col gap-[30px] md:mb-[60px] md:flex-row md:items-center md:justify-between">
+        {/* A local SVG, so there is nothing for next/image to optimise — same
+            reasoning as the wordmark in Nav. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/figma/cinque-logo.svg"
           alt=""
