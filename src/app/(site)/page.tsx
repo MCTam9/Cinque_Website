@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Container, { contentPadY } from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
-import { H1, H3 } from '@/components/typography';
+import { H1, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { homePageQuery, lookbookDropsQuery } from '@/lib/sanity/queries';
@@ -137,14 +137,14 @@ export default async function HomePage() {
           height={96}
           className="hidden h-auto w-[260px] md:block md:w-[351px]"
         />
-        <H3 className="text-oslo md:text-right">
+        <P1 className="text-oslo md:text-right">
           {taglineLines.map((line, i) => (
             <Fragment key={i}>
               {line}
               {i < taglineLines.length - 1 && <br />}
             </Fragment>
           ))}
-        </H3>
+        </P1>
       </section>
 
       {/* Sections */}
