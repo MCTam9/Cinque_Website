@@ -34,21 +34,21 @@
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Type scale — canon (H1–H3, P1–P2). One shared scale across
-   breakpoints; only P2 has a mobile-specific size (M_P2).
+   Type scale — canon (H1–H3, P1–P2). One shared scale across every
+   breakpoint: no token varies by viewport.
    ─────────────────────────────────────────────────────────────── */
 @layer components {
-  /* Matches the Figma text styles exactly. "Auto" line-height → `normal`.
-     Long monospace headings wrap (overflow-wrap in the base layer) rather than
-     shrink, so the sizes stay fixed as in Figma. */
+  /* "Auto" line-height → `normal`. Long monospace headings wrap
+     (overflow-wrap in the base layer) rather than shrink, so the sizes stay
+     fixed rather than fluid. */
   .type-h1 {
-    font-weight: 400; /* H1 · 32/Auto — Letter Gothic Medium */
-    font-size: 32px;
+    font-weight: 400; /* H1 · 24/Auto — Letter Gothic Medium */
+    font-size: 24px;
     line-height: normal;
   }
   .type-h2 {
-    font-weight: 700; /* H2 · 32/Auto — Bold */
-    font-size: 32px;
+    font-weight: 700; /* H2 · 24/Auto — Bold */
+    font-size: 24px;
     line-height: normal;
   }
   .type-h3 {
@@ -61,17 +61,11 @@
     font-size: 14px;
     line-height: 18px;
   }
-  /* P2 · 12/16 on desktop; M_P2 · 11/20 on mobile. */
+  /* P2 · 11/20 — M_P2 merged into P2, so one size at every breakpoint. */
   .type-p2 {
     font-weight: 400;
     font-size: 11px;
     line-height: 20px;
-  }
-  @media (min-width: 768px) {
-    .type-p2 {
-      font-size: 12px;
-      line-height: 16px;
-    }
   }
 
   /* Outlined button — the site's only button treatment. Used on links
