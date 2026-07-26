@@ -24,12 +24,16 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
   const hasThumbs = images.length > 1;
   const main = images[Math.min(active, images.length - 1)];
 
-  // The active outline is drawn *inside* the thumb box: the desktop column
-  // scrolls, and an outset ring would be clipped against its edges.
-  const thumbClass = (i: number) =>
-    `group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30 ${
-      i === active ? 'outline outline-1 outline-offset-[-1px] outline-graphite' : ''
-    }`;
+  const thumbClass = 'group relative aspect-[3/4] w-full overflow-hidden bg-cloud/30';
+
+  // The active thumb is marked with an overlay rather than a ring or outline on
+  // the button itself: the desktop column scrolls, so an outset ring is clipped
+  // against its edges, and an inset ring or outline is painted underneath the
+  // fill Image. This sits inside the box and after the image, so neither
+  // happens.
+  const activeMark = (
+    <span aria-hidden className="pointer-events-none absolute inset-0 border border-graphite" />
+  );
 
   return (
     <div className={`grid gap-[10px] ${hasThumbs ? 'md:grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
@@ -55,9 +59,10 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
                 onClick={() => setActive(i)}
                 aria-label={`View image ${i + 1}`}
                 aria-pressed={i === active}
-                className={`${thumbClass(i)} shrink-0`}
+                className={`${thumbClass} shrink-0`}
               >
                 <Image src={img.thumb} alt={img.alt} fill sizes="15vw" className="img-bw object-cover" />
+                {i === active && activeMark}
               </button>
             ))}
           </div>
@@ -74,9 +79,10 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
               onClick={() => setActive(i)}
               aria-label={`View image ${i + 1}`}
               aria-pressed={i === active}
-              className={thumbClass(i)}
+              className={thumbClass}
             >
               <Image src={img.thumb} alt={img.alt} fill sizes="22vw" className="img-bw object-cover" />
+              {i === active && activeMark}
             </button>
           ))}
         </div>
