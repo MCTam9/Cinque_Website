@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import ImageColorReveal from '@/components/ImageColorReveal';
@@ -5,6 +6,10 @@ import ImageColorReveal from '@/components/ImageColorReveal';
 /**
  * Shared chrome for all public marketing/shop pages. Sanity Studio (/admin)
  * and API routes sit outside this group so they stay clean.
+ *
+ * Vercel Analytics mounts here rather than in the root layout for the same
+ * reason: the Studio is not part of the storefront, and its pageviews would
+ * both skew the numbers and eat into the plan's event allowance.
  */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +27,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       </main>
       <Footer />
       <ImageColorReveal />
+      <Analytics />
     </>
   );
 }
