@@ -59,12 +59,22 @@ export interface LookbookDrop {
   images?: SanityImageRef[];
 }
 
-/** The Home page singleton (tagline + per-section image galleries). */
+/** A press entry reduced to what the Home page PRESS card needs. */
+export interface PressCard {
+  _id: string;
+  title: string;
+  slug: string;
+  cover?: SanityImageRef;
+}
+
+/**
+ * The Home page singleton (tagline + per-section image galleries). PRESS has no
+ * field here — that section is built from the press entries themselves.
+ */
 export interface HomePageDoc {
   tagline?: string;
   shopImages?: SanityImageRef[];
   lookbookImages?: SanityImageRef[];
-  pressImages?: SanityImageRef[];
   studioImages?: SanityImageRef[];
 }
 
