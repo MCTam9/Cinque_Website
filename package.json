@@ -16,6 +16,7 @@
     "@sanity/vision": "^3.68.3",
     "@stripe/react-stripe-js": "^3.1.1",
     "@stripe/stripe-js": "^5.5.0",
+    "@vercel/analytics": "^2.0.1",
     "next": "^15.1.6",
     "next-sanity": "^9.8.44",
     "react": "^18.3.1",
