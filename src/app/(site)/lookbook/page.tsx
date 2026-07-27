@@ -18,12 +18,9 @@ export const metadata: Metadata = {
   description: 'Cinque® drops and the studio archive — one-of-a-kind and limited objects.',
 };
 
-// Built-in imagery / copy used when no drops have been added in Sanity yet, so
-// the page always renders (mirrors the Press page's stand-in pattern).
-const HAND = '/figma/lookbook-1-hand.png';
-const BENCH = '/figma/lookbook-2-bench-flatlay.png';
-const MACRO = '/figma/lookbook-3-macro-hallmark-bead.png';
-const FALLBACK_IMAGES = [HAND, MACRO, BENCH, HAND, BENCH, MACRO, HAND];
+// The drop list shown when none have been added in Sanity yet, so the page
+// always has something to navigate. Copy only — these drops carry no imagery,
+// since a photo that hasn't been uploaded is never stood in for.
 const FALLBACK_SLUGS = [
   '00_Archive',
   '01_Metal_Veil',
@@ -82,7 +79,7 @@ function toNormDrops(cms: LookbookDrop[]): NormDrop[] {
   return FALLBACK_SLUGS.map((slug) => ({
     slug,
     label: formatLabel(slug),
-    images: FALLBACK_IMAGES.map((src) => ({ src, alt: 'Cinque piece' })),
+    images: [],
   }));
 }
 
@@ -176,8 +173,13 @@ export default async function LookbookPage({
 
         {/* Row 1: copy + up to two images | featured image. On mobile these
             stack, so they take the 20px text↔image spacing used elsewhere; from
-            md up the 10px grid gutter applies. */}
-        <div className="mb-[10px] grid grid-cols-1 gap-[20px] md:grid-cols-2 md:gap-[10px]">
+            md up the 10px grid gutter applies. With no featured image there is
+            nothing to sit beside, so the copy takes the full width. */}
+        <div
+          className={`mb-[10px] grid grid-cols-1 gap-[20px] md:gap-[10px] ${
+            featured ? 'md:grid-cols-2' : ''
+          }`}
+        >
           <div className="flex flex-col gap-[20px] md:gap-[10px]">
             <div className="flex flex-col gap-[20px] type-p1">
               {activeDrop?.intro ? (
