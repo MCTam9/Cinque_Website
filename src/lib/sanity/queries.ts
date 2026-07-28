@@ -121,6 +121,14 @@ export const pressQuery = groq`
   }
 `;
 
+// Just enough to point each Home PRESS image at its entry on the Press page.
+// Same order as `pressQuery`, so the two lists line up position for position.
+export const pressLinksQuery = groq`
+  *[_type == "press"] | order(startDate desc) {
+    _id, title, "slug": slug.current
+  }
+`;
+
 // All drops, newest first (Lookbook page + Home drop list).
 export const lookbookDropsQuery = groq`
   *[_type == "drop" && defined(slug.current)] | order(dropNumber desc) {

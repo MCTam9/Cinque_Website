@@ -6,7 +6,7 @@ import JsonLd from '@/components/JsonLd';
 import { H1, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { homePageQuery, lookbookDropsQuery } from '@/lib/sanity/queries';
+import { homePageQuery, lookbookDropsQuery, pressLinksQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
 import type { HomePageDoc, LookbookDrop, SanityImageRef } from '@/types';
@@ -39,6 +39,8 @@ const SECTIONS = [
 ] as const;
 
 type DropLink = { slug: string; label: string; cover?: SanityImageRef };
+
+type PressLink = { _id: string; title: string; slug?: string };
 
 /** Sanity CDN URL at the 2:3 crop every home card renders in. */
 function imageUrl(img: SanityImageRef): string {
@@ -80,8 +82,32 @@ function lookbookCards(
   return cards;
 }
 
+/**
+ * PRESS cards: each image links to its own entry on the Press page
+ * (/press#slug) rather than to the top of it, so the reader lands on the piece
+ * they clicked.
+ *
+ * Pairing is positional, as on LOOKBOOK — the Home Page's PRESS images are
+ * uploaded newest entry first, the order `pressLinks` comes back in. An image
+ * with no entry beside it (or an entry with no slug) still links to /press.
+ */
+function pressCards(
+  images: SanityImageRef[] | undefined,
+  pressLinks: PressLink[]
+): MediaImage[] {
+  return (images ?? []).map((img, i) => {
+    const entry = pressLinks[i];
+    return {
+      url: imageUrl(img),
+      alt: img.alt || `${entry ? formatLabel(entry.title) : 'PRESS'} — Cinque`,
+      href: entry?.slug ? `/press#${entry.slug}` : undefined,
+      linkLabel: entry ? formatLabel(entry.title) : undefined,
+    };
+  });
+}
+
 export default async function HomePage() {
-  const [home, drops] = await Promise.all([
+  const [home, drops, pressLinks] = await Promise.all([
     sanityFetch<HomePageDoc | null>({
       label: 'homePage',
       query: homePageQuery,
@@ -90,6 +116,11 @@ export default async function HomePage() {
     sanityFetch<LookbookDrop[]>({
       label: 'lookbookDrops',
       query: lookbookDropsQuery,
+      fallback: [],
+    }),
+    sanityFetch<PressLink[]>({
+      label: 'pressLinks',
+      query: pressLinksQuery,
       fallback: [],
     }),
   ]);
@@ -162,10 +193,12 @@ export default async function HomePage() {
 
           const mediaImages: MediaImage[] = isLookbook
             ? lookbookCards(cmsImages, dropLinks)
-            : (cmsImages ?? []).map((i) => ({
-                url: imageUrl(i),
-                alt: i.alt || `${s.label} — Cinque`,
-              }));
+            : s.href === '/press'
+              ? pressCards(cmsImages, pressLinks)
+              : (cmsImages ?? []).map((i) => ({
+                  url: imageUrl(i),
+                  alt: i.alt || `${s.label} — Cinque`,
+                }));
 
           // Media: CMS gallery (a grid, capped at 4 images on mobile / 5 on
           // desktop) if uploaded, else the built-in Figma fallback strip (a

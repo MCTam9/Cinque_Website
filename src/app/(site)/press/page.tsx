@@ -84,7 +84,13 @@ function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
   );
 
   return (
-    <article className={last ? '' : 'mb-[40px] md:mb-[60px]'}>
+    // The slug doubles as the anchor the Home page's PRESS images link to
+    // (/press#slug). scroll-mt clears the 70px sticky Nav, so a jumped-to entry
+    // starts below it rather than under it.
+    <article
+      id={ex.slug}
+      className={`scroll-mt-[80px] ${last ? '' : 'mb-[40px] md:mb-[60px]'}`}
+    >
       {/* Header — title (+ venue/publication: right over a shared rule on desktop, left below on mobile) */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
         <H2 className="border-b border-oslo pb-[10px] md:col-span-2">
