@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Container, { contentPadY } from '@/components/Container';
-import { H1, H2, P1 } from '@/components/typography';
+import { H1, H2, H3, P1 } from '@/components/typography';
 import { PortableText } from '@/components/PortableText';
 import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 interface PressDoc {
   _id: string;
   title: string;
+  subtitle?: string;
   slug?: string;
   venue?: string;
   publication?: string;
@@ -31,23 +32,16 @@ interface PressDoc {
   externalUrl?: string;
 }
 
-// Fallback imagery when a press entry has no photos yet.
-const STANDINS = [
-  '/figma/lookbook-1-hand.png',
-  '/figma/lookbook-2-bench-flatlay.png',
-  '/figma/lookbook-3-macro-hallmark-bead.png',
-];
-
 /**
  * A press photo. `full` marks the one that spans both mobile columns (the first
  * of an entry), so its `sizes` hint matches the width it actually renders at.
  */
-function ExhImage({ src, full = false }: { src: string; full?: boolean }) {
+function ExhImage({ src, alt, full = false }: { src: string; alt: string; full?: boolean }) {
   return (
     <div className="group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
       <Image
         src={src}
-        alt="Cinque press piece"
+        alt={alt}
         fill
         sizes={`(max-width: 768px) ${full ? '100vw' : '50vw'}, 300px`}
         className="img-bw object-cover"
@@ -56,19 +50,21 @@ function ExhImage({ src, full = false }: { src: string; full?: boolean }) {
   );
 }
 
-function formatMonth(iso?: string): string {
-  return iso ? iso.slice(0, 7) : '';
+/** Sanity `date` fields already store YYYY-MM-DD; the slice is a guard. */
+function formatDay(iso?: string): string {
+  return iso ? iso.slice(0, 10) : '';
 }
 
 function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
-  const images =
-    ex.images && ex.images.length
-      ? ex.images
-          .filter((i) => i.asset)
-          .slice(0, 3)
-          .map((img) => urlFor(img as never).width(600).height(900).fit('crop').url())
-      : STANDINS;
-  const date = [formatMonth(ex.startDate), formatMonth(ex.endDate)].filter(Boolean).join(' – ');
+  // Only real uploads render — an entry with no photos shows none.
+  const images = (ex.images ?? [])
+    .filter((i) => i.asset)
+    .slice(0, 3)
+    .map((img) => ({
+      src: urlFor(img as never).width(600).height(900).fit('crop').url(),
+      alt: img.alt || formatLabel(ex.title),
+    }));
+  const date = [formatDay(ex.startDate), formatDay(ex.endDate)].filter(Boolean).join(' – ');
 
   const meta = (
     <dl className="flex justify-between gap-[20px] type-p1">
@@ -93,15 +89,19 @@ function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
     >
       {/* Header — title (+ venue/publication: right over a shared rule on desktop, left below on mobile) */}
       <div className="mb-[10px] grid grid-cols-1 items-end gap-x-[10px] gap-y-[10px] md:grid-cols-3">
-        <H2 className="border-b border-oslo pb-[10px] md:col-span-2">
-          {ex.slug ? (
-            <Link href={`/press/${ex.slug}`} className="hover:text-redcurrent">
-              {formatLabel(ex.title)}
-            </Link>
-          ) : (
-            formatLabel(ex.title)
-          )}
-        </H2>
+        {/* Title and subtitle share the rule, so the subtitle sits above it. */}
+        <div className="flex flex-col gap-[10px] border-b border-oslo pb-[10px] md:col-span-2">
+          <H2>
+            {ex.slug ? (
+              <Link href={`/press/${ex.slug}`} className="hover:text-redcurrent">
+                {formatLabel(ex.title)}
+              </Link>
+            ) : (
+              formatLabel(ex.title)
+            )}
+          </H2>
+          {ex.subtitle && <H3 className="text-graphite">{ex.subtitle}</H3>}
+        </div>
         {(ex.venue || ex.publication) && (
           <P1 className="text-oslo md:border-b md:border-oslo md:pb-[10px] md:text-right">
             {[ex.venue, ex.publication].filter(Boolean).join(' · ')}
@@ -137,17 +137,20 @@ function Entry({ ex, last }: { ex: PressDoc; last: boolean }) {
         {/* Date / Location — col 3 on desktop */}
         <div className="hidden h-fit md:block">{meta}</div>
 
-        {/* Images: mobile = first full + rest 2-up; desktop = 3 columns */}
-        <div className="grid grid-cols-2 gap-[10px] md:contents">
-          {images.map((src, i) => (
-            <div
-              key={`${src}-${i}`}
-              className={i === 0 ? 'col-span-2 md:col-span-1' : ''}
-            >
-              <ExhImage src={src} full={i === 0} />
-            </div>
-          ))}
-        </div>
+        {/* Images: mobile = first full + rest 2-up; desktop = 3 columns. Omitted
+            entirely when there are none, so no empty row is left behind. */}
+        {images.length > 0 && (
+          <div className="grid grid-cols-2 gap-[10px] md:contents">
+            {images.map((img, i) => (
+              <div
+                key={`${img.src}-${i}`}
+                className={i === 0 ? 'col-span-2 md:col-span-1' : ''}
+              >
+                <ExhImage src={img.src} alt={img.alt} full={i === 0} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   );

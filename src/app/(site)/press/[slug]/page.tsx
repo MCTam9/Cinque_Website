@@ -7,13 +7,14 @@ import { pressBySlugQuery, pressSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
 import { PortableText } from '@/components/PortableText';
 import Container, { contentPadY } from '@/components/Container';
-import { H1, P1 } from '@/components/typography';
+import { H1, H3, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 
 export const revalidate = 60;
 
 interface PressDoc {
   title: string;
+  subtitle?: string;
   venue?: string;
   publication?: string;
   location?: string;
@@ -75,6 +76,7 @@ export default async function PressDetailPage({
       </Link>
       <header className="mb-[30px] flex flex-col gap-[10px]">
         <H1>{formatLabel(doc.title)}</H1>
+        {doc.subtitle && <H3 className="text-graphite">{doc.subtitle}</H3>}
         {(doc.venue || doc.publication || doc.location) && (
           <P1 className="text-oslo">
             {[doc.venue, doc.publication, doc.location].filter(Boolean).join(', ')}

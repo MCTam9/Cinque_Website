@@ -3,14 +3,17 @@ import { crop2x3 } from '../imageCrop';
 
 /**
  * The Home page — a singleton (only one exists; edited in place, never created
- * or deleted). Staff edit the tagline and, for each section (Shop / Lookbook /
- * Press / Studio), upload one or more images.
+ * or deleted). Staff edit the tagline and, for the Shop / Lookbook / Studio
+ * sections, upload one or more images.
+ *
+ * PRESS has no field here: that section is built from the Press entries
+ * themselves, one card per entry using its first image (see the Home page).
  *
  * Each section is one row of images, sized to how many it has:
  *   • mobile → the first 4, up to 4 columns; captions hidden.
  *   • desktop → the first 5, up to 5 columns, each captioned.
- * Anything beyond those counts never renders. A section left empty falls back
- * to the built-in Figma strip, so the page always renders.
+ * Anything beyond those counts never renders. A section left empty simply shows
+ * its heading — no image is ever substituted in.
  */
 const sectionImages = (name: string, title: string) =>
   defineField({

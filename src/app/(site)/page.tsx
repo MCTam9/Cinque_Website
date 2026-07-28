@@ -1,6 +1,5 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import Container, { contentPadY } from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
 import { H1, P1 } from '@/components/typography';
@@ -9,7 +8,7 @@ import { sanityFetch } from '@/lib/sanity/fetch';
 import { homePageQuery, lookbookDropsQuery, pressLinksQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
-import type { HomePageDoc, LookbookDrop, SanityImageRef } from '@/types';
+import type { HomePageDoc, LookbookDrop, PressCard, SanityImageRef } from '@/types';
 
 export const revalidate = 60;
 
@@ -29,13 +28,15 @@ const DEFAULT_DROPS = [
 ];
 
 // Each Home section = a heading + section imagery, linking to its page.
-// `imageKey` is the Sanity array field; `img` is the built-in Figma fallback
-// strip (shown until images are uploaded).
+// `imageKey` is the Sanity array field on the Home Page document. PRESS has no
+// such field — it is built from the press entries themselves (`press: true`).
+// A section with nothing uploaded shows its heading alone; no image is ever
+// substituted in.
 const SECTIONS = [
-  { href: '/shop', label: 'SHOP', imageKey: 'shopImages', img: '/figma/home-shop.png', w: 1800, h: 653 },
-  { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', img: '/figma/home-lookbook.png', w: 1800, h: 516, drops: true },
-  { href: '/press', label: 'PRESS', imageKey: 'pressImages', img: '/figma/home-exhibition.png', w: 1800, h: 652 },
-  { href: '/studio', label: 'STUDIO', imageKey: 'studioImages', img: '/figma/home-studio.png', w: 1800, h: 652 },
+  { href: '/shop', label: 'SHOP', imageKey: 'shopImages', priority: true },
+  { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', drops: true },
+  { href: '/press', label: 'PRESS', press: true },
+  { href: '/studio', label: 'STUDIO', imageKey: 'studioImages' },
 ] as const;
 
 type DropLink = { slug: string; label: string; cover?: SanityImageRef };
@@ -230,8 +231,14 @@ export default async function HomePage() {
 
               {/* LOOKBOOK's per-drop links are no longer a separate row: each
                   drop title sits on its own card above its cover image (see
-                  `lookbookCards`). Mobile shows the covers only. */}
-              {media}
+                  `lookbookCards`). PRESS works the same way, one card per
+                  entry. Mobile shows the covers only. */}
+              <HomeSectionMedia
+                images={mediaImages}
+                href={s.href}
+                sectionLabel={s.label}
+                priority={'priority' in s && s.priority}
+              />
             </section>
           );
         })}

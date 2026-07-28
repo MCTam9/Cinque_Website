@@ -36,10 +36,13 @@ export default function HomeSectionMedia({
   images,
   href,
   sectionLabel,
+  priority = false,
 }: {
   images: MediaImage[];
   href: string;
   sectionLabel: string;
+  /** Eager-loads the first card — set on the topmost section, for LCP. */
+  priority?: boolean;
 }) {
   const shown = images.slice(0, DESKTOP_MAX);
   if (shown.length === 0) return null;
@@ -83,6 +86,7 @@ export default function HomeSectionMedia({
                 100 / Math.min(shown.length, MOBILE_MAX)
               )}vw, ${Math.round(100 / shown.length)}vw`}
               className="img-bw object-cover transition-opacity group-hover:opacity-90"
+              priority={priority && i === 0}
             />
           </div>
         </Link>
