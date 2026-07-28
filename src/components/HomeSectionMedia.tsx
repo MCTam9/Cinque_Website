@@ -8,6 +8,11 @@ export type MediaImage = {
   label?: string;
   /** Per-image destination; falls back to the section's own link. */
   href?: string;
+  /**
+   * Accessible name for an uncaptioned card that has its own destination, so
+   * sibling links aren't all announced as the section name.
+   */
+  linkLabel?: string;
 };
 
 /** Desktop shows 5 across, mobile 4; the rest never render. */
@@ -55,7 +60,7 @@ export default function HomeSectionMedia({
           href={img.href ?? href}
           // With a visible caption the link names itself; without one it needs
           // the section name. Mobile hides captions, so the image alt carries it.
-          aria-label={img.label ? undefined : sectionLabel}
+          aria-label={img.label ? undefined : (img.linkLabel ?? sectionLabel)}
           className={[
             'group block',
             // Anything past the mobile cap only exists on desktop.
