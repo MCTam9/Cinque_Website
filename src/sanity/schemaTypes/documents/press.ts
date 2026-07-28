@@ -17,6 +17,12 @@ export const press = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'subtitle',
+      title: 'Subtitle',
+      type: 'string',
+      description: 'A second line under the title on the Press page.',
+    }),
+    defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',

@@ -93,7 +93,7 @@ export const collectionSlugsQuery = groq`
 
 export const pressBySlugQuery = groq`
   *[_type == "press" && slug.current == $slug][0]{
-    _id, title, venue, publication, location, startDate, endDate, description,
+    _id, title, subtitle, venue, publication, location, startDate, endDate, description,
     "images": images[]{ alt, asset }, externalUrl,
     ${pageContentProjection}
   }
@@ -116,7 +116,7 @@ export const pageSlugsQuery = groq`
 
 export const pressQuery = groq`
   *[_type == "press"] | order(startDate desc) {
-    _id, title, "slug": slug.current, venue, publication, location, startDate, endDate, description,
+    _id, title, subtitle, "slug": slug.current, venue, publication, location, startDate, endDate, description,
     "images": images[]{ alt, asset }, externalUrl
   }
 `;
@@ -146,7 +146,6 @@ export const homePageQuery = groq`
     tagline,
     "shopImages": shopImages[]{ alt, asset },
     "lookbookImages": lookbookImages[]{ alt, asset },
-    "pressImages": pressImages[]{ alt, asset },
     "studioImages": studioImages[]{ alt, asset }
   }
 `;

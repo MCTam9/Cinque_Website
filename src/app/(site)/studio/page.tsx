@@ -16,8 +16,10 @@ export const revalidate = 60;
 const INSTAGRAM = 'https://www.instagram.com/cinque.made';
 
 /**
- * Built-in copy, shown for any field the Studio Page document leaves blank (or
- * whenever Sanity is unreachable) — so /studio always renders in full.
+ * Built-in copy, shown for any text field the Studio Page document leaves blank
+ * (or whenever Sanity is unreachable) — so /studio always reads in full.
+ * Imagery has no equivalent: an image that hasn't been uploaded simply doesn't
+ * render, rather than standing in a photo of something else.
  */
 const DEFAULTS = {
   seoDescription:
@@ -28,15 +30,6 @@ const DEFAULTS = {
     'Through wax and metal forming, Cinque transforms natural and cultural relics into tangible, wearable pieces—sealing ephemeral moments into the material permanence of metalwork. Each piece evokes new interpretations of memory, activated through the touch of skin. Cinque® uses this instinctive, tactile connection to express delicate, transient memories through the warmth of the five fingers—hence the name Cinque, meaning “five.”',
     'Handmade and cast in London, Cinque’s pieces create new connections and tangible interpretations of memories, accessed from the touch of skin.',
     'Cinque works closely with photographer and multi-disciplinary designer Vincent Tam to explore the dialogue between object, image and documentation.',
-  ],
-  portrait: '/figma/lookbook-2-bench-flatlay.png',
-  bandImage: '/figma/home-studio.png',
-  bespokeImage: '/figma/lookbook-3-macro-hallmark-bead.png',
-  bespokeImages: [
-    '/figma/lookbook-1-hand.png',
-    '/figma/lookbook-2-bench-flatlay.png',
-    '/figma/lookbook-3-macro-hallmark-bead.png',
-    '/figma/hallmark.png',
   ],
   contactIntro:
     'For bespoke commissions, custom variations, or general enquiries, please email:',
@@ -158,16 +151,13 @@ export default async function StudioPage() {
     studio?.bespokeProcessLabel?.trim() || DEFAULTS.bespokeProcessLabel;
   const bespokeSteps = studio?.bespokeSteps?.length ? studio.bespokeSteps : null;
   const bespokeImage = cropped(studio?.bespokeImage, 500, 700);
-  const cmsBespokeImages = (studio?.bespokeImages ?? []).filter((i) => i.asset);
-  const bespokeImages =
-    cmsBespokeImages.length > 0
-      ? cmsBespokeImages
-          .slice(0, 4)
-          .map((img) => ({
-            src: urlFor(img as never).width(600).height(900).fit('crop').url(),
-            alt: img.alt || 'Cinque bespoke commission',
-          }))
-      : DEFAULTS.bespokeImages.map((src) => ({ src, alt: 'Cinque bespoke commission' }));
+  const bespokeImages = (studio?.bespokeImages ?? [])
+    .filter((i) => i.asset)
+    .slice(0, 4)
+    .map((img) => ({
+      src: urlFor(img as never).width(600).height(900).fit('crop').url(),
+      alt: img.alt || 'Cinque bespoke commission',
+    }));
 
   return (
     <Container className={contentPadY}>
@@ -197,12 +187,27 @@ export default async function StudioPage() {
         </div>
         {/* Mobile leads with the portrait, directly under the About rule and
             above the copy; on desktop it returns to the right-hand column. */}
-        <div className="group relative order-first aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30 md:order-none">
+        {portrait && (
+          <div className="group relative order-first aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30 md:order-none">
+            <Image
+              src={portrait}
+              alt={studio?.portrait?.alt || 'Cinque studio'}
+              fill
+              sizes="(max-width: 768px) 100vw, 25vw"
+              className="img-bw object-cover"
+            />
+          </div>
+        )}
+      </section>
+
+      {/* Full-width studio flatlay band, closing the About section */}
+      {band && (
+        <div className="group relative mb-[40px] aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:mb-[60px]">
           <Image
-            src={portrait ?? DEFAULTS.portrait}
-            alt={studio?.portrait?.alt || 'Cinque studio'}
+            src={band}
+            alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
             fill
-            sizes="(max-width: 768px) 100vw, 25vw"
+            sizes="(max-width: 768px) 100vw, 900px"
             className="img-bw object-cover"
           />
         </div>
@@ -250,19 +255,21 @@ export default async function StudioPage() {
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Bespoke</H2>
       <section className="grid grid-cols-1 gap-[30px] md:grid-cols-3">
         <div className="flex flex-col gap-[30px] md:col-span-2">
-          <div className="grid grid-cols-4 gap-[10px]">
-            {bespokeImages.map((img, i) => (
-              <div key={i} className="group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
-                <Image
-                  src={img.src}
-                  alt={img.alt}
-                  fill
-                  sizes="(max-width: 768px) 25vw, 17vw"
-                  className="img-bw object-cover"
-                />
-              </div>
-            ))}
-          </div>
+          {bespokeImages.length > 0 && (
+            <div className="grid grid-cols-4 gap-[10px]">
+              {bespokeImages.map((img, i) => (
+                <div key={i} className="group relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    sizes="(max-width: 768px) 25vw, 17vw"
+                    className="img-bw object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex flex-col gap-[20px] type-p1">
             {studio?.bespokeIntro ? (
               <PortableText value={studio.bespokeIntro as never} />
@@ -297,15 +304,17 @@ export default async function StudioPage() {
             <BespokeClosingFallback />
           )}
         </div>
-        <div className="group relative aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30">
-          <Image
-            src={bespokeImage ?? DEFAULTS.bespokeImage}
-            alt={studio?.bespokeImage?.alt || 'Cinque bespoke commission'}
-            fill
-            sizes="(max-width: 768px) 100vw, 25vw"
-            className="img-bw object-cover"
-          />
-        </div>
+        {bespokeImage && (
+          <div className="group relative aspect-[5/7] w-full self-start overflow-hidden bg-cloud/30">
+            <Image
+              src={bespokeImage}
+              alt={studio?.bespokeImage?.alt || 'Cinque bespoke commission'}
+              fill
+              sizes="(max-width: 768px) 100vw, 25vw"
+              className="img-bw object-cover"
+            />
+          </div>
+        )}
       </section>
     </Container>
   );
