@@ -5,10 +5,10 @@ import JsonLd from '@/components/JsonLd';
 import { H1, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { homePageQuery, lookbookDropsQuery, pressLinksQuery } from '@/lib/sanity/queries';
+import { homePageQuery, lookbookDropsQuery, pressCardsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
-import type { HomePageDoc, LookbookDrop, SanityImageRef } from '@/types';
+import type { HomePageDoc, LookbookDrop, PressCard, SanityImageRef } from '@/types';
 
 export const revalidate = 60;
 
@@ -29,19 +29,17 @@ const DEFAULT_DROPS = [
 
 // Each Home section = a heading + section imagery, linking to its page.
 // `imageKey` is the Sanity array field on the Home Page document. PRESS has no
-// such field — it is built from the press entries themselves (`press: true`).
-// A section with nothing uploaded shows its heading alone; no image is ever
-// substituted in.
+// such field — its cards come from the press entries themselves, so the picture
+// and the title can never drift apart. A section with nothing uploaded shows
+// its heading alone; no image is ever substituted in.
 const SECTIONS = [
   { href: '/shop', label: 'SHOP', imageKey: 'shopImages', priority: true },
   { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', drops: true },
-  { href: '/press', label: 'PRESS', press: true },
+  { href: '/press', label: 'PRESS' },
   { href: '/studio', label: 'STUDIO', imageKey: 'studioImages' },
 ] as const;
 
 type DropLink = { slug: string; label: string; cover?: SanityImageRef };
-
-type PressLink = { _id: string; title: string; slug?: string };
 
 /** Sanity CDN URL at the 2:3 crop every home card renders in. */
 function imageUrl(img: SanityImageRef): string {
@@ -84,31 +82,34 @@ function lookbookCards(
 }
 
 /**
- * PRESS cards: each image links to its own entry on the Press page
- * (/press#slug) rather than to the top of it, so the reader lands on the piece
- * they clicked.
+ * PRESS cards: one per press entry, newest first, each showing that entry's own
+ * first uploaded image under its own title, and linking to that entry on the
+ * Press page (/press#slug) rather than to the top of it — so the reader lands
+ * on the piece they clicked. The slug is the anchor the Press listing already
+ * puts on every entry.
  *
- * Pairing is positional, as on LOOKBOOK — the Home Page's PRESS images are
- * uploaded newest entry first, the order `pressLinks` comes back in. An image
- * with no entry beside it (or an entry with no slug) still links to /press.
+ * Unlike LOOKBOOK, nothing here is paired positionally: the image travels with
+ * the entry it belongs to, so adding or reordering press entries can never
+ * caption a picture with someone else's title. An entry with no image gets no
+ * card — the Home page never stands in a picture of its own choosing.
  */
-function pressCards(
-  images: SanityImageRef[] | undefined,
-  pressLinks: PressLink[]
-): MediaImage[] {
-  return (images ?? []).map((img, i) => {
-    const entry = pressLinks[i];
-    return {
-      url: imageUrl(img),
-      alt: img.alt || `${entry ? formatLabel(entry.title) : 'PRESS'} — Cinque`,
-      href: entry?.slug ? `/press#${entry.slug}` : undefined,
-      linkLabel: entry ? formatLabel(entry.title) : undefined,
-    };
+function pressCards(entries: PressCard[]): MediaImage[] {
+  return entries.flatMap((entry) => {
+    if (!entry.cover) return [];
+    const label = formatLabel(entry.title);
+    return [
+      {
+        url: imageUrl(entry.cover),
+        alt: entry.cover.alt || `${label} — Cinque`,
+        label,
+        href: `/press#${entry.slug}`,
+      },
+    ];
   });
 }
 
 export default async function HomePage() {
-  const [home, drops, pressLinks] = await Promise.all([
+  const [home, drops, press] = await Promise.all([
     sanityFetch<HomePageDoc | null>({
       label: 'homePage',
       query: homePageQuery,
@@ -119,9 +120,9 @@ export default async function HomePage() {
       query: lookbookDropsQuery,
       fallback: [],
     }),
-    sanityFetch<PressLink[]>({
-      label: 'pressLinks',
-      query: pressLinksQuery,
+    sanityFetch<PressCard[]>({
+      label: 'pressCards',
+      query: pressCardsQuery,
       fallback: [],
     }),
   ]);
@@ -196,7 +197,7 @@ export default async function HomePage() {
           const mediaImages: MediaImage[] = isLookbook
             ? lookbookCards(cmsImages, dropLinks)
             : s.href === '/press'
-              ? pressCards(cmsImages, pressLinks)
+              ? pressCards(press)
               : (cmsImages ?? []).map((i) => ({
                   url: imageUrl(i),
                   alt: i.alt || `${s.label} — Cinque`,
