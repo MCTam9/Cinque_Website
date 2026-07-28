@@ -58,10 +58,9 @@ export const homePage = defineType({
       'lookbookImages',
       'LOOKBOOK images (one per drop, newest first)'
     ),
-    // Order matters here too: each PRESS image links to the entry in the same
-    // position on the Press page (newest first), so reordering these re-pairs
-    // the links. See `pressCards` in the Home page.
-    sectionImages('pressImages', 'PRESS images (one per press entry, newest first)'),
+    // No PRESS field: that section builds itself from the press entries, each
+    // card showing that entry's own first image. Add imagery to the press entry
+    // rather than here. See `pressCards` in the Home page.
     sectionImages('studioImages', 'STUDIO images'),
   ],
   preview: {

@@ -75,7 +75,6 @@ export interface HomePageDoc {
   tagline?: string;
   shopImages?: SanityImageRef[];
   lookbookImages?: SanityImageRef[];
-  pressImages?: SanityImageRef[];
   studioImages?: SanityImageRef[];
 }
 
