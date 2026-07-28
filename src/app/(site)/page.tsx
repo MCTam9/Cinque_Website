@@ -8,7 +8,7 @@ import { sanityFetch } from '@/lib/sanity/fetch';
 import { homePageQuery, lookbookDropsQuery, pressLinksQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
-import type { HomePageDoc, LookbookDrop, PressCard, SanityImageRef } from '@/types';
+import type { HomePageDoc, LookbookDrop, SanityImageRef } from '@/types';
 
 export const revalidate = 60;
 
@@ -185,9 +185,10 @@ export default async function HomePage() {
       {/* Sections */}
       <div className="flex flex-col gap-[40px] md:gap-[60px]">
         {SECTIONS.map((s) => {
-          const cmsImages = (home?.[s.imageKey as keyof HomePageDoc] as
-            | SanityImageRef[]
-            | undefined
+          const cmsImages = (
+            'imageKey' in s
+              ? (home?.[s.imageKey as keyof HomePageDoc] as SanityImageRef[] | undefined)
+              : undefined
           )?.filter((i) => i.asset);
 
           const isLookbook = 'drops' in s && s.drops;
@@ -200,26 +201,6 @@ export default async function HomePage() {
                   url: imageUrl(i),
                   alt: i.alt || `${s.label} — Cinque`,
                 }));
-
-          // Media: CMS gallery (a grid, capped at 4 images on mobile / 5 on
-          // desktop) if uploaded, else the built-in Figma fallback strip (a
-          // single image linking to the page).
-          const media =
-            mediaImages.length > 0 ? (
-              <HomeSectionMedia images={mediaImages} href={s.href} sectionLabel={s.label} />
-            ) : (
-              <Link href={s.href} aria-label={s.label}>
-                <Image
-                  src={s.img}
-                  alt={`${s.label} — Cinque`}
-                  width={s.w}
-                  height={s.h}
-                  sizes="(max-width: 768px) 100vw, 900px"
-                  className="h-auto w-full transition-opacity hover:opacity-90"
-                  priority={s.label === 'SHOP'}
-                />
-              </Link>
-            );
 
           return (
             <section key={s.href}>
