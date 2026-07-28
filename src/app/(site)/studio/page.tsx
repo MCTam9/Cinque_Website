@@ -208,17 +208,6 @@ export default async function StudioPage() {
         </div>
       </section>
 
-      {/* Full-width studio flatlay band, closing the About section */}
-      <div className="group relative mb-[40px] aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:mb-[60px]">
-        <Image
-          src={band ?? DEFAULTS.bandImage}
-          alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
-          fill
-          sizes="(max-width: 768px) 100vw, 900px"
-          className="img-bw object-cover"
-        />
-      </div>
-
       {/* Contact */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Contact</H2>
       <section id="contact" className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
@@ -245,6 +234,17 @@ export default async function StudioPage() {
           <Lines text={address} className="text-graphite" />
         </div>
       </section>
+
+      {/* Full-width studio flatlay band, closing the Contact section */}
+      <div className="group relative mb-[40px] aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:mb-[60px]">
+        <Image
+          src={band ?? DEFAULTS.bandImage}
+          alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
+          fill
+          sizes="(max-width: 768px) 100vw, 900px"
+          className="img-bw object-cover"
+        />
+      </div>
 
       {/* Bespoke */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Bespoke</H2>
