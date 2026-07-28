@@ -121,11 +121,13 @@ export const pressQuery = groq`
   }
 `;
 
-// Just enough to point each Home PRESS image at its entry on the Press page.
-// Same order as `pressQuery`, so the two lists line up position for position.
-export const pressLinksQuery = groq`
-  *[_type == "press"] | order(startDate desc) {
-    _id, title, "slug": slug.current
+// Home page PRESS cards: newest first, each carrying its own first uploaded
+// image. A slug is required — every card links through to that entry's anchor
+// on the Press page, and an entry with no images gets no card at all.
+export const pressCardsQuery = groq`
+  *[_type == "press" && defined(slug.current)] | order(startDate desc) {
+    _id, title, "slug": slug.current,
+    "cover": images[defined(asset)][0]{ alt, asset }
   }
 `;
 
@@ -146,7 +148,6 @@ export const homePageQuery = groq`
     tagline,
     "shopImages": shopImages[]{ alt, asset },
     "lookbookImages": lookbookImages[]{ alt, asset },
-    "pressImages": pressImages[]{ alt, asset },
     "studioImages": studioImages[]{ alt, asset }
   }
 `;
