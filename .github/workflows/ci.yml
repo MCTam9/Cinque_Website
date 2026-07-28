@@ -1,0 +1,52 @@
+name: CI
+
+# Vercel only builds commits authored by the account that owns the project, so
+# on a private repo under a Hobby plan the production merge into main is the
+# first time anything gets compiled. That is far too late. This runs the same
+# three checks on every pull request, for every author.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A new push supersedes the run in flight for the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    # Placeholders, deliberately. src/lib/env.ts and src/lib/serverEnv.ts parse
+    # these with zod at import time and throw if any required one is missing, so
+    # the build needs them present — but not valid. Sanity reads fail, sanityFetch
+    # logs and serves its fallback content, and the build completes. Expect
+    # [sanity] read ... failed lines in the log; they are the designed behaviour,
+    # not a failure. Real credentials would make this build depend on live CMS
+    # content, which is Vercel's job to catch, not CI's.
+    env:
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ci
+      NEXT_PUBLIC_SANITY_DATASET: production
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ci
+      STRIPE_SECRET_KEY: sk_test_ci
+      STRIPE_WEBHOOK_SECRET: whsec_ci
+      SANITY_API_WRITE_TOKEN: ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Keep in step with Vercel's Node version (Project Settings → General).
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck first: it is the fastest of the three and caught both errors
+      # in the merge that prompted this workflow.
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      - run: npm run build
