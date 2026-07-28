@@ -5,7 +5,7 @@ import JsonLd from '@/components/JsonLd';
 import { H1, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { homePageQuery, lookbookDropsQuery, pressCardsQuery } from '@/lib/sanity/queries';
+import { homePageQuery, lookbookDropsQuery, pressLinksQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
 import type { HomePageDoc, LookbookDrop, PressCard, SanityImageRef } from '@/types';
@@ -40,6 +40,8 @@ const SECTIONS = [
 ] as const;
 
 type DropLink = { slug: string; label: string; cover?: SanityImageRef };
+
+type PressLink = { _id: string; title: string; slug?: string };
 
 /** Sanity CDN URL at the 2:3 crop every home card renders in. */
 function imageUrl(img: SanityImageRef): string {
@@ -82,27 +84,31 @@ function lookbookCards(
 }
 
 /**
- * PRESS cards: one per press entry, newest first, showing that entry's first
- * uploaded image and linking through to its own page. An entry with no image
- * gets no card — the Home page never stands in a picture of its own choosing.
+ * PRESS cards: each image links to its own entry on the Press page
+ * (/press#slug) rather than to the top of it, so the reader lands on the piece
+ * they clicked.
+ *
+ * Pairing is positional, as on LOOKBOOK — the Home Page's PRESS images are
+ * uploaded newest entry first, the order `pressLinks` comes back in. An image
+ * with no entry beside it (or an entry with no slug) still links to /press.
  */
-function pressCards(entries: PressCard[]): MediaImage[] {
-  return entries.flatMap((p) => {
-    if (!p.cover) return [];
-    const label = formatLabel(p.title);
-    return [
-      {
-        url: imageUrl(p.cover),
-        alt: p.cover.alt || `${label} — Cinque`,
-        label,
-        href: `/press/${p.slug}`,
-      },
-    ];
+function pressCards(
+  images: SanityImageRef[] | undefined,
+  pressLinks: PressLink[]
+): MediaImage[] {
+  return (images ?? []).map((img, i) => {
+    const entry = pressLinks[i];
+    return {
+      url: imageUrl(img),
+      alt: img.alt || `${entry ? formatLabel(entry.title) : 'PRESS'} — Cinque`,
+      href: entry?.slug ? `/press#${entry.slug}` : undefined,
+      linkLabel: entry ? formatLabel(entry.title) : undefined,
+    };
   });
 }
 
 export default async function HomePage() {
-  const [home, drops, press] = await Promise.all([
+  const [home, drops, pressLinks] = await Promise.all([
     sanityFetch<HomePageDoc | null>({
       label: 'homePage',
       query: homePageQuery,
@@ -113,9 +119,9 @@ export default async function HomePage() {
       query: lookbookDropsQuery,
       fallback: [],
     }),
-    sanityFetch<PressCard[]>({
-      label: 'pressCards',
-      query: pressCardsQuery,
+    sanityFetch<PressLink[]>({
+      label: 'pressLinks',
+      query: pressLinksQuery,
       fallback: [],
     }),
   ]);
@@ -179,24 +185,41 @@ export default async function HomePage() {
       {/* Sections */}
       <div className="flex flex-col gap-[40px] md:gap-[60px]">
         {SECTIONS.map((s) => {
-          const cmsImages =
-            'imageKey' in s
-              ? (home?.[s.imageKey as keyof HomePageDoc] as SanityImageRef[] | undefined)
-                  ?.filter((i) => i.asset)
-              : undefined;
+          const cmsImages = (home?.[s.imageKey as keyof HomePageDoc] as
+            | SanityImageRef[]
+            | undefined
+          )?.filter((i) => i.asset);
 
-          // Media: a grid capped at 4 images on mobile / 5 on desktop. Sourced
-          // from the press entries for PRESS, and from the Home Page document
-          // for the rest. Empty renders nothing at all.
-          const mediaImages: MediaImage[] =
-            'press' in s && s.press
-              ? pressCards(press)
-              : 'drops' in s && s.drops
-                ? lookbookCards(cmsImages, dropLinks)
-                : (cmsImages ?? []).map((i) => ({
-                    url: imageUrl(i),
-                    alt: i.alt || `${s.label} — Cinque`,
-                  }));
+          const isLookbook = 'drops' in s && s.drops;
+
+          const mediaImages: MediaImage[] = isLookbook
+            ? lookbookCards(cmsImages, dropLinks)
+            : s.href === '/press'
+              ? pressCards(cmsImages, pressLinks)
+              : (cmsImages ?? []).map((i) => ({
+                  url: imageUrl(i),
+                  alt: i.alt || `${s.label} — Cinque`,
+                }));
+
+          // Media: CMS gallery (a grid, capped at 4 images on mobile / 5 on
+          // desktop) if uploaded, else the built-in Figma fallback strip (a
+          // single image linking to the page).
+          const media =
+            mediaImages.length > 0 ? (
+              <HomeSectionMedia images={mediaImages} href={s.href} sectionLabel={s.label} />
+            ) : (
+              <Link href={s.href} aria-label={s.label}>
+                <Image
+                  src={s.img}
+                  alt={`${s.label} — Cinque`}
+                  width={s.w}
+                  height={s.h}
+                  sizes="(max-width: 768px) 100vw, 900px"
+                  className="h-auto w-full transition-opacity hover:opacity-90"
+                  priority={s.label === 'SHOP'}
+                />
+              </Link>
+            );
 
           return (
             <section key={s.href}>

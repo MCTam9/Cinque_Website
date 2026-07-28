@@ -61,14 +61,14 @@ export const studioPage = defineType({
         }),
       ],
     }),
+    // ── Contact ──
     defineField({
       name: 'bandImage',
       title: 'Wide band image',
       type: 'image',
-      group: 'about',
+      group: 'contact',
       options: { hotspot: crop21x9 },
-      description:
-        'The full-width 21:9 band below About. Desktop only — phones skip it.',
+      description: 'The full-width 21:9 band between Contact and Bespoke.',
       fields: [
         defineField({
           name: 'alt',
@@ -78,8 +78,6 @@ export const studioPage = defineType({
         }),
       ],
     }),
-
-    // ── Contact ──
     defineField({
       name: 'contactIntro',
       title: 'Contact intro',

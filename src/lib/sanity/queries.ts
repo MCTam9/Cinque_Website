@@ -121,12 +121,11 @@ export const pressQuery = groq`
   }
 `;
 
-// Home page PRESS cards: newest first, each with its first uploaded image.
-// A slug is required — every card links through to its own press page.
-export const pressCardsQuery = groq`
-  *[_type == "press" && defined(slug.current)] | order(startDate desc) {
-    _id, title, "slug": slug.current,
-    "cover": images[defined(asset)][0]{ alt, asset }
+// Just enough to point each Home PRESS image at its entry on the Press page.
+// Same order as `pressQuery`, so the two lists line up position for position.
+export const pressLinksQuery = groq`
+  *[_type == "press"] | order(startDate desc) {
+    _id, title, "slug": slug.current
   }
 `;
 
