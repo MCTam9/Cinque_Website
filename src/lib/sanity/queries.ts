@@ -146,6 +146,7 @@ export const homePageQuery = groq`
     tagline,
     "shopImages": shopImages[]{ alt, asset },
     "lookbookImages": lookbookImages[]{ alt, asset },
+    "pressImages": pressImages[]{ alt, asset },
     "studioImages": studioImages[]{ alt, asset }
   }
 `;

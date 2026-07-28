@@ -28,14 +28,12 @@ const DEFAULT_DROPS = [
 ];
 
 // Each Home section = a heading + section imagery, linking to its page.
-// `imageKey` is the Sanity array field on the Home Page document. PRESS has no
-// such field — it is built from the press entries themselves (`press: true`).
-// A section with nothing uploaded shows its heading alone; no image is ever
-// substituted in.
+// `imageKey` is the Sanity array field on the Home Page document. A section with
+// nothing uploaded shows its heading alone; no image is ever substituted in.
 const SECTIONS = [
   { href: '/shop', label: 'SHOP', imageKey: 'shopImages', priority: true },
   { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', drops: true },
-  { href: '/press', label: 'PRESS', press: true },
+  { href: '/press', label: 'PRESS', imageKey: 'pressImages' },
   { href: '/studio', label: 'STUDIO', imageKey: 'studioImages' },
 ] as const;
 
@@ -84,13 +82,15 @@ function lookbookCards(
 }
 
 /**
- * PRESS cards: each image links to its own entry on the Press page
- * (/press#slug) rather than to the top of it, so the reader lands on the piece
- * they clicked.
+ * PRESS cards: each card carries its entry's title and links to that entry on
+ * the Press page (/press#slug) rather than to the top of it, so the reader
+ * lands on the piece they clicked. The slug is the anchor the Press listing
+ * puts on each entry.
  *
  * Pairing is positional, as on LOOKBOOK — the Home Page's PRESS images are
  * uploaded newest entry first, the order `pressLinks` comes back in. An image
- * with no entry beside it (or an entry with no slug) still links to /press.
+ * with no entry beside it (or an entry with no slug) renders uncaptioned and
+ * still links to /press.
  */
 function pressCards(
   images: SanityImageRef[] | undefined,
@@ -98,11 +98,12 @@ function pressCards(
 ): MediaImage[] {
   return (images ?? []).map((img, i) => {
     const entry = pressLinks[i];
+    const label = entry ? formatLabel(entry.title) : undefined;
     return {
       url: imageUrl(img),
-      alt: img.alt || `${entry ? formatLabel(entry.title) : 'PRESS'} — Cinque`,
+      alt: img.alt || `${label ?? 'PRESS'} — Cinque`,
+      label,
       href: entry?.slug ? `/press#${entry.slug}` : undefined,
-      linkLabel: entry ? formatLabel(entry.title) : undefined,
     };
   });
 }
