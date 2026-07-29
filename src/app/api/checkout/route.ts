@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe';
 import { sanityClient } from '@/lib/sanity/client';
 import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
+import { rateLimit, clientIp } from '@/lib/rateLimit';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature/crypto & SDK require the Node.js runtime (not Edge).
@@ -39,7 +40,21 @@ type VariantResult = {
   } | null;
 };
 
+// A single request fans out to one Sanity query PER LINE (up to 50) plus a
+// Stripe session create, so an unlimited endpoint is a ~50x amplifier against
+// both quotas. Cap it well above real shopping behaviour: a person checking
+// out repeatedly is retrying a failure, not placing 10 orders a minute.
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 10;
+
 export async function POST(req: Request) {
+  if (rateLimit(`checkout:${clientIp(req)}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
+    return NextResponse.json(
+      { error: 'Too many checkout attempts. Please wait a moment and try again.' },
+      { status: 429 }
+    );
+  }
+
   let json: unknown;
   try {
     json = await req.json();

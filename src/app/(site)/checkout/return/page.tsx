@@ -14,7 +14,9 @@ import ClearCartOnMount from '@/components/checkout/ClearCartOnMount';
 type SessionInfo = {
   status?: string; // open | complete | expired
   paymentStatus?: string; // paid | unpaid | no_payment_required
-  customerEmail?: string | null;
+  // Masked (`j•••@gmail.com`) — enough for the buyer to recognise the address,
+  // useless to anyone who scrapes a session id out of a URL or analytics.
+  customerEmailMasked?: string | null;
 };
 
 export default async function CheckoutReturnPage({
@@ -53,7 +55,7 @@ export default async function CheckoutReturnPage({
         <ClearCartOnMount />
         <H1 className="mb-[20px]">Thank you</H1>
         <P1 className="mb-[10px]">
-          Your order is confirmed{data?.customerEmail ? `, ${data.customerEmail}` : ''}.
+          Your order is confirmed{data?.customerEmailMasked ? `, ${data.customerEmailMasked}` : ''}.
         </P1>
         <P1 className="mb-[30px] text-oslo">A confirmation email will follow shortly.</P1>
         <Link href="/shop" className="btn">
