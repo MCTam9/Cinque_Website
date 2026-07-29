@@ -87,6 +87,25 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     return;
   }
 
+  const orderId = `order.${session.id}`;
+
+  // ── IDEMPOTENCY GUARD — keyed on the ORDER, not the event. ──
+  // The stripeEvent ledger is written only AFTER this function returns, so it
+  // cannot protect the work inside it: if fulfillment succeeds and that ledger
+  // write then fails, we answer 500, Stripe retries, the ledger still shows
+  // nothing, and we land back here. createIfNotExists makes the order itself
+  // safe to repeat — but the stock decrement below is a `dec()` and the
+  // confirmation email is a send, and BOTH would run a second time.
+  //
+  // The order doc is the real unit of work, so gate on it. Any repeat delivery
+  // — retry after a partial failure, or a concurrent duplicate that lost the
+  // race to create it — stops here having changed nothing.
+  const existingOrder = await sanityWriteClient.getDocument(orderId);
+  if (existingOrder) {
+    console.info('[webhook] order already fulfilled, skipping', orderId);
+    return;
+  }
+
   // Parse the compact fulfillment map written at checkout creation.
   let fulfillmentLines: FulfillmentLine[] = [];
   try {
@@ -127,7 +146,6 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
 
   const now = new Date();
   const orderNumber = `CQ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${session.id.slice(-8).toUpperCase()}`;
-  const orderId = `order.${session.id}`; // deterministic → also guards duplicates
 
   const shipping =
     // Newer API: collected_information.shipping_details; fall back to customer address.

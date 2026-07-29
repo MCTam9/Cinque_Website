@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendContactMessage } from '@/lib/fulfillment/email';
+import { rateLimit, clientIp } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,27 +15,11 @@ const contactSchema = z.object({
   company: z.string().optional(),
 });
 
-// Best-effort in-memory rate limit (per warm instance). Not a substitute for
-// an edge/WAF limiter, but stops trivial floods.
-const hits = new Map<string, { count: number; ts: number }>();
-const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 5;
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const rec = hits.get(ip);
-  if (!rec || now - rec.ts > WINDOW_MS) {
-    hits.set(ip, { count: 1, ts: now });
-    return false;
-  }
-  rec.count += 1;
-  return rec.count > MAX_PER_WINDOW;
-}
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 5;
 
 export async function POST(req: Request) {
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (rateLimited(ip)) {
+  if (rateLimit(`contact:${clientIp(req)}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
     return NextResponse.json(
       { ok: false, error: 'Too many messages. Please try again shortly.' },
       { status: 429 }
