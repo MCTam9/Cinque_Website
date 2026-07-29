@@ -42,5 +42,7 @@ yarn-error.log*
 
 # claude code — personal/local settings (allowlists etc.)
 .claude/settings.local.json
+
+# internal working material — never publish
 design-refs/
-.env*
+HANDOVER.md
