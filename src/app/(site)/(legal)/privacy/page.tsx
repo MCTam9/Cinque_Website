@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       <H3 as="h2" className="font-bold">Sharing &amp; processors</H3>
       <P1>
         We share data only with the service providers that help us run the store: Stripe (payment
-        processing), Resend (transactional and enquiry email), and Sanity (content and order
+        processing), Postmark (transactional and enquiry email), and Sanity (content and order
         records). Each processes data on our behalf under its own terms. We do not sell your data.
       </P1>
 

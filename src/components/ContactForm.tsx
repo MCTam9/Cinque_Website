@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
-/** Public contact form → POST /api/contact → Resend → cindy@cinque.studio. */
+/** Public contact form → POST /api/contact → Postmark → cindy@cinque.studio. */
 export default function ContactForm() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string>('');
