@@ -1,8 +1,14 @@
 import { defineField, defineType } from 'sanity';
 
 /**
- * Internal manufacturing / operations metadata. Not for public display.
- * Fields here map to Cinque's SLA and production workflow.
+ * Manufacturing / operations metadata. Fields here map to Cinque's SLA and
+ * production workflow, and the storefront does not render any of them.
+ *
+ * "Internal" means not-displayed, NOT confidential: the dataset is public on
+ * Sanity's free plan, so everything below is world-readable over the query
+ * API. Casting house, lead times and QC notes are commercially sensitive —
+ * treat this object as a public spec sheet, and keep anything that would
+ * genuinely hurt if a competitor read it out of Sanity altogether.
  */
 export const productionNotes = defineType({
   name: 'productionNotes',
