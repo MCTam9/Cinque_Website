@@ -35,11 +35,17 @@ export const dynamic = 'force-dynamic';
  *       _type, _id, "slug": slug.current, title, status,
  *       variants[]{ _key, sku, metalType, priceGBP, stripeProductId, stripePriceId },
  *       orderNumber,
- *       "email": customer.email,
+ *       stripeSessionId,
  *       "carrier": fulfillment.carrier,
  *       "tracking": fulfillment.trackingNumber,
  *       "sentAt": fulfillment.shippedEmailSentAt
  *     }
+ *
+ * The projection sends `stripeSessionId`, not the buyer's address: order
+ * documents store no customer PII, so the shipping email resolves its
+ * recipient from Stripe. Editing this comment does NOT update the live
+ * webhook — re-paste the projection in Manage → API → Webhooks when it
+ * changes.
  */
 export async function POST(req: NextRequest) {
   // Accept the per-job secrets as fallbacks so an existing three-webhook setup

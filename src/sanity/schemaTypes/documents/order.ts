@@ -2,8 +2,21 @@ import { defineArrayMember, defineField, defineType } from 'sanity';
 
 /**
  * Orders are created/finalized by the Stripe webhook, NOT by hand.
- * This document powers the dashboard's orders & customer-query view and is
- * the read-source for shipping (ShipStation) and transactional email.
+ * This document is the fulfilment worklist: what was bought, and how far along
+ * it is. It powers the Studio's orders view and the shipping-confirmation
+ * trigger.
+ *
+ * ── NO CUSTOMER PII LIVES HERE ──
+ * The dataset is public (Sanity's free plan has no private datasets and no
+ * document-level read grants), so every field below is world-readable at
+ * `…/data/query/production?query=*[_type=="order"]`. Stripe is the system of
+ * record for the buyer: email, name, phone and shipping address are read from
+ * the Checkout Session at the point of use and never persisted here.
+ * `stripeSessionId` is the join key back to Stripe — retrieving anything with
+ * it requires the secret key.
+ *
+ * If you add a field, ask first whether you would be happy posting its value
+ * publicly. If not, it belongs in Stripe.
  */
 export const order = defineType({
   name: 'order',
@@ -39,34 +52,14 @@ export const order = defineType({
       title: 'Stripe Checkout Session ID',
       type: 'string',
       readOnly: true,
+      description:
+        'Look this up in the Stripe dashboard for the buyer\u2019s email, name and shipping address.',
     }),
     defineField({
       name: 'stripePaymentIntentId',
       title: 'Stripe PaymentIntent ID',
       type: 'string',
       readOnly: true,
-    }),
-    defineField({
-      name: 'customer',
-      title: 'Customer',
-      type: 'object',
-      fields: [
-        defineField({ name: 'email', title: 'Email', type: 'string' }),
-        defineField({ name: 'name', title: 'Name', type: 'string' }),
-        defineField({ name: 'phone', title: 'Phone', type: 'string' }),
-        defineField({
-          name: 'shippingAddress',
-          title: 'Shipping Address',
-          type: 'object',
-          fields: [
-            defineField({ name: 'line1', title: 'Line 1', type: 'string' }),
-            defineField({ name: 'line2', title: 'Line 2', type: 'string' }),
-            defineField({ name: 'city', title: 'City', type: 'string' }),
-            defineField({ name: 'postalCode', title: 'Postal Code', type: 'string' }),
-            defineField({ name: 'country', title: 'Country', type: 'string' }),
-          ],
-        }),
-      ],
     }),
     defineField({
       name: 'lines',
@@ -137,6 +130,8 @@ export const order = defineType({
       title: 'Internal Notes',
       type: 'text',
       rows: 3,
+      description:
+        'Publicly readable \u2014 keep to fulfilment notes. Never paste a customer\u2019s name, address or contact details here.',
     }),
     defineField({
       name: 'createdAt',
@@ -153,9 +148,10 @@ export const order = defineType({
     },
   ],
   preview: {
-    select: { title: 'orderNumber', status: 'status', email: 'customer.email' },
-    prepare({ title, status, email }) {
-      return { title: title || 'Order', subtitle: [status, email].filter(Boolean).join(' · ') };
+    select: { title: 'orderNumber', status: 'status', createdAt: 'createdAt' },
+    prepare({ title, status, createdAt }) {
+      const date = createdAt ? new Date(createdAt).toLocaleDateString('en-GB') : null;
+      return { title: title || 'Order', subtitle: [status, date].filter(Boolean).join(' · ') };
     },
   },
 });

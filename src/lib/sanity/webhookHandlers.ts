@@ -4,6 +4,7 @@ import { sanityWriteClient } from './writeClient';
 import { pathsFor } from './revalidatePaths';
 import { syncProductToStripe, type SyncVariantInput } from '@/lib/stripe/sync';
 import { sendShippingConfirmation } from '@/lib/fulfillment/email';
+import { getOrderContact } from '@/lib/stripe/customer';
 
 /**
  * The three things a Sanity content change can trigger, as plain functions so
@@ -29,7 +30,10 @@ export interface SanityWebhookBody {
   variants?: SyncVariantInput[];
   // order
   orderNumber?: string;
-  email?: string | null;
+  // The join key back to Stripe. The order document holds no buyer contact
+  // details of its own — see the schema's no-PII note — so the recipient of a
+  // shipping email is resolved from the Checkout Session at send time.
+  stripeSessionId?: string | null;
   carrier?: string | null;
   tracking?: string | null;
   sentAt?: string | null;
@@ -91,6 +95,9 @@ export async function syncProduct(body: SanityWebhookBody): Promise<number> {
  * Email the customer their tracking details when staff flip an order to
  * "Shipped". Sends once — the shippedEmailSentAt stamp is both the guard
  * against a duplicate email and the thing that stops the webhook loop.
+ *
+ * The address comes from Stripe, not from the webhook payload: the order
+ * document stores no buyer contact details.
  */
 export async function handleOrderUpdate(body: SanityWebhookBody): Promise<boolean> {
   if (!body._id) return false;
@@ -98,8 +105,23 @@ export async function handleOrderUpdate(body: SanityWebhookBody): Promise<boolea
   const shouldEmail = body.status === 'shipped' && !!body.tracking && !body.sentAt;
   if (!shouldEmail) return false;
 
+  const { email } = await getOrderContact(body.stripeSessionId);
+  if (!email) {
+    // No recipient means no email is possible — and no amount of retrying will
+    // conjure one. Leave shippedEmailSentAt unset so a human can resend once
+    // the cause is fixed, and report "not emailed" rather than failing the
+    // webhook (which would make Sanity redeliver forever).
+    console.error(
+      '[order-update] no buyer email in Stripe for',
+      body._id,
+      '— session:',
+      body.stripeSessionId ?? '(missing from projection)'
+    );
+    return false;
+  }
+
   const result = await sendShippingConfirmation({
-    to: body.email,
+    to: email,
     orderNumber: body.orderNumber ?? '',
     carrier: body.carrier,
     trackingNumber: body.tracking,
