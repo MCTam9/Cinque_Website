@@ -17,8 +17,7 @@ export const dynamic = 'force-dynamic';
  *
  *   Trigger:    update, filter `_type == "order"`
  *   Secret:     SANITY_ORDER_WEBHOOK_SECRET
- *   Projection: { _type, _id, orderNumber, status,
- *                 "email": customer.email,
+ *   Projection: { _type, _id, orderNumber, status, stripeSessionId,
  *                 "carrier": fulfillment.carrier,
  *                 "tracking": fulfillment.trackingNumber,
  *                 "sentAt": fulfillment.shippedEmailSentAt }

@@ -6,6 +6,7 @@ import { sanityWriteClient } from '@/lib/sanity/writeClient';
 import { urlFor } from '@/lib/sanity/image';
 import { createShipment } from '@/lib/fulfillment/shipping';
 import { sendOrderConfirmation, sendLowStockAlert } from '@/lib/fulfillment/email';
+import { contactFromSession } from '@/lib/stripe/customer';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import type { FulfillmentLine } from '@/types';
 
@@ -147,11 +148,10 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   const now = new Date();
   const orderNumber = `CQ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${session.id.slice(-8).toUpperCase()}`;
 
-  const shipping =
-    // Newer API: collected_information.shipping_details; fall back to customer address.
-    (session as unknown as { collected_information?: { shipping_details?: Stripe.Checkout.Session.ShippingDetails } })
-      .collected_information?.shipping_details ?? session.shipping_details ?? null;
-  const address = shipping?.address ?? session.customer_details?.address ?? null;
+  // Buyer details are used below to ship and to email — and then dropped.
+  // They are NOT written to the order document: the Sanity dataset is public,
+  // and Stripe already holds this. See the order schema's no-PII note.
+  const contact = contactFromSession(session);
 
   // ── Inventory deduction + order creation in ONE atomic transaction. ──
   const tx = sanityWriteClient.transaction();
@@ -166,20 +166,6 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id ?? null,
-    customer: {
-      email: session.customer_details?.email ?? null,
-      name: shipping?.name ?? session.customer_details?.name ?? null,
-      phone: session.customer_details?.phone ?? null,
-      shippingAddress: address
-        ? {
-            line1: address.line1,
-            line2: address.line2,
-            city: address.city,
-            postalCode: address.postal_code,
-            country: address.country,
-          }
-        : null,
-    },
     // imageUrl is derived (email-only) — keep it out of the persisted snapshot.
     lines: orderLines.map(({ imageUrl: _imageUrl, ...persisted }) => persisted),
     totalGBP: session.amount_total ?? 0,
@@ -218,17 +204,8 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     await createShipment({
       orderId,
       orderNumber,
-      email: session.customer_details?.email,
-      shippingAddress: address
-        ? {
-            name: shipping?.name ?? session.customer_details?.name,
-            line1: address.line1,
-            line2: address.line2,
-            city: address.city,
-            postalCode: address.postal_code,
-            country: address.country,
-          }
-        : null,
+      email: contact.email,
+      shippingAddress: contact.address ? { name: contact.name, ...contact.address } : null,
       lines: orderLines.map((l) => ({ sku: l.sku, title: l.titleSnapshot, quantity: l.quantity })),
     });
   } catch (err) {
@@ -237,7 +214,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
 
   try {
     await sendOrderConfirmation({
-      to: session.customer_details?.email,
+      to: contact.email,
       orderNumber,
       lines: orderLines.map((l) => ({
         title: l.titleSnapshot,
