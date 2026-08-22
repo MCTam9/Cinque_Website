@@ -7,13 +7,18 @@ import { defineArrayMember, defineField, defineType } from 'sanity';
  * trigger.
  *
  * ── NO CUSTOMER PII LIVES HERE ──
- * The dataset is public (Sanity's free plan has no private datasets and no
- * document-level read grants), so every field below is world-readable at
- * `…/data/query/production?query=*[_type=="order"]`. Stripe is the system of
- * record for the buyer: email, name, phone and shipping address are read from
- * the Checkout Session at the point of use and never persisted here.
- * `stripeSessionId` is the join key back to Stripe — retrieving anything with
- * it requires the secret key.
+ * The dataset is public: Sanity's free plan has no private datasets and no
+ * document-level read grants. Stripe is the system of record for the buyer —
+ * email, name, phone and shipping address are read from the Checkout Session
+ * at the point of use and never persisted here. `stripeSessionId` is the join
+ * key back to Stripe, and retrieving anything with it requires the secret key.
+ *
+ * Order documents happen to survive the public flip for a second reason: the
+ * webhook ids them `order.<sessionId>`, and Sanity treats any `_id` containing
+ * a `.` as token-only. That is a naming accident, not a policy — it evaporates
+ * the moment someone "tidies up" the id scheme, and nothing in the type system
+ * would catch it. Keep the dotted id, and do not let it be the thing standing
+ * between a customer's address and the open internet.
  *
  * If you add a field, ask first whether you would be happy posting its value
  * publicly. If not, it belongs in Stripe.

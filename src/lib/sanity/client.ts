@@ -6,9 +6,14 @@ import { publicEnv, SANITY_API_VERSION } from '@/lib/env';
  *
  * Read-only token, and deliberately no fallback to SANITY_API_WRITE_TOKEN.
  * The storefront only ever reads, so putting a write-capable credential on
- * that path buys nothing and costs the blast radius if it ever leaks. An
- * unset token is a legitimate configuration once the dataset is public —
- * `undefined` here simply means anonymous reads.
+ * that path buys nothing and costs the blast radius if it ever leaks.
+ *
+ * REQUIRED, despite the dataset being public. Sanity treats any document
+ * whose `_id` contains a `.` as private — readable only with a token, public
+ * dataset or not. Drops (`drop.01-metal-veil`) and seeded products
+ * (`seed.product.…`) are exactly that, so an unset token does not degrade to
+ * "anonymous reads work fine": it silently empties the lookbook and parts of
+ * the shop while the build still succeeds. Do not remove it.
  *
  * All storefront fetching happens in server components / route handlers, so
  * the token is never bundled to the browser: non-public env vars are stripped
