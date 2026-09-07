@@ -15,9 +15,7 @@ const letterGothic = localFont({
   fallback: ['ui-monospace', 'Courier New', 'monospace'],
 });
 
-// Decoupled from the full env schema (which requires Stripe/Sanity keys) so the
-// marketing shell can render even before those are configured locally.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+import { siteUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -42,7 +40,14 @@ export const metadata: Metadata = {
     title: 'Cinque — Jewellery & Object Maker',
     description: 'Individually made, cast and hallmarked in London.',
   },
-  robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
+  robots: {
+    index: true,
+    follow: true,
+    // Let Google show full-size image and video previews and untruncated
+    // snippets — the default caps can clip rich results.
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
 };
 
 export default function RootLayout({

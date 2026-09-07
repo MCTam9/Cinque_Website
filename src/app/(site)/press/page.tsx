@@ -15,6 +15,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Press',
   description: 'Cinque® press, shows and installations.',
+  alternates: { canonical: '/press' },
 };
 
 interface PressDoc {

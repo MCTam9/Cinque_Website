@@ -4,6 +4,7 @@ import { H1, H3, P1, P2 } from '@/components/typography';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'How Cinque® collects, uses and protects your personal data.',
+  alternates: { canonical: '/privacy' },
 };
 
 export default function PrivacyPage() {

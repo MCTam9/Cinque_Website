@@ -16,6 +16,25 @@ const nextConfig = {
     return [
       { source: '/products', destination: '/shop', permanent: true },
       { source: '/products/:slug', destination: '/shop/:slug', permanent: true },
+      // Category filtering moved from a query string to real routes. Redirect
+      // rather than serving both: two URLs for identical content is the
+      // duplication the move was meant to remove.
+      // NOTE: deliberately no rule for `category=all` — unmatched query params
+      // are forwarded to the destination, so `/shop?category=all` -> `/shop`
+      // would redirect to `/shop?category=all` and loop. The canonical on
+      // /shop collapses that variant instead.
+      {
+        source: '/shop',
+        has: [
+          {
+            type: 'query',
+            key: 'category',
+            value: '(?<cat>rings|earrings|necklaces|objects)',
+          },
+        ],
+        destination: '/shop/:cat',
+        permanent: true,
+      },
       // Contact lives in the Studio page's #contact section now.
       { source: '/contact', destination: '/studio', permanent: true },
       // Exhibition renamed to Press (and merged with the unused Press Item type).

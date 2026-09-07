@@ -5,9 +5,13 @@ import { groq } from 'next-sanity';
  * internal `productionNotes` are intentionally excluded from public reads.
  */
 
-// All purchasable products for the catalog grid.
-export const activeProductsQuery = groq`
-  *[_type == "product" && status == "active"] | order(_createdAt desc) {
+/**
+ * The fields every catalog card needs. Shared by the all-products query and the
+ * per-category one so the two cannot drift apart — a card missing `metalFinish`
+ * or `stone` in one listing but not the other is exactly the kind of bug that
+ * only shows up on one route.
+ */
+const productCardProjection = `
     _id,
     title,
     "slug": slug.current,
@@ -21,6 +25,19 @@ export const activeProductsQuery = groq`
       stockQuantity, allowBackorder,
       stone
     }
+`;
+
+// All purchasable products for the catalog grid.
+export const activeProductsQuery = groq`
+  *[_type == "product" && status == "active"] | order(_createdAt desc) {
+    ${productCardProjection}
+  }
+`;
+
+/** Active products in one category — powers the /shop/<category> landing pages. */
+export const productsByCategoryQuery = groq`
+  *[_type == "product" && status == "active" && category == $category] | order(_createdAt desc) {
+    ${productCardProjection}
   }
 `;
 
@@ -174,5 +191,35 @@ export const studioPageQuery = groq`
     bespokeSteps[]{ number, title, body },
     bespokeClosing,
     seoDescription
+  }
+`;
+
+// ── Sitemap ────────────────────────────────────────────────────────────────
+// Slug + last edit time for every indexable document, so sitemap entries can
+// carry a real `lastModified` instead of nothing. Kept separate from the
+// existing *SlugsQuery exports, which return bare string arrays and are used
+// by generateStaticParams.
+
+export const productSitemapQuery = groq`
+  *[_type == "product" && status == "active" && defined(slug.current)]{
+    "slug": slug.current, "updatedAt": _updatedAt
+  }
+`;
+
+export const collectionSitemapQuery = groq`
+  *[_type == "drop" && defined(slug.current)]{
+    "slug": slug.current, "updatedAt": _updatedAt
+  }
+`;
+
+export const pressSitemapQuery = groq`
+  *[_type == "press" && defined(slug.current)]{
+    "slug": slug.current, "updatedAt": _updatedAt
+  }
+`;
+
+export const pageSitemapQuery = groq`
+  *[_type == "page" && published == true && defined(slug.current)]{
+    "slug": slug.current, "updatedAt": _updatedAt
   }
 `;

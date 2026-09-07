@@ -9,6 +9,8 @@ import { H1, H2, H3, P1 } from '@/components/typography';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { studioPageQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
+import JsonLd from '@/components/JsonLd';
+import { absoluteUrl, INSTAGRAM_URL, SHIPPING } from '@/lib/seo';
 import type { SanityImageRef, StudioPageDoc } from '@/types';
 
 export const revalidate = 60;
@@ -95,6 +97,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Studio',
     description: studio?.seoDescription?.trim() || DEFAULTS.seoDescription,
+    alternates: { canonical: '/studio' },
   };
 }
 
@@ -159,8 +162,65 @@ export default async function StudioPage() {
       alt: img.alt || 'Cinque bespoke commission',
     }));
 
+  // The address is free text ("Cinque® Studio\nLondon, W2"); the last line is
+  // the locality + outward postcode. Marked up loosely rather than invented —
+  // there is no full street address to claim.
+  const addressLines = address.split('\n').map((l) => l.trim()).filter(Boolean);
+
   return (
     <Container className={contentPadY}>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'JewelryStore',
+          '@id': absoluteUrl('/studio#studio'),
+          name: 'Cinque® Studio',
+          url: absoluteUrl('/studio'),
+          parentOrganization: { '@id': absoluteUrl('/#organization') },
+          email,
+          image: portrait ?? undefined,
+          description: studio?.seoDescription?.trim() || DEFAULTS.seoDescription,
+          founder: { '@type': 'Person', name: 'Cindy Liu' },
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: 'London',
+            addressCountry: 'GB',
+            ...(addressLines.at(-1)?.includes(',')
+              ? { addressRegion: addressLines.at(-1)!.split(',').pop()!.trim() }
+              : {}),
+          },
+          areaServed: SHIPPING.countries.map((c) => ({
+            '@type': 'Country',
+            name: c,
+          })),
+          sameAs: [studio?.instagramUrl?.trim() || INSTAGRAM_URL],
+          knowsAbout: [
+            'bespoke jewellery commissions',
+            'engagement rings',
+            'lost-wax casting',
+            'London hallmarking',
+          ],
+        }}
+      />
+      {bespokeSteps && bespokeSteps.length > 0 && (
+        // The bespoke process is already written as ordered steps; marking it
+        // up is what lets an answer engine quote the actual process.
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'HowTo',
+            name: bespokeProcessLabel,
+            description:
+              'How a bespoke commission with Cinque® is made, from first conversation to completion.',
+            step: bespokeSteps.map((st, i) => ({
+              '@type': 'HowToStep',
+              position: i + 1,
+              name: st.title,
+              text: st.body,
+            })),
+          }}
+        />
+      )}
       <H1 className="mb-[10px] border-b border-oslo pb-[10px]">STUDIO</H1>
 
       {/* About */}

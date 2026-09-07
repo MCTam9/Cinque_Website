@@ -10,5 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: '#F1F0ED',
     theme_color: '#4D4B4A',
+    // Without an icons array the manifest is ignored for install prompts.
+    // src/app/icon.png is the same asset Next serves as the favicon.
+    icons: [{ src: '/icon.png', sizes: '512x512', type: 'image/png' }],
   };
 }

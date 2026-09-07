@@ -5,6 +5,7 @@ import { H1, H3, P1, P2 } from '@/components/typography';
 export const metadata: Metadata = {
   title: 'Terms & Conditions',
   description: 'The terms governing use of the Cinque® website and purchases.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsPage() {

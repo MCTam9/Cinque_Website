@@ -1,5 +1,6 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 import { cropProduct } from '../imageCrop';
+import { isReservedShopSlug } from '@/lib/shop/categories';
 
 export const product = defineType({
   name: 'product',
@@ -24,7 +25,18 @@ export const product = defineType({
       type: 'slug',
       group: 'content',
       options: { source: 'title', maxLength: 96 },
-      validation: (rule) => rule.required(),
+      // The Shop category pages (/shop/rings, …) are literal routes and take
+      // precedence over /shop/<product-slug>. A product using one of those
+      // words would be permanently unreachable, so reject it here rather than
+      // letting it 404 mysteriously after publish.
+      validation: (rule) =>
+        rule.required().custom((slug) => {
+          const current = (slug as { current?: string } | undefined)?.current;
+          if (current && isReservedShopSlug(current)) {
+            return `"${current}" is a Shop category URL — choose a different slug.`;
+          }
+          return true;
+        }),
     }),
     // Field key stays `collection` (not `drop`) to avoid touching every
     // query/component that reads `product.collection`.

@@ -9,6 +9,8 @@ import { PortableText } from '@/components/PortableText';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, H3, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
+import JsonLd from '@/components/JsonLd';
+import { absoluteUrl } from '@/lib/seo';
 
 export const revalidate = 60;
 
@@ -18,6 +20,7 @@ interface PressDoc {
   venue?: string;
   publication?: string;
   location?: string;
+  startDate?: string;
   description?: unknown;
   content?: PageBlock[];
 }
@@ -54,6 +57,7 @@ export async function generateMetadata({
     description: `${formatLabel(doc.title)} — Cinque® press${
       doc.venue ? ` at ${doc.venue}` : doc.publication ? `, ${doc.publication}` : ''
     }.`,
+    alternates: { canonical: `/press/${slug}` },
   };
 }
 
@@ -68,6 +72,19 @@ export default async function PressDetailPage({
 
   return (
     <Container className={contentPadY}>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: formatLabel(doc.title),
+          ...(doc.startDate ? { datePublished: doc.startDate } : {}),
+          ...(doc.subtitle ? { description: doc.subtitle } : {}),
+          author: { '@id': absoluteUrl('/#organization') },
+          publisher: { '@id': absoluteUrl('/#organization') },
+          mainEntityOfPage: absoluteUrl(`/press/${slug}`),
+          ...(doc.location ? { locationCreated: doc.location } : {}),
+        }}
+      />
       <Link
         href="/press"
         className="type-p1 mb-[20px] inline-block text-oslo hover:text-redcurrent"

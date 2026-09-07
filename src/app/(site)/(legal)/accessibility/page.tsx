@@ -4,6 +4,7 @@ import { H1, H3, P1, P2 } from '@/components/typography';
 export const metadata: Metadata = {
   title: 'Accessibility Statement',
   description: 'Cinque®’s commitment to an accessible website.',
+  alternates: { canonical: '/accessibility' },
 };
 
 export default function AccessibilityPage() {

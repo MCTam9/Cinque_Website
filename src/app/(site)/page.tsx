@@ -7,12 +7,11 @@ import { formatLabel } from '@/lib/products';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { homePageQuery, lookbookDropsQuery, pressCardsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
+import { organizationJsonLd, siteUrl } from '@/lib/seo';
 import HomeSectionMedia, { type MediaImage } from '@/components/HomeSectionMedia';
 import type { HomePageDoc, LookbookDrop, PressCard, SanityImageRef } from '@/types';
 
 export const revalidate = 60;
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 // Default tagline, shown until one is set in Sanity.
 const DEFAULT_TAGLINE =
@@ -149,15 +148,16 @@ export default async function HomePage() {
     <Container className={contentPadY}>
       {/* The page's single real heading; the logo below is decorative. */}
       <h1 className="sr-only">Cinque</h1>
+      <JsonLd data={organizationJsonLd()} />
       <JsonLd
         data={{
           '@context': 'https://schema.org',
-          '@type': 'Organization',
-          name: 'Cinque',
+          '@type': 'WebSite',
+          '@id': `${siteUrl}/#website`,
           url: siteUrl,
-          description:
-            'Jewellery and object maker. Individually made, cast and hallmarked in London.',
-          sameAs: ['https://www.instagram.com/cinque.made'],
+          name: 'Cinque',
+          publisher: { '@id': `${siteUrl}/#organization` },
+          inLanguage: 'en-GB',
         }}
       />
 

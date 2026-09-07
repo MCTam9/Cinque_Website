@@ -13,10 +13,33 @@ import type { LookbookDrop, SanityImageRef } from '@/types';
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: 'Lookbook',
-  description: 'Cinque® drops and the studio archive — one-of-a-kind and limited objects.',
-};
+/**
+ * Each `?drop=` variant is a genuinely different page, but they all used to
+ * serve the identical title with no canonical, so the drops competed with each
+ * other in the index. Give each one its own title and a canonical that keeps
+ * the parameter.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ drop?: string }>;
+}): Promise<Metadata> {
+  const { drop } = await searchParams;
+  if (!drop) {
+    return {
+      title: 'Lookbook',
+      description:
+        'Cinque® drops and the studio archive — one-of-a-kind and limited objects.',
+      alternates: { canonical: '/lookbook' },
+    };
+  }
+  const label = formatLabel(drop);
+  return {
+    title: `${label} — Lookbook`,
+    description: `${label}, a Cinque® drop. Individually made, cast and hallmarked in London.`,
+    alternates: { canonical: `/lookbook?drop=${drop}` },
+  };
+}
 
 // The drop list shown when none have been added in Sanity yet, so the page
 // always has something to navigate. Copy only — these drops carry no imagery,

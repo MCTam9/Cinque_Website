@@ -1,7 +1,9 @@
+import type { ElementType } from 'react';
 import Link from 'next/link';
 import { contentPadY, shellGrid } from '@/components/Container';
 import { H1, P2 } from '@/components/typography';
 import CategoryDisclosure from '@/components/CategoryDisclosure';
+import { SHOP_CATEGORIES } from '@/lib/shop/categories';
 
 /**
  * Shared Shop chrome (Figma): the SHOP heading + subtitle in the centre column
@@ -10,12 +12,12 @@ import CategoryDisclosure from '@/components/CategoryDisclosure';
  * inside it; `children` go in the centre column. `filterable` shows the mobile
  * FILTER control (catalog only).
  */
+// 'All' plus the shared category list — the categories themselves live in
+// src/lib/shop/categories.ts, which the routes and the Sanity slug validation
+// also read, so this list cannot drift from the routes that exist.
 const CATEGORIES = [
   { label: 'All', value: 'all' },
-  { label: 'Rings', value: 'rings' },
-  { label: 'Earrings', value: 'earrings' },
-  { label: 'Necklaces', value: 'necklaces' },
-  { label: 'Objects', value: 'objects' },
+  ...SHOP_CATEGORIES.map((c) => ({ label: c.label, value: c.value })),
 ] as const;
 
 function CategoryList({ active }: { active: string }) {
@@ -23,7 +25,8 @@ function CategoryList({ active }: { active: string }) {
     <ul className="flex flex-col gap-[10px]">
       {CATEGORIES.map((c) => {
         const isActive = c.value === active;
-        const href = c.value === 'all' ? '/shop' : `/shop?category=${c.value}`;
+        // Real routes now, not query strings — see src/lib/shop/categories.ts.
+        const href = c.value === 'all' ? '/shop' : `/shop/${c.value}`;
         return (
           <li key={c.value}>
             <Link
@@ -47,12 +50,20 @@ export default function ShopLayout({
   active = 'all',
   filterable = false,
   titleHref,
+  titleAs,
   children,
 }: {
   active?: string;
   filterable?: boolean;
   /** When set, the SHOP title becomes a link (e.g. back to /shop from a PDP). */
   titleHref?: string;
+  /**
+   * Element for the SHOP title. Defaults to `h1` for the catalog itself; pages
+   * nested inside this chrome (a PDP, a category listing) pass `"p"` so their
+   * own subject gets the page's single <h1> instead of the word "SHOP".
+   * Visual styling is unchanged either way.
+   */
+  titleAs?: ElementType;
   children: React.ReactNode;
 }) {
   return (
@@ -64,10 +75,10 @@ export default function ShopLayout({
       <header className="flex items-end justify-between border-b border-oslo pb-[10px] md:col-start-2 md:row-start-1">
         {titleHref ? (
           <Link href={titleHref} className="hover:text-redcurrent">
-            <H1>SHOP</H1>
+            <H1 as={titleAs}>SHOP</H1>
           </Link>
         ) : (
-          <H1>SHOP</H1>
+          <H1 as={titleAs}>SHOP</H1>
         )}
         <Link
           href="/studio#contact"
