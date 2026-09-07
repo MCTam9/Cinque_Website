@@ -6,6 +6,12 @@ import type { Metadata } from 'next';
  * stops crawling — a URL linked from elsewhere can still be indexed without
  * being fetched. This tag is what actually keeps it out.
  */
+// The strict, nonce-based CSP in src/middleware.ts applies to this route.
+// A nonce is minted per request, so the HTML cannot be prerendered or shared
+// from the cache — it has to render on demand. That costs nothing in search
+// terms: this route is noindexed anyway.
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Cart',
   robots: { index: false, follow: false },
