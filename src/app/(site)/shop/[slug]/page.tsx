@@ -307,8 +307,11 @@ export default async function ProductPage({
           {/* The CMS description. Queried since day one but never rendered,
               which left the PDP with no prose for search engines to read. */}
           {product.description && (
-            <div className="type-p1 flex flex-col gap-[10px] text-graphite">
-              <PortableText value={product.description} />
+            <div>
+              <P1 className="mb-[10px] font-bold">Description</P1>
+              <div className="type-p1 flex flex-col gap-[10px] text-graphite">
+                <PortableText value={product.description} />
+              </div>
             </div>
           )}
 
