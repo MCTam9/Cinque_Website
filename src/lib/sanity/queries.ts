@@ -27,16 +27,21 @@ const productCardProjection = `
     }
 `;
 
-// All purchasable products for the catalog grid.
-export const activeProductsQuery = groq`
-  *[_type == "product" && status == "active"] | order(_createdAt desc) {
+// Products the Shop lists: everything live, including sold-out pieces, which
+// stay visible (marked [SOLD OUT]) rather than vanishing from the catalog.
+// Draft and archived products are never listed.
+const SHOP_STATUSES = `status in ["active", "sold_out"]`;
+
+// The full catalog grid.
+export const shopProductsQuery = groq`
+  *[_type == "product" && ${SHOP_STATUSES}] | order(_createdAt desc) {
     ${productCardProjection}
   }
 `;
 
-/** Active products in one category — powers the /shop/<category> landing pages. */
+/** Listed products in one category — powers the /shop/<category> landing pages. */
 export const productsByCategoryQuery = groq`
-  *[_type == "product" && status == "active" && category == $category] | order(_createdAt desc) {
+  *[_type == "product" && ${SHOP_STATUSES} && category == $category] | order(_createdAt desc) {
     ${productCardProjection}
   }
 `;

@@ -6,7 +6,8 @@ import type { ProductCardData } from '@/types';
 /**
  * Product card (Figma): 2:3 photo → info panel with a bordered title, a
  * two-column spec block (labels left / values right), and the price (right
- * aligned). The whole card is a single link to the PDP.
+ * aligned), or [SOLD OUT] in its place. The whole card is a single link to the
+ * PDP, which stays reachable for sold-out pieces.
  */
 export default function ProductCard({ product }: { product: ProductCardData }) {
   return (
@@ -15,11 +16,6 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
       className="group flex flex-col border border-oslo bg-cararra"
     >
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-cloud/30">
-        {!product.inStock && (
-          <span className="absolute left-2 top-2 z-10 bg-cararra/90 px-2 py-1 type-p2 text-graphite">
-            Sold out
-          </span>
-        )}
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
@@ -51,7 +47,9 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         </dl>
 
-        <span className="type-p1 mt-auto text-right">{formatGBP(product.priceGBP)}</span>
+        <span className={`type-p1 mt-auto text-right ${product.inStock ? '' : 'text-oslo'}`}>
+          {product.inStock ? formatGBP(product.priceGBP) : '[SOLD OUT]'}
+        </span>
       </div>
     </Link>
   );
