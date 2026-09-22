@@ -5,23 +5,15 @@ import { sanityClient } from '@/lib/sanity/client';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { pressBySlugQuery, pressSlugsQuery } from '@/lib/sanity/queries';
 import { PageBuilder, type PageBlock } from '@/components/PageBuilder';
-import { PortableText } from '@/components/PortableText';
+import { PressEntry, type PressEntryDoc } from '@/components/PressEntry';
 import Container, { contentPadY } from '@/components/Container';
-import { H1, H3, P1 } from '@/components/typography';
 import { formatLabel } from '@/lib/products';
 import JsonLd from '@/components/JsonLd';
 import { absoluteUrl } from '@/lib/seo';
 
 export const revalidate = 60;
 
-interface PressDoc {
-  title: string;
-  subtitle?: string;
-  venue?: string;
-  publication?: string;
-  location?: string;
-  startDate?: string;
-  description?: unknown;
+interface PressDoc extends PressEntryDoc {
   content?: PageBlock[];
 }
 
@@ -91,20 +83,14 @@ export default async function PressDetailPage({
       >
         ← Press
       </Link>
-      <header className="mb-[30px] flex flex-col gap-[10px]">
-        <H1>{formatLabel(doc.title)}</H1>
-        {doc.subtitle && <H3 className="text-graphite">{doc.subtitle}</H3>}
-        {(doc.venue || doc.publication || doc.location) && (
-          <P1 className="text-oslo">
-            {[doc.venue, doc.publication, doc.location].filter(Boolean).join(', ')}
-          </P1>
-        )}
-        {Boolean(doc.description) && (
-          <div className="type-p1 mt-[10px] flex max-w-2xl flex-col gap-[10px]">
-            <PortableText value={doc.description as never} />
-          </div>
-        )}
-      </header>
+      {/* Same entry as on the Press list, with every photo rather than the
+          first three. Most entries have no page-builder content, so without
+          this the page was just a title. */}
+      <PressEntry
+        ex={doc}
+        titleAs="h1"
+        className={doc.content?.length ? 'mb-[40px] md:mb-[60px]' : ''}
+      />
       <PageBuilder blocks={doc.content} />
     </Container>
   );
