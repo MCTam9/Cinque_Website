@@ -1,13 +1,15 @@
 import 'server-only';
 import { serverEnv } from '@/lib/serverEnv';
 import { publicEnv } from '@/lib/env';
+import type { OrderContact } from '@/lib/stripe/customer';
 
 /**
  * ─────────────────────────────────────────────────────────────
  * TRANSACTIONAL EMAIL — Postmark
  * ─────────────────────────────────────────────────────────────
- * Four senders: order confirmation, shipping confirmation, a public
- * contact-form relay, and an internal low-stock alert. All are best-effort: if
+ * Five senders: order confirmation, a new-order notification to the studio,
+ * shipping confirmation, a public contact-form relay, and an internal
+ * low-stock alert. All are best-effort: if
  * Postmark isn't configured (no server token), they log and no-op so local dev
  * and the webhooks still work.
  *
@@ -185,14 +187,13 @@ export interface OrderConfirmationInput {
   currency: string;
 }
 
-export async function sendOrderConfirmation(
-  input: OrderConfirmationInput
-): Promise<SendEmailResult> {
-  if (!input.to) {
-    console.warn('[email] no recipient for order', input.orderNumber);
-    return { ok: false, error: 'no recipient' };
-  }
-  const rows = input.lines
+/** Line items (with thumbnails) and the total, shared by both order emails. */
+function orderTable(
+  lines: OrderConfirmationInput['lines'],
+  totalGBP: number,
+  currency: string
+): string {
+  const rows = lines
     .map((l) => {
       // Left-aligned product thumbnail. Retina: request 2x, display 56px square.
       const thumb = l.imageUrl
@@ -207,24 +208,91 @@ export async function sendOrderConfirmation(
               <td style="vertical-align:top;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">${escapeHtml(l.title)}<br><span style="color:${BRAND.oslo};font-size:12px;">${escapeHtml(l.sku)} &times; ${l.quantity}</span></td>
             </tr></table>
           </td>
-          <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};text-align:right;vertical-align:top;white-space:nowrap;">${money(l.unitPriceGBP * l.quantity, input.currency)}</td>
+          <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};text-align:right;vertical-align:top;white-space:nowrap;">${money(l.unitPriceGBP * l.quantity, currency)}</td>
         </tr>`;
     })
     .join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+       ${rows}
+       <tr>
+         <td style="padding:16px 0 0 0;font-weight:700;">Total</td>
+         <td style="padding:16px 0 0 0;text-align:right;font-weight:700;white-space:nowrap;">${money(totalGBP, currency)}</td>
+       </tr>
+     </table>`;
+}
+
+export async function sendOrderConfirmation(
+  input: OrderConfirmationInput
+): Promise<SendEmailResult> {
+  if (!input.to) {
+    console.warn('[email] no recipient for order', input.orderNumber);
+    return { ok: false, error: 'no recipient' };
+  }
   const html = shell(
     'Thank you for your order',
     `<p style="margin:0 0 4px 0;">Order confirmed.</p>
      <p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
-     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
-       ${rows}
-       <tr>
-         <td style="padding:16px 0 0 0;font-weight:700;">Total</td>
-         <td style="padding:16px 0 0 0;text-align:right;font-weight:700;white-space:nowrap;">${money(input.totalGBP, input.currency)}</td>
-       </tr>
-     </table>
+     ${orderTable(input.lines, input.totalGBP, input.currency)}
      <p style="margin:28px 0 0 0;color:${BRAND.oslo};">We&rsquo;ll email you again when your order ships.</p>`
   );
   return send({ to: input.to, subject: `Your Cinque order ${input.orderNumber}`, html });
+}
+
+// ── New-order notification (to the studio) ───────────────────
+/** The studio's own inbox: new orders and contact-form enquiries land here. */
+const STUDIO_INBOX = 'cindy@cinque.studio';
+
+export interface NewOrderNotificationInput extends Omit<OrderConfirmationInput, 'to'> {
+  customer: OrderContact;
+  /** Stripe dashboard link to the payment, for refunds and full details. */
+  dashboardUrl?: string | null;
+}
+
+/**
+ * Tells the studio an order has been paid, with everything needed to pack and
+ * post it. The buyer's details travel in the email only: they are deliberately
+ * not stored on the (public) Sanity order document.
+ */
+export async function sendNewOrderNotification(
+  input: NewOrderNotificationInput
+): Promise<SendEmailResult> {
+  const c = input.customer;
+  const address = c.address
+    ? [c.address.line1, c.address.line2, c.address.city, c.address.postalCode, c.address.country]
+        .filter(Boolean)
+        .map((part) => escapeHtml(part as string))
+        .join('<br>')
+    : '';
+  const detail = (label: string, value: string) =>
+    value
+      ? `<tr>
+           <td style="padding:4px 16px 4px 0;vertical-align:top;color:${BRAND.oslo};white-space:nowrap;">${label}</td>
+           <td style="padding:4px 0;vertical-align:top;">${value}</td>
+         </tr>`
+      : '';
+  const html = shell(
+    'New order',
+    `<p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
+     ${orderTable(input.lines, input.totalGBP, input.currency)}
+     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0 0;border-collapse:collapse;">
+       ${detail('Name', escapeHtml(c.name ?? ''))}
+       ${detail('Email', escapeHtml(c.email ?? ''))}
+       ${detail('Phone', escapeHtml(c.phone ?? ''))}
+       ${detail('Ship to', address)}
+     </table>
+     ${
+       input.dashboardUrl
+         ? `<p style="margin:28px 0 0 0;"><a href="${escapeHtml(input.dashboardUrl)}" style="color:${BRAND.redcurrent};">View payment in Stripe</a></p>`
+         : ''
+     }`
+  );
+  return send({
+    to: STUDIO_INBOX,
+    subject: `New order ${input.orderNumber}${c.name ? ` from ${c.name}` : ''}`,
+    html,
+    // Reply goes straight to the buyer.
+    replyTo: c.email ?? undefined,
+  });
 }
 
 // ── Shipping confirmation ─────────────────────────────────────
@@ -255,7 +323,7 @@ export async function sendShippingConfirmation(
 
 // ── Contact form ──────────────────────────────────────────────
 /** Where public contact-form enquiries are delivered. */
-export const CONTACT_RECIPIENT = 'cindy@cinque.studio';
+export const CONTACT_RECIPIENT = STUDIO_INBOX;
 
 export interface ContactMessageInput {
   name: string;
