@@ -16,7 +16,7 @@ import {
   productSeoDescription,
   productSeoTitle,
   RETURN_POLICY,
-  SHIPPING,
+  shippingDetailsJsonLd,
 } from '@/lib/seo';
 import { categoryBy, isReservedShopSlug } from '@/lib/shop/categories';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
@@ -213,22 +213,7 @@ export default async function ProductPage({
                   ? 'https://schema.org/ReturnShippingFees'
                   : 'https://schema.org/FreeReturn',
               },
-              shippingDetails: {
-                '@type': 'OfferShippingDetails',
-                shippingDestination: SHIPPING.countries.map((c) => ({
-                  '@type': 'DefinedRegion',
-                  addressCountry: c,
-                })),
-                deliveryTime: {
-                  '@type': 'ShippingDeliveryTime',
-                  handlingTime: {
-                    '@type': 'QuantitativeValue',
-                    minValue: SHIPPING.handlingDaysMin,
-                    maxValue: SHIPPING.handlingDaysMax,
-                    unitCode: 'DAY',
-                  },
-                },
-              },
+              shippingDetails: shippingDetailsJsonLd(v.priceGBP),
             })),
           },
         }}

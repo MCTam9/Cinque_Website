@@ -5,6 +5,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
 import { rateLimit, clientIp } from '@/lib/rateLimit';
+import { SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature/crypto & SDK require the Node.js runtime (not Edge).
@@ -23,6 +24,9 @@ const bodySchema = z.object({
     )
     .min(1)
     .max(50),
+  // Where the order ships. The session only accepts an address in this
+  // country, which is what makes the UK / international rate enforceable.
+  country: z.enum(SHIP_COUNTRY_CODES),
 });
 
 type VariantResult = {
@@ -69,6 +73,8 @@ export async function POST(req: Request) {
 
   const lineItems: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem[] = [];
   const fulfillmentLines: FulfillmentLine[] = [];
+  // Goods total from the trusted Sanity prices, for the free-shipping threshold.
+  let subtotalPence = 0;
 
   // Validate every line against Sanity — price & stock come from the server,
   // NEVER from the client. This is the price-integrity boundary.
@@ -117,7 +123,11 @@ export async function POST(req: Request) {
     }
 
     fulfillmentLines.push({ p: line.productId, v: line.variantKey, q: line.quantity });
+    subtotalPence += variant.priceGBP * line.quantity;
   }
+
+  const { country } = parsed.data;
+  const shipping = shippingQuote(country, subtotalPence);
 
   // Compact fulfillment map for the webhook. Stripe metadata values cap at 500
   // chars; guard it. (Large carts → future: persist a draft order + reference.)
@@ -149,7 +159,16 @@ export async function POST(req: Request) {
       // to match the site's cararra background instead of Stripe's default white.
       branding_settings: { background_color: '#F1F0ED' },
       automatic_tax: { enabled: false },
-      shipping_address_collection: { allowed_countries: ['GB', 'US', 'FR', 'DE', 'IE'] },
+      shipping_address_collection: { allowed_countries: [country] },
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            display_name: shipping.label,
+            fixed_amount: { amount: shipping.amountPence, currency: 'gbp' },
+          },
+        },
+      ],
       phone_number_collection: { enabled: true },
       metadata: { cart: cartMeta },
     } as SessionCreateParamsWithBranding);

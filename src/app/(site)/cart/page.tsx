@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
+import { SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
 
@@ -132,7 +133,18 @@ export default function CartPage() {
             <span className="type-h3">Subtotal</span>
             <span className="type-h3">{formatGBP(subtotal)}</span>
           </div>
-          <P1 className="text-oslo">Shipping calculated at checkout.</P1>
+          <div className="flex flex-col gap-[10px]">
+            <P1 className="text-oslo">
+              Shipping: UK {formatPence(SHIPPING_RATES.domesticPence)} · International{' '}
+              {formatPence(SHIPPING_RATES.internationalPence)} · Free on orders of{' '}
+              {formatPence(SHIPPING_RATES.freeFromPence)} or more.
+            </P1>
+            <P1 className="text-graphite">
+              {subtotal >= SHIPPING_RATES.freeFromPence
+                ? 'Your order ships free.'
+                : `${formatPence(SHIPPING_RATES.freeFromPence - subtotal)} away from free shipping.`}
+            </P1>
+          </div>
           <Link
             href="/checkout"
             className="type-h3 min-h-[48px] flex items-center justify-center bg-graphite text-cararra transition-colors hover:bg-redcurrent"

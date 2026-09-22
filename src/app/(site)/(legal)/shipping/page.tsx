@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
 import { H1, H3, P1, P2 } from '@/components/typography';
+import { SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
 
 export const metadata: Metadata = {
   title: 'Shipping & Returns',
-  description: 'Cinque® shipping destinations, lead times, and returns policy.',
+  description: 'Cinque® shipping costs, destinations, lead times, and returns policy.',
   alternates: { canonical: '/shipping' },
 };
 
@@ -19,6 +20,9 @@ export const metadata: Metadata = {
  * the marked-up answer to be visible on the page, and a drift between the two
  * is a structured-data violation.
  */
+// Built from the same constants checkout charges, so the page can't drift.
+const SHIPPING_COSTS = `UK delivery is ${formatPence(SHIPPING_RATES.domesticPence)} and international delivery is ${formatPence(SHIPPING_RATES.internationalPence)}. Orders of ${formatPence(SHIPPING_RATES.freeFromPence)} or more ship free to every country we deliver to.`;
+
 const FAQ: { question: string; answer: string }[] = [
   {
     question: 'How long does a Cinque order take to make and dispatch?',
@@ -29,6 +33,10 @@ const FAQ: { question: string; answer: string }[] = [
     question: 'Which countries does Cinque ship to?',
     answer:
       'We currently ship to the United Kingdom, United States, France, Germany and Ireland. Orders are sent via a tracked, insured service; an estimated delivery window and tracking details are provided at checkout and by email once your order ships.',
+  },
+  {
+    question: 'How much does shipping cost?',
+    answer: SHIPPING_COSTS,
   },
   {
     question: 'Are import duties and taxes included?',
@@ -67,7 +75,7 @@ export default function ShippingPage() {
         }}
       />
       <H1>Shipping &amp; Returns</H1>
-      <P2 className="text-oslo">Last updated: July 2026</P2>
+      <P2 className="text-oslo">Last updated: September 2026</P2>
 
       <H3 as="h2" className="font-bold">Processing &amp; lead times</H3>
       <P1>
@@ -82,6 +90,9 @@ export default function ShippingPage() {
         Orders are sent via a tracked, insured service; an estimated delivery window and tracking
         details are provided at checkout and by email once your order ships.
       </P1>
+
+      <H3 as="h2" className="font-bold">Shipping costs</H3>
+      <P1>{SHIPPING_COSTS}</P1>
 
       <H3 as="h2" className="font-bold">Duties &amp; taxes</H3>
       <P1>

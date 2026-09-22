@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ProductCategory, Variant } from '@/types';
 import { metalLabel, formatLabel } from '@/lib/products';
 import { categoryBy } from '@/lib/shop/categories';
+import { HOME_COUNTRY, SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
 
 /**
  * Canonical site URL. Previously copy-pasted into five files; import it from
@@ -39,10 +40,41 @@ export const RETURN_POLICY = {
 } as const;
 
 export const SHIPPING = {
-  countries: ['GB', 'US', 'FR', 'DE', 'IE'],
+  countries: SHIP_COUNTRY_CODES,
   handlingDaysMin: 3,
   handlingDaysMax: 5,
 } as const;
+
+/**
+ * Offer shippingDetails for one item at `pricePence`: a UK entry and an
+ * international entry, each with the rate checkout would charge for that item
+ * alone. Mirrors /shipping, like the return policy above.
+ */
+export function shippingDetailsJsonLd(pricePence: number) {
+  const international = SHIPPING.countries.filter((c) => c !== HOME_COUNTRY);
+  const groups = [
+    { countries: [HOME_COUNTRY], quote: shippingQuote(HOME_COUNTRY, pricePence) },
+    { countries: international, quote: shippingQuote(international[0], pricePence) },
+  ];
+  return groups.map(({ countries, quote }) => ({
+    '@type': 'OfferShippingDetails',
+    shippingRate: {
+      '@type': 'MonetaryAmount',
+      value: (quote.amountPence / 100).toFixed(2),
+      currency: 'GBP',
+    },
+    shippingDestination: countries.map((c) => ({ '@type': 'DefinedRegion', addressCountry: c })),
+    deliveryTime: {
+      '@type': 'ShippingDeliveryTime',
+      handlingTime: {
+        '@type': 'QuantitativeValue',
+        minValue: SHIPPING.handlingDaysMin,
+        maxValue: SHIPPING.handlingDaysMax,
+        unitCode: 'DAY',
+      },
+    },
+  }));
+}
 
 /** Ordered trail → BreadcrumbList JSON-LD. */
 export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
