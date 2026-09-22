@@ -267,14 +267,6 @@ export default async function ProductPage({
 
         {/* Info */}
         <div className="mt-[30px] flex flex-col gap-[20px] md:col-start-3 md:row-start-2 md:mt-0">
-          {/* The CMS description. Queried since day one but never rendered,
-              which left the PDP with no prose for search engines to read. */}
-          {product.description && (
-            <div className="type-p1 flex flex-col gap-[10px] text-graphite">
-              <PortableText value={product.description} />
-            </div>
-          )}
-
           <dl className="flex justify-between type-p1">
             <div className="flex flex-col gap-0.5 text-oslo">
               {drop && <dt>Drop</dt>}
@@ -310,6 +302,14 @@ export default async function ProductPage({
               variants={purchaseVariants}
               imageUrl={thumbUrl}
             />
+          )}
+
+          {/* The CMS description. Queried since day one but never rendered,
+              which left the PDP with no prose for search engines to read. */}
+          {product.description && (
+            <div className="type-p1 flex flex-col gap-[10px] text-graphite">
+              <PortableText value={product.description} />
+            </div>
           )}
 
           {product.careInstructions && (

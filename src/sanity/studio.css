@@ -1,0 +1,7 @@
+/* Studio-only overrides, loaded by the /admin route. See CompactObjectInput. */
+
+/* Gap between fields (and between the group tabs and the first field).
+   Sanity's default is 52px; 20px matches its own compact Tasks form. */
+[data-compact-form] > [data-ui='Stack'] {
+  gap: 20px;
+}

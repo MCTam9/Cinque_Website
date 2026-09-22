@@ -5,6 +5,7 @@
  */
 import { NextStudio } from 'next-sanity/studio';
 import config from '../../../../sanity.config';
+import '@/sanity/studio.css';
 
 export const dynamic = 'force-static';
 

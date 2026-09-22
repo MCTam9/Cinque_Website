@@ -6,6 +6,7 @@ import { visionTool } from '@sanity/vision';
 
 import { schemaTypes } from './src/sanity/schemaTypes';
 import { structure } from './src/sanity/structure';
+import { CompactObjectInput } from './src/sanity/components/CompactObjectInput';
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!;
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET!;
@@ -19,6 +20,7 @@ export default defineConfig({
   projectId,
   dataset,
   schema: { types: schemaTypes },
+  form: { components: { input: CompactObjectInput } },
   plugins: [
     structureTool({ structure }),
     // Vision lets staff/devs run GROQ queries. Safe to keep; remove for prod-lockdown.
