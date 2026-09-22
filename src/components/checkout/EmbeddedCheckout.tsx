@@ -10,6 +10,7 @@ import {
 import { publicEnv } from '@/lib/env';
 import { P1 } from '@/components/typography';
 import type { CheckoutRequestLine } from '@/types';
+import type { ShipCountry } from '@/lib/shop/shipping';
 
 // Publishable key is safe on the client. Loaded once, module-level.
 const stripePromise = loadStripe(publicEnv.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
@@ -19,9 +20,17 @@ const stripePromise = loadStripe(publicEnv.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
  * (zero-touch PCI). We fetch the clientSecret from our /api/checkout route
  * ourselves so that a validation failure (out of stock, cart too large) shows a
  * clear message with a route back to the cart, instead of Stripe's generic
- * error. Keyed on the cart contents so it only re-requests when they change.
+ * error. Keyed on the cart contents and destination country, so it only
+ * re-requests when either changes — a new country means a new session, since
+ * each session only accepts an address in its own country.
  */
-export function EmbeddedCheckout({ lines }: { lines: CheckoutRequestLine[] }) {
+export function EmbeddedCheckout({
+  lines,
+  country,
+}: {
+  lines: CheckoutRequestLine[];
+  country: ShipCountry;
+}) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const linesKey = JSON.stringify(lines);
@@ -35,7 +44,7 @@ export function EmbeddedCheckout({ lines }: { lines: CheckoutRequestLine[] }) {
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lines }),
+          body: JSON.stringify({ lines, country }),
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({ error: 'Checkout failed.' }));
@@ -50,9 +59,10 @@ export function EmbeddedCheckout({ lines }: { lines: CheckoutRequestLine[] }) {
     return () => {
       cancelled = true;
     };
-    // linesKey captures the cart contents; re-run only when they change.
+    // linesKey captures the cart contents; re-run only when they (or the
+    // country) change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linesKey]);
+  }, [linesKey, country]);
 
   if (error) {
     return (
@@ -72,7 +82,8 @@ export function EmbeddedCheckout({ lines }: { lines: CheckoutRequestLine[] }) {
 
   return (
     <div id="checkout">
-      <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
+      {/* Keyed on the secret: Stripe's provider can't swap sessions in place. */}
+      <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={{ clientSecret }}>
         <StripeEmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>

@@ -183,13 +183,16 @@ export interface OrderConfirmationInput {
     unitPriceGBP: number;
     imageUrl?: string | null;
   }>;
+  /** Shipping charged, in pence; 0 shows as "Free", omitted hides the row. */
+  shippingGBP?: number | null;
   totalGBP: number;
   currency: string;
 }
 
-/** Line items (with thumbnails) and the total, shared by both order emails. */
+/** Line items (with thumbnails), shipping and the total, shared by both order emails. */
 function orderTable(
   lines: OrderConfirmationInput['lines'],
+  shippingGBP: number | null | undefined,
   totalGBP: number,
   currency: string
 ): string {
@@ -212,8 +215,16 @@ function orderTable(
         </tr>`;
     })
     .join('');
+  const shippingRow =
+    shippingGBP == null
+      ? ''
+      : `<tr>
+         <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};">Shipping</td>
+         <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};text-align:right;white-space:nowrap;">${shippingGBP === 0 ? 'Free' : money(shippingGBP, currency)}</td>
+       </tr>`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
        ${rows}
+       ${shippingRow}
        <tr>
          <td style="padding:16px 0 0 0;font-weight:700;">Total</td>
          <td style="padding:16px 0 0 0;text-align:right;font-weight:700;white-space:nowrap;">${money(totalGBP, currency)}</td>
@@ -232,7 +243,7 @@ export async function sendOrderConfirmation(
     'Thank you for your order',
     `<p style="margin:0 0 4px 0;">Order confirmed.</p>
      <p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
-     ${orderTable(input.lines, input.totalGBP, input.currency)}
+     ${orderTable(input.lines, input.shippingGBP, input.totalGBP, input.currency)}
      <p style="margin:28px 0 0 0;color:${BRAND.oslo};">We&rsquo;ll email you again when your order ships.</p>`
   );
   return send({ to: input.to, subject: `Your Cinque order ${input.orderNumber}`, html });
@@ -273,7 +284,7 @@ export async function sendNewOrderNotification(
   const html = shell(
     'New order',
     `<p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
-     ${orderTable(input.lines, input.totalGBP, input.currency)}
+     ${orderTable(input.lines, input.shippingGBP, input.totalGBP, input.currency)}
      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0 0;border-collapse:collapse;">
        ${detail('Name', escapeHtml(c.name ?? ''))}
        ${detail('Email', escapeHtml(c.email ?? ''))}

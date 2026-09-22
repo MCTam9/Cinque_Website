@@ -231,6 +231,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       to: contact.email,
       orderNumber,
       lines: emailLines,
+      shippingGBP: session.shipping_cost?.amount_total ?? null,
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',
     });
@@ -244,6 +245,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     await sendNewOrderNotification({
       orderNumber,
       lines: emailLines,
+      shippingGBP: session.shipping_cost?.amount_total ?? null,
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',
       customer: contact,
