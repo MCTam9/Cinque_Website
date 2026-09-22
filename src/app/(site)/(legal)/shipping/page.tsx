@@ -51,7 +51,7 @@ const FAQ: { question: string; answer: string }[] = [
   {
     question: 'How do I return an item?',
     answer:
-      'To arrange a return, email cindy@cinque.studio with your order number. Return postage is the customer’s responsibility unless the item is faulty. Refunds are issued to the original payment method within 14 days of us receiving the returned item.',
+      'To arrange a return, email cindy@cinque.studio with your order number. Return postage is the customer’s responsibility unless the item is faulty. Refunds include the original standard delivery charge and are issued to the original payment method within 14 days of us receiving the returned item.',
   },
   {
     question: 'What if my piece arrives damaged or faulty?',
@@ -116,8 +116,8 @@ export default function ShippingPage() {
           cindy@cinque.studio
         </a>{' '}
         with your order number. Return postage is the customer’s responsibility unless the item is
-        faulty. Refunds are issued to the original payment method within 14 days of us receiving
-        the returned item.
+        faulty. Refunds include the original standard delivery charge and are issued to the
+        original payment method within 14 days of us receiving the returned item.
       </P1>
 
       <H3 as="h2" className="font-bold">Faulty items</H3>
