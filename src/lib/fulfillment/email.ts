@@ -14,10 +14,13 @@ import type { OrderContact } from '@/lib/stripe/customer';
  * and the webhooks still work.
  *
  * Postmark rather than Resend because Resend's domain verification requires an
- * MX record on a `send.` subdomain, and Wix — which hosts this domain's DNS —
- * cannot create subdomain MX records. Postmark verifies with a DKIM TXT and a
- * Return-Path CNAME, both of which Wix supports. If DNS ever moves off Wix
- * that constraint disappears, but there's no reason to switch back.
+ * MX record on a `send.` subdomain, which Wix — the domain's DNS host at the
+ * time — could not create. Postmark verifies with a DKIM TXT and a Return-Path
+ * CNAME (`pm-bounces` → pm.mtasv.net). DNS has since moved to Porkbun, which
+ * has no such limit, but there's no reason to switch back.
+ *
+ * Current DNS (Porkbun): mailboxes are iCloud (MX + SPF include:icloud.com),
+ * and DMARC aggregate reports go to Valimail, not the studio inbox.
  *
  * The REST API is called directly with `fetch` rather than via Postmark's SDK —
  * the payload is five fields, so the dependency buys nothing.
