@@ -4,7 +4,7 @@ import ProductGrid from '@/components/ProductGrid';
 import RingSizeChart from '@/components/RingSizeChart';
 import ShopLayout from '@/components/ShopLayout';
 import { sanityFetch } from '@/lib/sanity/fetch';
-import { activeProductsQuery } from '@/lib/sanity/queries';
+import { shopProductsQuery } from '@/lib/sanity/queries';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import type { Product } from '@/types';
 
@@ -26,8 +26,8 @@ export const metadata: Metadata = {
  */
 export default async function ShopPage() {
   const products = await sanityFetch<Product[]>({
-    label: 'activeProducts',
-    query: activeProductsQuery,
+    label: 'shopProducts',
+    query: shopProductsQuery,
     fallback: [],
   });
 
