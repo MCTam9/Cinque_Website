@@ -5,7 +5,11 @@ import { serverEnv } from '@/lib/serverEnv';
 import { sanityWriteClient } from '@/lib/sanity/writeClient';
 import { urlFor } from '@/lib/sanity/image';
 import { createShipment } from '@/lib/fulfillment/shipping';
-import { sendOrderConfirmation, sendLowStockAlert } from '@/lib/fulfillment/email';
+import {
+  sendOrderConfirmation,
+  sendNewOrderNotification,
+  sendLowStockAlert,
+} from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import type { FulfillmentLine } from '@/types';
@@ -153,6 +157,11 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   // and Stripe already holds this. See the order schema's no-PII note.
   const contact = contactFromSession(session);
 
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null;
+
   // ── Inventory deduction + order creation in ONE atomic transaction. ──
   const tx = sanityWriteClient.transaction();
 
@@ -162,10 +171,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     orderNumber,
     status: 'paid',
     stripeSessionId: session.id,
-    stripePaymentIntentId:
-      typeof session.payment_intent === 'string'
-        ? session.payment_intent
-        : session.payment_intent?.id ?? null,
+    stripePaymentIntentId: paymentIntentId,
     // imageUrl is derived (email-only) — keep it out of the persisted snapshot.
     lines: orderLines.map(({ imageUrl: _imageUrl, ...persisted }) => persisted),
     totalGBP: session.amount_total ?? 0,
@@ -212,22 +218,41 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     console.error('[webhook] shipping placeholder error', err);
   }
 
+  const emailLines = orderLines.map((l) => ({
+    title: l.titleSnapshot,
+    sku: l.sku,
+    quantity: l.quantity,
+    unitPriceGBP: l.unitPriceGBP,
+    imageUrl: l.imageUrl,
+  }));
+
   try {
     await sendOrderConfirmation({
       to: contact.email,
       orderNumber,
-      lines: orderLines.map((l) => ({
-        title: l.titleSnapshot,
-        sku: l.sku,
-        quantity: l.quantity,
-        unitPriceGBP: l.unitPriceGBP,
-        imageUrl: l.imageUrl,
-      })),
+      lines: emailLines,
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',
     });
   } catch (err) {
     console.error('[webhook] email placeholder error', err);
+  }
+
+  // Tell the studio. Separate from the buyer's email so one failing never
+  // costs the other.
+  try {
+    await sendNewOrderNotification({
+      orderNumber,
+      lines: emailLines,
+      totalGBP: session.amount_total ?? 0,
+      currency: session.currency ?? 'gbp',
+      customer: contact,
+      dashboardUrl: paymentIntentId
+        ? `https://dashboard.stripe.com/${session.livemode ? '' : 'test/'}payments/${paymentIntentId}`
+        : null,
+    });
+  } catch (err) {
+    console.error('[webhook] new-order notification error', err);
   }
 }
 
