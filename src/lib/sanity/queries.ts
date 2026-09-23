@@ -39,9 +39,9 @@ export const shopProductsQuery = groq`
   }
 `;
 
-/** Listed products in one category — powers the /shop/<category> landing pages. */
+/** Listed products in one category, A–Z — powers the /shop/<category> landing pages. */
 export const productsByCategoryQuery = groq`
-  *[_type == "product" && ${SHOP_STATUSES} && category == $category] | order(_createdAt desc) {
+  *[_type == "product" && ${SHOP_STATUSES} && category == $category] | order(lower(title) asc) {
     ${productCardProjection}
   }
 `;

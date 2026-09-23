@@ -224,6 +224,23 @@
   display: none;
 }
 
+/* A quiet scrollbar for in-page scroll areas (the PDP thumbnail column): thin,
+   in the muted `cloud` grey, on a transparent track. */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c9c8c4 transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #c9c8c4;
+  border-radius: 2px;
+}
+
 /* Keyboard focus indicator — shown only for keyboard / assistive-tech
    navigation (:focus-visible), never on mouse clicks. Unlayered so it reliably
    wins over Tailwind's utility outline resets on links, buttons and inputs. */
