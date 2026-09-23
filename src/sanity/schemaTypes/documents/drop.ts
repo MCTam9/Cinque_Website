@@ -49,7 +49,7 @@ export const drop = defineType({
       name: 'heroImage',
       title: 'Hero Image',
       type: 'image',
-      description: 'Used for the drop’s card on the Shop page.',
+      description: 'Used for the drop’s card on the Shop page and on the Home page LOOKBOOK row.',
       options: { hotspot: true },
       fields: [defineField({ name: 'alt', title: 'Alt Text', type: 'string' })],
     }),
@@ -91,7 +91,7 @@ export const drop = defineType({
     prepare: ({ title, dropNumber, media, hero }) => ({
       title: dropNumber ? `${dropNumber}/${title}` : title,
       subtitle: 'Drop',
-      media: media || hero,
+      media: hero || media,
     }),
   },
 });

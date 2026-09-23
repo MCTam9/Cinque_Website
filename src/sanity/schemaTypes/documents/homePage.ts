@@ -1,13 +1,15 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 import { crop2x3 } from '../imageCrop';
+import { LookbookOrderInput } from '../../components/LookbookOrderInput';
 
 /**
  * The Home page — a singleton (only one exists; edited in place, never created
- * or deleted). Staff edit the tagline and, for the Shop / Lookbook / Studio
- * sections, upload one or more images.
+ * or deleted). Staff edit the tagline and, for the Shop / Studio sections,
+ * upload one or more images.
  *
- * PRESS has no field here: that section is built from the Press entries
- * themselves, one card per entry using its first image (see the Home page).
+ * LOOKBOOK only sets the order of the drops: each card's title and image come
+ * from the drop itself (Editorial → Drops, its Hero Image). PRESS has no field
+ * here at all: it is built from the Press entries, one card per entry.
  *
  * Each section is one row of images, sized to how many it has:
  *   • mobile → the first 4, up to 4 columns; captions hidden.
@@ -51,13 +53,18 @@ export const homePage = defineType({
       description: 'The intro lines beside the logo. Each line break shows as a new line.',
     }),
     sectionImages('shopImages', 'SHOP images'),
-    // Order matters here: the first LOOKBOOK image is captioned with the newest
-    // drop, the second with the one before it, and so on (see `lookbookCards`
-    // in the Home page). Reordering these re-pairs the titles.
-    sectionImages(
-      'lookbookImages',
-      'LOOKBOOK images (one per drop, newest first)'
-    ),
+    // Order only. Title and image travel with the drop, so reordering can never
+    // caption a picture with another drop's name. The input keeps the list in
+    // step with the published drops (see LookbookOrderInput).
+    defineField({
+      name: 'lookbookOrder',
+      title: 'LOOKBOOK — drag to reorder',
+      type: 'array',
+      description:
+        "The order of the drops on the Home page. Each card's title and image come from the drop's Hero Image in Editorial → Drops. New drops are added here automatically.",
+      of: [defineArrayMember({ type: 'reference', to: [{ type: 'drop' }] })],
+      components: { input: LookbookOrderInput },
+    }),
     // No PRESS field: that section builds itself from the press entries, each
     // card showing that entry's own first image. Add imagery to the press entry
     // rather than here. See `pressCards` in the Home page.

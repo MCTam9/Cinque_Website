@@ -157,6 +157,7 @@ export const pressCardsQuery = groq`
 export const lookbookDropsQuery = groq`
   *[_type == "drop" && defined(slug.current)] | order(dropNumber desc) {
     _id, title, dropNumber, "slug": slug.current, intro,
+    heroImage{ alt, asset },
     "images": images[]{ alt, asset }
   }
 `;
@@ -169,7 +170,7 @@ export const homePageQuery = groq`
   *[_id == "homePage"][0]{
     tagline,
     "shopImages": shopImages[]{ alt, asset },
-    "lookbookImages": lookbookImages[]{ alt, asset },
+    "lookbookOrder": lookbookOrder[]._ref,
     "studioImages": studioImages[]{ alt, asset }
   }
 `;
