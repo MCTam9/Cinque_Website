@@ -133,16 +133,24 @@ export default function CartPage() {
             <span className="type-h3">Subtotal</span>
             <span className="type-h3">{formatGBP(subtotal)}</span>
           </div>
-          <div className="flex flex-col gap-[10px]">
-            <P1 className="text-oslo">
-              Shipping: UK {formatPence(SHIPPING_RATES.domesticPence)} · International{' '}
-              {formatPence(SHIPPING_RATES.internationalPence)} · Free on orders of{' '}
-              {formatPence(SHIPPING_RATES.freeFromPence)} or more.
-            </P1>
+          <div className="flex flex-col gap-[10px] border-t border-oslo/40 pt-[20px]">
+            <P1 className="text-oslo">Shipping</P1>
+            <dl className="type-p1 flex flex-col gap-0.5">
+              {[
+                ['UK', formatPence(SHIPPING_RATES.domesticPence)],
+                ['International', formatPence(SHIPPING_RATES.internationalPence)],
+                [`Orders ${formatPence(SHIPPING_RATES.freeFromPence)}+`, 'Free'],
+              ].map(([label, value]) => (
+                <div key={label} className="flex justify-between">
+                  <dt className="text-oslo">{label}</dt>
+                  <dd className="text-graphite">{value}</dd>
+                </div>
+              ))}
+            </dl>
             <P1 className="text-graphite">
               {subtotal >= SHIPPING_RATES.freeFromPence
-                ? 'Your order ships free.'
-                : `${formatPence(SHIPPING_RATES.freeFromPence - subtotal)} away from free shipping.`}
+                ? 'Your order ships free'
+                : `${formatPence(SHIPPING_RATES.freeFromPence - subtotal)} away from free shipping`}
             </P1>
           </div>
           <Link
