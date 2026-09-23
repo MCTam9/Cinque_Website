@@ -212,17 +212,25 @@ export default async function ProductPage({
               url: absoluteUrl(`/shop/${product.slug}`),
               // Mirrors the published terms at /shipping. Keep the two in step:
               // Google treats a mismatch as a merchant listing violation.
-              hasMerchantReturnPolicy: {
-                '@type': 'MerchantReturnPolicy',
-                applicableCountry: RETURN_POLICY.country,
-                returnPolicyCategory:
-                  'https://schema.org/MerchantReturnFiniteReturnWindow',
-                merchantReturnDays: RETURN_POLICY.days,
-                returnMethod: 'https://schema.org/ReturnByMail',
-                returnFees: RETURN_POLICY.returnFeesCustomerResponsibility
-                  ? 'https://schema.org/ReturnShippingFees'
-                  : 'https://schema.org/FreeReturn',
-              },
+              // Made-to-order pieces are made to the buyer's size and can't be
+              // returned unless faulty — /shipping says so, and this must match.
+              hasMerchantReturnPolicy: v.madeToOrder
+                ? {
+                    '@type': 'MerchantReturnPolicy',
+                    applicableCountry: RETURN_POLICY.country,
+                    returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+                  }
+                : {
+                    '@type': 'MerchantReturnPolicy',
+                    applicableCountry: RETURN_POLICY.country,
+                    returnPolicyCategory:
+                      'https://schema.org/MerchantReturnFiniteReturnWindow',
+                    merchantReturnDays: RETURN_POLICY.days,
+                    returnMethod: 'https://schema.org/ReturnByMail',
+                    returnFees: RETURN_POLICY.returnFeesCustomerResponsibility
+                      ? 'https://schema.org/ReturnShippingFees'
+                      : 'https://schema.org/FreeReturn',
+                  },
               shippingDetails: shippingDetailsJsonLd(v.priceGBP),
             })),
           },
