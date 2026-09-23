@@ -260,49 +260,9 @@ export default async function StudioPage() {
         )}
       </section>
 
-      {/* Contact */}
-      <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Contact</H2>
-      <section id="contact" className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
-        <div className="md:col-span-2">
-          <ContactForm />
-        </div>
-        <div className="flex flex-col gap-[20px] text-graphite">
-          <Lines text={contactIntro} className="text-graphite" />
-          <a
-            href={`mailto:${email}`}
-            className="type-p1 w-fit text-graphite underline underline-offset-4 hover:text-redcurrent"
-          >
-            {email}
-          </a>
-          <div className="type-p1 text-graphite">
-            <Lines text={commissionNote} className="mb-[10px] text-graphite" />
-            {commissionChecklist.map((item, i) => (
-              <P1 key={i} className="text-graphite">
-                {item}
-              </P1>
-            ))}
-          </div>
-          <Lines text={responseTime} className="text-graphite" />
-          <Lines text={address} className="text-graphite" />
-        </div>
-      </section>
-
-      {/* Full-width studio flatlay band, closing the Contact section */}
-      {band && (
-        <div className="group relative mb-[40px] aspect-[21/9] w-full overflow-hidden bg-cloud/30 md:mb-[60px]">
-          <Image
-            src={band}
-            alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
-            fill
-            sizes="(max-width: 768px) 100vw, 900px"
-            className="img-bw object-cover"
-          />
-        </div>
-      )}
-
       {/* Bespoke */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Bespoke</H2>
-      <section className="grid grid-cols-1 gap-[30px] md:grid-cols-3">
+      <section className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
         <div className="flex flex-col gap-[30px] md:col-span-2">
           {bespokeImages.length > 0 && (
             <div className="grid grid-cols-4 gap-[10px]">
@@ -365,6 +325,45 @@ export default async function StudioPage() {
           </div>
         )}
       </section>
+      {/* Contact */}
+      <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Contact</H2>
+      <section id="contact" className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
+        <div className="md:col-span-2">
+          <ContactForm />
+        </div>
+        <div className="flex flex-col gap-[20px] text-graphite">
+          <Lines text={contactIntro} className="text-graphite" />
+          <a
+            href={`mailto:${email}`}
+            className="type-p1 w-fit text-graphite underline underline-offset-4 hover:text-redcurrent"
+          >
+            {email}
+          </a>
+          <div className="type-p1 text-graphite">
+            <Lines text={commissionNote} className="mb-[10px] text-graphite" />
+            {commissionChecklist.map((item, i) => (
+              <P1 key={i} className="text-graphite">
+                {item}
+              </P1>
+            ))}
+          </div>
+          <Lines text={responseTime} className="text-graphite" />
+          <Lines text={address} className="text-graphite" />
+        </div>
+      </section>
+
+      {/* Full-width studio flatlay band, closing the page */}
+      {band && (
+        <div className="group relative aspect-[21/9] w-full overflow-hidden bg-cloud/30">
+          <Image
+            src={band}
+            alt={studio?.bandImage?.alt || 'Cinque studio flatlay'}
+            fill
+            sizes="(max-width: 768px) 100vw, 900px"
+            className="img-bw object-cover"
+          />
+        </div>
+      )}
     </Container>
   );
 }

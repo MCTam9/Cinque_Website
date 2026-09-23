@@ -49,6 +49,10 @@ const STRIPE_CONNECT = 'https://api.stripe.com https://m.stripe.network';
 // https in local dev, so it is production-only.
 const isProd = process.env.NODE_ENV === 'production';
 
+// `next dev` evaluates its bundles with eval(); without this every page
+// renders but never hydrates locally. Production builds don't need it.
+const DEV_EVAL = isProd ? '' : " 'unsafe-eval'";
+
 function baseDirectives(): string[] {
   return [
     `default-src 'self'`,
@@ -67,13 +71,13 @@ function baseDirectives(): string[] {
 
 /** Cacheable storefront policy — see note 1 above on 'unsafe-inline'. */
 function buildStorefrontCsp(): string {
-  return [`script-src 'self' 'unsafe-inline' ${STRIPE_SCRIPT}`, ...baseDirectives()].join('; ');
+  return [`script-src 'self' 'unsafe-inline'${DEV_EVAL} ${STRIPE_SCRIPT}`, ...baseDirectives()].join('; ');
 }
 
 /** Strict, nonce-based policy for the checkout flow. */
 function buildCheckoutCsp(nonce: string): string {
   return [
-    `script-src 'self' 'nonce-${nonce}' ${STRIPE_SCRIPT}`,
+    `script-src 'self' 'nonce-${nonce}'${DEV_EVAL} ${STRIPE_SCRIPT}`,
     ...baseDirectives(),
   ].join('; ');
 }
