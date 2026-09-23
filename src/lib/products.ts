@@ -37,8 +37,8 @@ export function formatGBP(pence: number): string {
   return Number.isInteger(pounds) ? `£${pounds}` : `£${pounds.toFixed(2)}`;
 }
 
-function variantIsAvailable(v: Variant): boolean {
-  return v.stockQuantity > 0 || Boolean(v.allowBackorder);
+export function variantIsAvailable(v: Variant): boolean {
+  return v.stockQuantity > 0 || Boolean(v.allowBackorder) || Boolean(v.madeToOrder);
 }
 
 /** Drop label like "01/Metal Veil" from a collection ref. */

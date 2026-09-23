@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useCart } from '@/store/cart';
+import { cartLineId, useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
 import { SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
+import { madeToOrderNote } from '@/lib/shop/madeToOrder';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
 
@@ -69,7 +70,7 @@ export default function CartPage() {
         {/* Line items */}
         <ul className="flex flex-col divide-y divide-oslo/40 border-y border-oslo/40">
           {lines.map((l) => (
-            <li key={`${l.productId}-${l.variantKey}`} className="flex gap-[20px] py-[20px]">
+            <li key={cartLineId(l)} className="flex gap-[20px] py-[20px]">
               <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-cloud/30">
                 {l.imageUrl && (
                   <Image
@@ -85,6 +86,9 @@ export default function CartPage() {
               <div className="flex flex-1 flex-col gap-1">
                 <P1>{l.title}</P1>
                 <P2 className="text-oslo">{l.sku}</P2>
+                {l.madeToOrder && (
+                  <P2 className="text-graphite">{madeToOrderNote(l.customSize)}</P2>
+                )}
 
                 <div className="mt-auto flex items-center gap-[10px]">
                   <div className="flex items-center border border-oslo">
@@ -93,7 +97,7 @@ export default function CartPage() {
                       aria-label="Decrease quantity"
                       disabled={l.quantity <= 1}
                       onClick={() =>
-                        updateQuantity(l.productId, l.variantKey, Math.max(1, l.quantity - 1))
+                        updateQuantity(cartLineId(l), Math.max(1, l.quantity - 1))
                       }
                       className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
                     >
@@ -105,7 +109,7 @@ export default function CartPage() {
                       aria-label="Increase quantity"
                       disabled={l.quantity >= MAX_QTY}
                       onClick={() =>
-                        updateQuantity(l.productId, l.variantKey, Math.min(MAX_QTY, l.quantity + 1))
+                        updateQuantity(cartLineId(l), Math.min(MAX_QTY, l.quantity + 1))
                       }
                       className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
                     >
@@ -114,7 +118,7 @@ export default function CartPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeLine(l.productId, l.variantKey)}
+                    onClick={() => removeLine(cartLineId(l))}
                     className="type-p2 text-oslo underline underline-offset-4 hover:text-redcurrent"
                   >
                     Remove

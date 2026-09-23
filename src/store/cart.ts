@@ -5,16 +5,21 @@ import type { CartLine } from '@/types';
 interface CartState {
   lines: CartLine[];
   addLine: (line: CartLine) => void;
-  removeLine: (productId: string, variantKey: string) => void;
-  updateQuantity: (productId: string, variantKey: string, quantity: number) => void;
+  /** `id` is `cartLineId(line)`. */
+  removeLine: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clear: () => void;
   // Derived selectors
   itemCount: () => number;
   subtotalGBP: () => number;
 }
 
-const sameLine = (a: CartLine, productId: string, variantKey: string) =>
-  a.productId === productId && a.variantKey === variantKey;
+/**
+ * A cart line's identity: the variant, plus the custom size for made-to-order
+ * pieces — so the same ring in sizes N and P stays two separate lines.
+ */
+export const cartLineId = (l: Pick<CartLine, 'productId' | 'variantKey' | 'customSize'>) =>
+  [l.productId, l.variantKey, l.customSize ?? ''].join('|');
 
 /**
  * Client-side cart. Persisted to localStorage so the basket survives reloads.
@@ -28,34 +33,28 @@ export const useCart = create<CartState>()(
 
       addLine: (line) =>
         set((state) => {
-          const existing = state.lines.find((l) =>
-            sameLine(l, line.productId, line.variantKey)
-          );
-          if (existing) {
+          const id = cartLineId(line);
+          if (state.lines.some((l) => cartLineId(l) === id)) {
             return {
               lines: state.lines.map((l) =>
-                sameLine(l, line.productId, line.variantKey)
-                  ? { ...l, quantity: l.quantity + line.quantity }
-                  : l
+                cartLineId(l) === id ? { ...l, quantity: l.quantity + line.quantity } : l
               ),
             };
           }
           return { lines: [...state.lines, line] };
         }),
 
-      removeLine: (productId, variantKey) =>
+      removeLine: (id) =>
         set((state) => ({
-          lines: state.lines.filter((l) => !sameLine(l, productId, variantKey)),
+          lines: state.lines.filter((l) => cartLineId(l) !== id),
         })),
 
-      updateQuantity: (productId, variantKey, quantity) =>
+      updateQuantity: (id, quantity) =>
         set((state) => ({
           lines:
             quantity <= 0
-              ? state.lines.filter((l) => !sameLine(l, productId, variantKey))
-              : state.lines.map((l) =>
-                  sameLine(l, productId, variantKey) ? { ...l, quantity } : l
-                ),
+              ? state.lines.filter((l) => cartLineId(l) !== id)
+              : state.lines.map((l) => (cartLineId(l) === id ? { ...l, quantity } : l)),
         })),
 
       clear: () => set({ lines: [] }),

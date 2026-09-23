@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /** UK ring sizes with US / EU equivalents, inner circumference and diameter (mm). */
 const ROWS = [
@@ -20,12 +20,24 @@ const ROWS = [
   { uk: 'T', us: '9¾', eu: '61', circ: '60.9', dia: '19.4' },
 ] as const;
 
-/** Collapsible ring-size chart for the PDP. */
+/** Anchor the PDP's "Ring size chart" link (made-to-order size field) jumps to. */
+export const RING_SIZE_CHART_ID = 'ring-size-chart';
+
+/** Collapsible ring-size chart for the PDP. Opens itself when linked to by id. */
 export default function RingSizeChart() {
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    const openIfTargeted = () => {
+      if (window.location.hash === `#${RING_SIZE_CHART_ID}`) setOpen(true);
+    };
+    openIfTargeted();
+    window.addEventListener('hashchange', openIfTargeted);
+    return () => window.removeEventListener('hashchange', openIfTargeted);
+  }, []);
+
   return (
-    <div>
+    <div id={RING_SIZE_CHART_ID} className="scroll-mt-[20px]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

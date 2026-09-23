@@ -110,13 +110,30 @@ export const variant = defineType({
       type: 'boolean',
       initialValue: false,
     }),
+    defineField({
+      name: 'madeToOrder',
+      title: 'Made to order',
+      type: 'boolean',
+      initialValue: false,
+      description:
+        'Sold regardless of stock, which is not tracked. The customer enters their own size, ' +
+        'and the site shows an 8–12 week lead time. Leave Size blank — the option shows as "Custom".',
+    }),
   ],
   preview: {
-    select: { sku: 'sku', metal: 'metalType', size: 'size', stock: 'stockQuantity' },
-    prepare({ sku, metal, size, stock }) {
+    select: {
+      sku: 'sku',
+      metal: 'metalType',
+      size: 'size',
+      stock: 'stockQuantity',
+      madeToOrder: 'madeToOrder',
+    },
+    prepare({ sku, metal, size, stock, madeToOrder }) {
       return {
         title: sku || 'Variant',
-        subtitle: [metal, size, `stock: ${stock ?? 0}`].filter(Boolean).join(' · '),
+        subtitle: [metal, size, madeToOrder ? 'made to order' : `stock: ${stock ?? 0}`]
+          .filter(Boolean)
+          .join(' · '),
       };
     },
   },

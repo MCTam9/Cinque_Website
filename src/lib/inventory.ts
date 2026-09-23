@@ -6,6 +6,7 @@ export interface ReconciledVariant {
   stockQuantity?: number;
   lowStockThreshold?: number;
   allowBackorder?: boolean;
+  madeToOrder?: boolean;
 }
 
 export interface ReconciledProduct {
@@ -17,7 +18,7 @@ export interface ReconciledProduct {
 
 const RECONCILE_QUERY = `*[_id == $id][0]{
   _id, title, status,
-  variants[]{ sku, stockQuantity, lowStockThreshold, allowBackorder }
+  variants[]{ sku, stockQuantity, lowStockThreshold, allowBackorder, madeToOrder }
 }`;
 
 /**
@@ -47,7 +48,7 @@ export async function reconcileProductStatus(
     docs.push(doc);
 
     const anyAvailable = (doc.variants ?? []).some(
-      (v) => (v.allowBackorder ?? false) || (v.stockQuantity ?? 0) > 0
+      (v) => (v.allowBackorder ?? false) || (v.madeToOrder ?? false) || (v.stockQuantity ?? 0) > 0
     );
 
     let next: string | null = null;
@@ -75,7 +76,7 @@ export function collectLowStock(docs: ReconciledProduct[]): LowStockItem[] {
   const items: LowStockItem[] = [];
   for (const doc of docs) {
     for (const v of doc.variants ?? []) {
-      if (v.allowBackorder) continue;
+      if (v.allowBackorder || v.madeToOrder) continue;
       const threshold = v.lowStockThreshold ?? 0;
       const remaining = v.stockQuantity ?? 0;
       if (remaining <= threshold) {

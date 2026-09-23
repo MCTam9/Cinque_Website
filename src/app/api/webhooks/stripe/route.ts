@@ -12,6 +12,7 @@ import {
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
+import { madeToOrderNote } from '@/lib/shop/madeToOrder';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature verification uses Node crypto — Edge would break it.
@@ -121,12 +122,12 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
 
   // Resolve SKUs/titles/prices from Sanity for the order snapshot.
   const orderLines = [];
-  for (const fl of fulfillmentLines) {
+  for (const [i, fl] of fulfillmentLines.entries()) {
     const doc = await sanityWriteClient.fetch(
       `*[_type == "product" && _id == $pid][0]{
         _id, title,
         "image": images[0],
-        "variant": variants[_key == $vkey][0]{ _key, sku, priceGBP }
+        "variant": variants[_key == $vkey][0]{ _key, sku, priceGBP, madeToOrder }
       }`,
       { pid: fl.p, vkey: fl.v }
     );
@@ -136,8 +137,10 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     const imageUrl = doc.image
       ? urlFor(doc.image).width(112).height(112).fit('crop').url()
       : null;
+    const madeToOrder = Boolean(doc.variant.madeToOrder);
     orderLines.push({
-      _key: `${fl.p}-${fl.v}`,
+      // Indexed: two sizes of one made-to-order variant are two lines.
+      _key: `${fl.p}-${fl.v}-${i}`,
       _type: 'orderLine',
       product: { _type: 'reference', _ref: fl.p, _weak: true },
       variantKey: fl.v,
@@ -145,6 +148,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       titleSnapshot: doc.title as string,
       quantity: fl.q,
       unitPriceGBP: doc.variant.priceGBP as number,
+      ...(madeToOrder ? { madeToOrder: true, customSize: fl.s ?? '' } : {}),
       imageUrl,
     });
   }
@@ -184,9 +188,11 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   // if it does, it surfaces as negative stock for staff to notice rather than
   // being silently hidden. (A hard reservation at session creation is the
   // future upgrade — see the plan's documented v1 tradeoff.)
-  for (const fl of fulfillmentLines) {
-    tx.patch(fl.p, (p) =>
-      p.dec({ [`variants[_key=="${fl.v}"].stockQuantity`]: fl.q })
+  // Made-to-order pieces are never stock-tracked, so they are skipped.
+  for (const l of orderLines) {
+    if (l.madeToOrder) continue;
+    tx.patch(l.product._ref, (p) =>
+      p.dec({ [`variants[_key=="${l.variantKey}"].stockQuantity`]: l.quantity })
     );
   }
 
@@ -224,6 +230,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     quantity: l.quantity,
     unitPriceGBP: l.unitPriceGBP,
     imageUrl: l.imageUrl,
+    note: l.madeToOrder ? madeToOrderNote(l.customSize) : undefined,
   }));
 
   try {
@@ -277,13 +284,18 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   const order = (await sanityWriteClient.fetch(
     `*[_type == "order" && stripePaymentIntentId == $pi][0]{
       _id, status,
-      "lines": lines[]{ "pid": product._ref, variantKey, quantity }
+      "lines": lines[]{ "pid": product._ref, variantKey, quantity, madeToOrder }
     }`,
     { pi: paymentIntentId }
   )) as {
     _id: string;
     status: string;
-    lines?: Array<{ pid?: string; variantKey?: string; quantity?: number }>;
+    lines?: Array<{
+      pid?: string;
+      variantKey?: string;
+      quantity?: number;
+      madeToOrder?: boolean;
+    }>;
   } | null;
 
   if (!order) {
@@ -305,7 +317,8 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   tx.patch(order._id, (p) => p.set({ status: 'refunded' }));
   for (const l of order.lines ?? []) {
     const qty = l.quantity ?? 0;
-    if (l.pid && l.variantKey && qty > 0) {
+    // Made-to-order pieces were never taken from stock, so nothing goes back.
+    if (l.pid && l.variantKey && qty > 0 && !l.madeToOrder) {
       tx.patch(l.pid, (p) =>
         p.inc({ [`variants[_key=="${l.variantKey}"].stockQuantity`]: qty })
       );
