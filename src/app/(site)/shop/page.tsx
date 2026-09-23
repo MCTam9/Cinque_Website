@@ -6,6 +6,7 @@ import ShopLayout from '@/components/ShopLayout';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { shopProductsQuery } from '@/lib/sanity/queries';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
+import { sortByCategoryThenTitle } from '@/lib/shop/categories';
 import type { Product } from '@/types';
 
 export const revalidate = 60;
@@ -25,11 +26,14 @@ export const metadata: Metadata = {
  * /shop/<category>; this page always lists everything.
  */
 export default async function ShopPage() {
-  const products = await sanityFetch<Product[]>({
-    label: 'shopProducts',
-    query: shopProductsQuery,
-    fallback: [],
-  });
+  // Grouped by category in sidebar order, A–Z within each.
+  const products = sortByCategoryThenTitle(
+    await sanityFetch<Product[]>({
+      label: 'shopProducts',
+      query: shopProductsQuery,
+      fallback: [],
+    })
+  );
 
   return (
     <ShopLayout active="all" filterable>

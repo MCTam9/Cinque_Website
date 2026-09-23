@@ -51,6 +51,24 @@ export const SHOP_CATEGORIES = [
 
 export type ShopCategory = (typeof SHOP_CATEGORIES)[number];
 
+/**
+ * Catalog order for the All listing: grouped by category in sidebar order, then
+ * A–Z by title within each. Anything without a known category goes last.
+ */
+export function sortByCategoryThenTitle<T extends { category?: string; title: string }>(
+  products: T[]
+): T[] {
+  const rank = (c?: string) => {
+    const i = SHOP_CATEGORIES.findIndex((cat) => cat.value === c);
+    return i === -1 ? SHOP_CATEGORIES.length : i;
+  };
+  return [...products].sort(
+    (a, b) =>
+      rank(a.category) - rank(b.category) ||
+      a.title.localeCompare(b.title, 'en-GB', { sensitivity: 'base' })
+  );
+}
+
 /** Route paths for every category, e.g. ['/shop/rings', …]. */
 export const CATEGORY_PATHS = SHOP_CATEGORIES.map((c) => `/shop/${c.value}`);
 

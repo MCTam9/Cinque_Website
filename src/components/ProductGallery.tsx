@@ -51,7 +51,7 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
       {/* Desktop: vertical scrolling thumbnail column */}
       {hasThumbs && (
         <div className="relative hidden md:block">
-          <div className="absolute inset-0 flex flex-col gap-[10px] overflow-y-auto">
+          <div className="thin-scrollbar absolute inset-0 flex flex-col gap-[10px] overflow-y-auto">
             {images.map((img, i) => (
               <button
                 key={img.thumb}
