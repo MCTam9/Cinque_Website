@@ -69,16 +69,19 @@ export interface PressCard {
 }
 
 /**
- * The Home page singleton (tagline + per-section image galleries). PRESS has no
- * field here — that section is built from the press entries themselves.
+ * The Home page singleton (tagline + per-section image galleries). LOOKBOOK and
+ * PRESS only hold ordering — their cards come from the drops and press entries.
  */
 export interface HomePageDoc {
   tagline?: string;
   shopImages?: SanityImageRef[];
   /** Drop ids in the order LOOKBOOK shows them; title and image come from the drop. */
   lookbookOrder?: string[];
-  /** Every drop id the Studio has already offered in that list (see LookbookOrderInput). */
+  /** Every drop id the Studio has already offered in that list (see SyncedOrderInput). */
   lookbookSeen?: string[];
+  /** Press entry ids in the order PRESS shows them; title and image come from the entry. */
+  pressOrder?: string[];
+  pressSeen?: string[];
   studioImages?: SanityImageRef[];
 }
 

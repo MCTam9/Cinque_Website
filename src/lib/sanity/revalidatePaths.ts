@@ -35,9 +35,10 @@ export function pathsFor(type: string, slug?: string): string[] {
         ? ['/', '/shop', '/lookbook', `/collections/${slug}`]
         : ['/', '/shop', '/lookbook'];
 
-    // Press entries render in full on the listing page as well as their own.
+    // Press entries render in full on the listing page as well as their own,
+    // and as a card in the Home PRESS row.
     case 'press':
-      return slug ? ['/press', `/press/${slug}`] : ['/press'];
+      return slug ? ['/', '/press', `/press/${slug}`] : ['/', '/press'];
 
     case 'page':
       return slug ? [`/pages/${slug}`] : [];

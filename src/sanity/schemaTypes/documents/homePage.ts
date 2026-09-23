@@ -1,15 +1,15 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 import { crop2x3 } from '../imageCrop';
-import { LookbookOrderInput } from '../../components/LookbookOrderInput';
+import { syncedOrderInput } from '../../components/SyncedOrderInput';
 
 /**
  * The Home page — a singleton (only one exists; edited in place, never created
  * or deleted). Staff edit the tagline and, for the Shop / Studio sections,
  * upload one or more images.
  *
- * LOOKBOOK only sets the order of the drops: each card's title and image come
- * from the drop itself (Editorial → Drops, its Hero Image). PRESS has no field
- * here at all: it is built from the Press entries, one card per entry.
+ * LOOKBOOK and PRESS only set which drops / press entries show and in what
+ * order: each card's title and image come from the drop (its Hero Image) or
+ * the press entry (its first image) itself.
  *
  * Each section is one row of images, sized to how many it has:
  *   • mobile → the first 4, up to 4 columns; captions hidden.
@@ -40,6 +40,36 @@ const sectionImages = (name: string, title: string) =>
     ],
   });
 
+/** A `<name>Order` reference list plus its hidden `<name>Seen` bookkeeping. */
+function syncedList(o: {
+  name: string;
+  title: string;
+  description: string;
+  type: string;
+  order: string;
+}) {
+  const orderField = `${o.name}Order`;
+  const seenField = `${o.name}Seen`;
+  return [
+    defineField({
+      name: orderField,
+      title: o.title,
+      type: 'array',
+      description: o.description,
+      of: [defineArrayMember({ type: 'reference', to: [{ type: o.type }] })],
+      components: {
+        input: syncedOrderInput({ type: o.type, order: o.order, orderField, seenField }),
+      },
+    }),
+    defineField({
+      name: seenField,
+      type: 'array',
+      of: [defineArrayMember({ type: 'string' })],
+      hidden: true,
+    }),
+  ];
+}
+
 export const homePage = defineType({
   name: 'homePage',
   title: 'Home Page',
@@ -53,29 +83,27 @@ export const homePage = defineType({
       description: 'The intro lines beside the logo. Each line break shows as a new line.',
     }),
     sectionImages('shopImages', 'SHOP images'),
-    // Order only. Title and image travel with the drop, so reordering can never
-    // caption a picture with another drop's name. The input keeps the list in
-    // step with the published drops (see LookbookOrderInput).
-    defineField({
-      name: 'lookbookOrder',
+    // LOOKBOOK and PRESS: order only. Title and image travel with the drop or
+    // press entry, so reordering can never caption a picture with another's
+    // name. The input keeps each list in step with its documents, and the
+    // hidden `…Seen` field beside it records what has already been offered, so
+    // an entry staff removed isn't re-added (see SyncedOrderInput).
+    ...syncedList({
+      name: 'lookbook',
       title: 'LOOKBOOK — drag to reorder',
-      type: 'array',
       description:
         "The drops on the Home page, in this order. Each card's title and image come from the drop's Hero Image in Editorial → Drops. New drops are added here automatically; remove one to hide it.",
-      of: [defineArrayMember({ type: 'reference', to: [{ type: 'drop' }] })],
-      components: { input: LookbookOrderInput },
+      type: 'drop',
+      order: 'dropNumber desc',
     }),
-    // Every drop the list above has already offered, so a drop staff removed
-    // isn't re-added next time. Maintained by LookbookOrderInput; never edited.
-    defineField({
-      name: 'lookbookSeen',
-      type: 'array',
-      of: [defineArrayMember({ type: 'string' })],
-      hidden: true,
+    ...syncedList({
+      name: 'press',
+      title: 'PRESS — drag to reorder',
+      description:
+        "The press entries on the Home page, in this order. Each card's title and image (its first image) come from the entry in Press. New entries are added here automatically; remove one to hide it.",
+      type: 'press',
+      order: 'startDate desc',
     }),
-    // No PRESS field: that section builds itself from the press entries, each
-    // card showing that entry's own first image. Add imagery to the press entry
-    // rather than here. See `pressCards` in the Home page.
     sectionImages('studioImages', 'STUDIO images'),
   ],
   preview: {
