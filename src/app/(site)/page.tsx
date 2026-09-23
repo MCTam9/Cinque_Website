@@ -46,31 +46,35 @@ function imageUrl(img: SanityImageRef): string {
 }
 
 /**
+ * Which items a Home section shows, and in what order, from its Home Page list
+ * (`order`, ids). An item left out of the list is hidden — unless the Studio
+ * has never offered it (not in `seen`): that one was created since anyone last
+ * opened the Home Page, and it goes first, as the newest. With no list at all,
+ * everything shows in `items` order (newest first). See SyncedOrderInput.
+ */
+function homeOrder<T extends { id: string }>(
+  items: T[],
+  order: string[] | undefined,
+  seen: string[] | undefined
+): T[] {
+  if (!order?.length) return items;
+  const rank = new Map(order.map((id, i) => [id, i]));
+  // Before the seen list existed nothing counts as new: only the list shows.
+  const unseen = seen ? items.filter((d) => !rank.has(d.id) && !seen.includes(d.id)) : [];
+  const listed = items
+    .filter((d) => rank.has(d.id))
+    .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+  return [...unseen, ...listed];
+}
+
+/**
  * LOOKBOOK cards: one per drop, each showing that drop's own Hero Image (or its
  * first Lookbook image) under its own title — both set in Editorial → Drops, so
- * a picture can never carry another drop's name.
- *
- * The Home Page decides which drops show and in what order (`lookbookOrder`).
- * A drop left out of that list is hidden — unless the Studio has never offered
- * it (not in `lookbookSeen`): that is a drop created since anyone last opened
- * the Home Page, and it goes first, as the newest. With no list at all, every
- * drop shows, newest first. A drop with no image gets no card.
+ * a picture can never carry another drop's name. A drop with no image gets no
+ * card.
  */
 function lookbookCards(home: HomePageDoc | null, dropLinks: DropLink[]): MediaImage[] {
-  const order = home?.lookbookOrder ?? [];
-  let shown = dropLinks;
-  if (order.length) {
-    const rank = new Map(order.map((id, i) => [id, i]));
-    const seen = home?.lookbookSeen;
-    // Before `lookbookSeen` existed nothing counts as new: only the list shows.
-    const unseen = seen ? dropLinks.filter((d) => !rank.has(d.id) && !seen.includes(d.id)) : [];
-    const listed = dropLinks
-      .filter((d) => rank.has(d.id))
-      .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
-    shown = [...unseen, ...listed];
-  }
-
-  return shown.flatMap((d) => {
+  return homeOrder(dropLinks, home?.lookbookOrder, home?.lookbookSeen).flatMap((d) => {
     if (!d.cover) return [];
     return [
       {
@@ -84,19 +88,16 @@ function lookbookCards(home: HomePageDoc | null, dropLinks: DropLink[]): MediaIm
 }
 
 /**
- * PRESS cards: one per press entry, newest first, each showing that entry's own
- * first uploaded image under its own title, and linking to that entry on the
- * Press page (/press#slug) rather than to the top of it — so the reader lands
- * on the piece they clicked. The slug is the anchor the Press listing already
- * puts on every entry.
- *
- * Unlike LOOKBOOK, nothing here is paired positionally: the image travels with
- * the entry it belongs to, so adding or reordering press entries can never
- * caption a picture with someone else's title. An entry with no image gets no
- * card — the Home page never stands in a picture of its own choosing.
+ * PRESS cards: one per press entry, each showing that entry's own first image
+ * under its own title, and linking to that entry on the Press page
+ * (/press#slug) so the reader lands on the piece they clicked. Which entries
+ * show, and their order, is set on the Home Page like LOOKBOOK. An entry with
+ * no image gets no card — the Home page never stands in a picture of its own
+ * choosing.
  */
-function pressCards(entries: PressCard[]): MediaImage[] {
-  return entries.flatMap((entry) => {
+function pressCards(home: HomePageDoc | null, entries: PressCard[]): MediaImage[] {
+  const items = entries.map((e) => ({ ...e, id: e._id }));
+  return homeOrder(items, home?.pressOrder, home?.pressSeen).flatMap((entry) => {
     if (!entry.cover) return [];
     const label = formatLabel(entry.title);
     return [
@@ -201,7 +202,7 @@ export default async function HomePage() {
           const mediaImages: MediaImage[] = isLookbook
             ? lookbookCards(home, dropLinks)
             : s.href === '/press'
-              ? pressCards(press)
+              ? pressCards(home, press)
               : (cmsImages ?? []).map((i) => ({
                   url: imageUrl(i),
                   alt: i.alt || `${s.label} — Cinque`,

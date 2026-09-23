@@ -172,6 +172,8 @@ export const homePageQuery = groq`
     "shopImages": shopImages[]{ alt, asset },
     "lookbookOrder": lookbookOrder[]._ref,
     lookbookSeen,
+    "pressOrder": pressOrder[]._ref,
+    pressSeen,
     "studioImages": studioImages[]{ alt, asset }
   }
 `;
