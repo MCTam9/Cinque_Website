@@ -56,6 +56,7 @@ export interface LookbookDrop {
   dropNumber?: string;
   slug: string;
   intro?: unknown; // Portable Text
+  heroImage?: SanityImageRef;
   images?: SanityImageRef[];
 }
 
@@ -74,7 +75,8 @@ export interface PressCard {
 export interface HomePageDoc {
   tagline?: string;
   shopImages?: SanityImageRef[];
-  lookbookImages?: SanityImageRef[];
+  /** Drop ids in the order LOOKBOOK shows them; title and image come from the drop. */
+  lookbookOrder?: string[];
   studioImages?: SanityImageRef[];
 }
 

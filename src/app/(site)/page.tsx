@@ -27,18 +27,18 @@ const DEFAULT_DROPS = [
 ];
 
 // Each Home section = a heading + section imagery, linking to its page.
-// `imageKey` is the Sanity array field on the Home Page document. PRESS has no
-// such field — its cards come from the press entries themselves, so the picture
-// and the title can never drift apart. A section with nothing uploaded shows
-// its heading alone; no image is ever substituted in.
+// `imageKey` is the Sanity array field on the Home Page document. LOOKBOOK and
+// PRESS have no such field — their cards come from the drops and press entries
+// themselves, so the picture and the title can never drift apart. A section
+// with nothing uploaded shows its heading alone; no image is substituted in.
 const SECTIONS = [
   { href: '/shop', label: 'SHOP', imageKey: 'shopImages', priority: true },
-  { href: '/lookbook', label: 'LOOKBOOK', imageKey: 'lookbookImages', drops: true },
+  { href: '/lookbook', label: 'LOOKBOOK', drops: true },
   { href: '/press', label: 'PRESS' },
   { href: '/studio', label: 'STUDIO', imageKey: 'studioImages' },
 ] as const;
 
-type DropLink = { slug: string; label: string; cover?: SanityImageRef };
+type DropLink = { id: string; slug: string; label: string; cover?: SanityImageRef };
 
 /** Sanity CDN URL at the 2:3 crop every home card renders in. */
 function imageUrl(img: SanityImageRef): string {
@@ -46,38 +46,32 @@ function imageUrl(img: SanityImageRef): string {
 }
 
 /**
- * LOOKBOOK cards: each drop title travels with its own cover image so the two
- * scroll as one, instead of a row of titles the reader has to match up against
- * a separate row of pictures.
+ * LOOKBOOK cards: one per drop, each showing that drop's own Hero Image (or its
+ * first Lookbook image) under its own title — both set in Editorial → Drops, so
+ * a picture can never carry another drop's name.
  *
- * Pairing is positional — the Home Page's LOOKBOOK images are uploaded newest
- * drop first, the order `dropLinks` already comes back in. Reordering either
- * list in the Studio therefore re-pairs them. A drop with no Home cover falls
- * back to its own first lookbook image; extra Home images beyond the drop list
- * still render, just without a title.
+ * The Home Page only sets the order (`lookbookOrder`). A published drop missing
+ * from that list — one created since anyone last opened the Home Page in the
+ * Studio — goes first, as the newest. A drop with no image gets no card.
  */
-function lookbookCards(
-  images: SanityImageRef[] | undefined,
-  dropLinks: DropLink[]
-): MediaImage[] {
-  const cards: MediaImage[] = dropLinks.flatMap((d, i) => {
-    const img = images?.[i] ?? d.cover;
-    if (!img) return [];
+function lookbookCards(order: string[] | undefined, dropLinks: DropLink[]): MediaImage[] {
+  const rank = new Map((order ?? []).map((id, i) => [id, i]));
+  const unlisted = dropLinks.filter((d) => !rank.has(d.id));
+  const listed = dropLinks
+    .filter((d) => rank.has(d.id))
+    .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+
+  return [...unlisted, ...listed].flatMap((d) => {
+    if (!d.cover) return [];
     return [
       {
-        url: imageUrl(img),
-        alt: img.alt || `${d.label} — Cinque`,
+        url: imageUrl(d.cover),
+        alt: d.cover.alt || `${d.label} — Cinque`,
         label: d.label,
         href: `/lookbook?drop=${d.slug}`,
       },
     ];
   });
-
-  for (const img of images?.slice(dropLinks.length) ?? []) {
-    cards.push({ url: imageUrl(img), alt: img.alt || 'LOOKBOOK — Cinque' });
-  }
-
-  return cards;
 }
 
 /**
@@ -133,12 +127,13 @@ export default async function HomePage() {
   const dropLinks =
     drops.length > 0
       ? drops.map((d) => ({
+          id: d._id,
           slug: d.slug,
           label: d.dropNumber ? `${d.dropNumber}/${d.title}` : d.title,
-          // Used only if the Home Page has no cover uploaded for this drop.
-          cover: d.images?.find((i) => i.asset),
+          cover: d.heroImage?.asset ? d.heroImage : d.images?.find((i) => i.asset),
         }))
       : DEFAULT_DROPS.map((slug) => ({
+          id: slug,
           slug,
           label: formatLabel(slug),
           cover: undefined as SanityImageRef | undefined,
@@ -195,7 +190,7 @@ export default async function HomePage() {
           const isLookbook = 'drops' in s && s.drops;
 
           const mediaImages: MediaImage[] = isLookbook
-            ? lookbookCards(cmsImages, dropLinks)
+            ? lookbookCards(home?.lookbookOrder, dropLinks)
             : s.href === '/press'
               ? pressCards(press)
               : (cmsImages ?? []).map((i) => ({
@@ -212,7 +207,7 @@ export default async function HomePage() {
               </Link>
 
               {/* LOOKBOOK's per-drop links are no longer a separate row: each
-                  drop title sits on its own card above its cover image (see
+                  drop title sits on its own card above its hero image (see
                   `lookbookCards`). PRESS works the same way, one card per
                   entry. Mobile shows the covers only. */}
               <HomeSectionMedia
