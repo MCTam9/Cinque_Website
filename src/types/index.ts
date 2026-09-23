@@ -77,6 +77,8 @@ export interface HomePageDoc {
   shopImages?: SanityImageRef[];
   /** Drop ids in the order LOOKBOOK shows them; title and image come from the drop. */
   lookbookOrder?: string[];
+  /** Every drop id the Studio has already offered in that list (see LookbookOrderInput). */
+  lookbookSeen?: string[];
   studioImages?: SanityImageRef[];
 }
 
