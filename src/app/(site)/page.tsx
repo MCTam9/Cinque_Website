@@ -50,18 +50,27 @@ function imageUrl(img: SanityImageRef): string {
  * first Lookbook image) under its own title — both set in Editorial → Drops, so
  * a picture can never carry another drop's name.
  *
- * The Home Page only sets the order (`lookbookOrder`). A published drop missing
- * from that list — one created since anyone last opened the Home Page in the
- * Studio — goes first, as the newest. A drop with no image gets no card.
+ * The Home Page decides which drops show and in what order (`lookbookOrder`).
+ * A drop left out of that list is hidden — unless the Studio has never offered
+ * it (not in `lookbookSeen`): that is a drop created since anyone last opened
+ * the Home Page, and it goes first, as the newest. With no list at all, every
+ * drop shows, newest first. A drop with no image gets no card.
  */
-function lookbookCards(order: string[] | undefined, dropLinks: DropLink[]): MediaImage[] {
-  const rank = new Map((order ?? []).map((id, i) => [id, i]));
-  const unlisted = dropLinks.filter((d) => !rank.has(d.id));
-  const listed = dropLinks
-    .filter((d) => rank.has(d.id))
-    .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+function lookbookCards(home: HomePageDoc | null, dropLinks: DropLink[]): MediaImage[] {
+  const order = home?.lookbookOrder ?? [];
+  let shown = dropLinks;
+  if (order.length) {
+    const rank = new Map(order.map((id, i) => [id, i]));
+    const seen = home?.lookbookSeen;
+    // Before `lookbookSeen` existed nothing counts as new: only the list shows.
+    const unseen = seen ? dropLinks.filter((d) => !rank.has(d.id) && !seen.includes(d.id)) : [];
+    const listed = dropLinks
+      .filter((d) => rank.has(d.id))
+      .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+    shown = [...unseen, ...listed];
+  }
 
-  return [...unlisted, ...listed].flatMap((d) => {
+  return shown.flatMap((d) => {
     if (!d.cover) return [];
     return [
       {
@@ -190,7 +199,7 @@ export default async function HomePage() {
           const isLookbook = 'drops' in s && s.drops;
 
           const mediaImages: MediaImage[] = isLookbook
-            ? lookbookCards(home?.lookbookOrder, dropLinks)
+            ? lookbookCards(home, dropLinks)
             : s.href === '/press'
               ? pressCards(press)
               : (cmsImages ?? []).map((i) => ({

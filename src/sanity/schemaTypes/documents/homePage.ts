@@ -61,9 +61,17 @@ export const homePage = defineType({
       title: 'LOOKBOOK — drag to reorder',
       type: 'array',
       description:
-        "The order of the drops on the Home page. Each card's title and image come from the drop's Hero Image in Editorial → Drops. New drops are added here automatically.",
+        "The drops on the Home page, in this order. Each card's title and image come from the drop's Hero Image in Editorial → Drops. New drops are added here automatically; remove one to hide it.",
       of: [defineArrayMember({ type: 'reference', to: [{ type: 'drop' }] })],
       components: { input: LookbookOrderInput },
+    }),
+    // Every drop the list above has already offered, so a drop staff removed
+    // isn't re-added next time. Maintained by LookbookOrderInput; never edited.
+    defineField({
+      name: 'lookbookSeen',
+      type: 'array',
+      of: [defineArrayMember({ type: 'string' })],
+      hidden: true,
     }),
     // No PRESS field: that section builds itself from the press entries, each
     // card showing that entry's own first image. Add imagery to the press entry
