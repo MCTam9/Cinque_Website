@@ -91,10 +91,21 @@ export const order = defineType({
               title: 'Unit Price (pence, snapshot)',
               type: 'number',
             }),
+            defineField({ name: 'madeToOrder', title: 'Made to order', type: 'boolean' }),
+            defineField({
+              name: 'customSize',
+              title: 'Custom size (made to order)',
+              type: 'string',
+            }),
           ],
           preview: {
-            select: { title: 'sku', qty: 'quantity' },
-            prepare: ({ title, qty }) => ({ title, subtitle: `qty: ${qty}` }),
+            select: { title: 'sku', qty: 'quantity', size: 'customSize' },
+            prepare: ({ title, qty, size }) => ({
+              title,
+              subtitle: [`qty: ${qty}`, size && `made to order, size ${size}`]
+                .filter(Boolean)
+                .join(' · '),
+            }),
           },
         }),
       ],

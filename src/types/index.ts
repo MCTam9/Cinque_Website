@@ -34,6 +34,8 @@ export interface Variant {
   stockQuantity: number;
   lowStockThreshold?: number;
   allowBackorder?: boolean;
+  /** Sold regardless of stock; the customer enters their own size. */
+  madeToOrder?: boolean;
 }
 
 export type ProductCategory = 'rings' | 'earrings' | 'necklaces' | 'objects';
@@ -148,6 +150,9 @@ export interface CartLine {
   unitPriceGBP: number; // pence, display-only; re-validated server-side
   quantity: number;
   imageUrl?: string;
+  /** Made-to-order lines only: the size the customer typed. */
+  madeToOrder?: boolean;
+  customSize?: string;
 }
 
 /** Payload the client posts to POST /api/checkout. */
@@ -155,6 +160,7 @@ export interface CheckoutRequestLine {
   productId: string;
   variantKey: string;
   quantity: number;
+  customSize?: string;
 }
 
 /** Compact per-line data stashed in Stripe session metadata for fulfillment. */
@@ -162,4 +168,5 @@ export interface FulfillmentLine {
   p: string; // productId
   v: string; // variantKey
   q: number; // quantity
+  s?: string; // custom size, made-to-order lines only
 }

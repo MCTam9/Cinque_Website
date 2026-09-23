@@ -5,7 +5,7 @@ import { sanityFetch } from '@/lib/sanity/fetch';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
-import { metalLabel, formatLabel } from '@/lib/products';
+import { metalLabel, formatLabel, variantIsAvailable } from '@/lib/products';
 import ShopLayout from '@/components/ShopLayout';
 import JsonLd from '@/components/JsonLd';
 import { PortableText } from '@/components/PortableText';
@@ -109,6 +109,7 @@ export async function generateStaticParams() {
 }
 
 function variantSwatch(v: Variant): string {
+  if (v.madeToOrder) return 'Custom';
   return v.size || metalLabel(v.metalType)?.replace(/_/g, ' ') || v.sku;
 }
 
@@ -140,9 +141,13 @@ export default async function ProductPage({
     key: v._key,
     sku: v.sku,
     swatch: variantSwatch(v),
-    label: [metalLabel(v.metalType), v.size].filter(Boolean).join(' · ') || v.sku,
+    label:
+      [metalLabel(v.metalType), v.madeToOrder ? 'Made to order, custom size' : v.size]
+        .filter(Boolean)
+        .join(' · ') || v.sku,
     priceGBP: v.priceGBP,
-    inStock: v.stockQuantity > 0 || Boolean(v.allowBackorder),
+    inStock: variantIsAvailable(v),
+    madeToOrder: Boolean(v.madeToOrder),
   }));
 
   const drop =
@@ -151,9 +156,12 @@ export default async function ProductPage({
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
   const material = metalLabel(product.variants?.[0]?.metalType);
-  // Distinct sizes across the variants (e.g. "M · P"); empty for sizeless pieces.
+  // Distinct sizes across the variants (e.g. "M · P", or "M · Custom" when a
+  // made-to-order variant is offered); empty for sizeless pieces.
   const sizes = Array.from(
-    new Set((product.variants ?? []).map((v) => v.size).filter(Boolean))
+    new Set(
+      (product.variants ?? []).map((v) => (v.madeToOrder ? 'Custom' : v.size)).filter(Boolean)
+    )
   ).join(' · ');
   const minPrice = product.variants?.length
     ? Math.min(...product.variants.map((v) => v.priceGBP))
@@ -195,24 +203,34 @@ export default async function ProductPage({
               name: v.label,
               priceCurrency: 'GBP',
               price: (v.priceGBP / 100).toFixed(2),
-              availability: v.inStock
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
+              availability: v.madeToOrder
+                ? 'https://schema.org/MadeToOrder'
+                : v.inStock
+                  ? 'https://schema.org/InStock'
+                  : 'https://schema.org/OutOfStock',
               itemCondition: 'https://schema.org/NewCondition',
               url: absoluteUrl(`/shop/${product.slug}`),
               // Mirrors the published terms at /shipping. Keep the two in step:
               // Google treats a mismatch as a merchant listing violation.
-              hasMerchantReturnPolicy: {
-                '@type': 'MerchantReturnPolicy',
-                applicableCountry: RETURN_POLICY.country,
-                returnPolicyCategory:
-                  'https://schema.org/MerchantReturnFiniteReturnWindow',
-                merchantReturnDays: RETURN_POLICY.days,
-                returnMethod: 'https://schema.org/ReturnByMail',
-                returnFees: RETURN_POLICY.returnFeesCustomerResponsibility
-                  ? 'https://schema.org/ReturnShippingFees'
-                  : 'https://schema.org/FreeReturn',
-              },
+              // Made-to-order pieces are made to the buyer's size and can't be
+              // returned unless faulty — /shipping says so, and this must match.
+              hasMerchantReturnPolicy: v.madeToOrder
+                ? {
+                    '@type': 'MerchantReturnPolicy',
+                    applicableCountry: RETURN_POLICY.country,
+                    returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+                  }
+                : {
+                    '@type': 'MerchantReturnPolicy',
+                    applicableCountry: RETURN_POLICY.country,
+                    returnPolicyCategory:
+                      'https://schema.org/MerchantReturnFiniteReturnWindow',
+                    merchantReturnDays: RETURN_POLICY.days,
+                    returnMethod: 'https://schema.org/ReturnByMail',
+                    returnFees: RETURN_POLICY.returnFeesCustomerResponsibility
+                      ? 'https://schema.org/ReturnShippingFees'
+                      : 'https://schema.org/FreeReturn',
+                  },
               shippingDetails: shippingDetailsJsonLd(v.priceGBP),
             })),
           },
@@ -286,6 +304,7 @@ export default async function ProductPage({
               title={formatLabel(product.title)}
               variants={purchaseVariants}
               imageUrl={thumbUrl}
+              showRingSizeChartLink={product.category === 'rings'}
             />
           )}
 

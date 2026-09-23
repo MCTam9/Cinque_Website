@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
 import { H1, H3, P1, P2 } from '@/components/typography';
 import { SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
+import { MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 
 export const metadata: Metadata = {
   title: 'Shipping & Returns',
@@ -23,11 +24,15 @@ export const metadata: Metadata = {
 // Built from the same constants checkout charges, so the page can't drift.
 const SHIPPING_COSTS = `UK delivery is ${formatPence(SHIPPING_RATES.domesticPence)} and international delivery is ${formatPence(SHIPPING_RATES.internationalPence)}. Orders of ${formatPence(SHIPPING_RATES.freeFromPence)} or more ship free to every country we deliver to.`;
 
+// Shared by the FAQ and the prose below, like SHIPPING_COSTS.
+const LEAD_TIMES = `Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are typically dispatched within 3–5 working days. Made-to-order pieces are made to the size you enter at checkout and are dispatched within ${MADE_TO_ORDER_LEAD_TIME}. Commissioned pieces have longer lead times, which are confirmed at the time of order.`;
+
+const RETURNS = 'Under the UK Consumer Contracts Regulations, you may cancel an eligible order within 14 days of receipt for a refund. Items must be returned unworn and in their original condition and packaging. Made-to-order pieces are made to the size you give us, and bespoke, commissioned, personalised or altered pieces are made to your specification; none of these are eligible for return unless faulty. Please check your size against our ring size chart before ordering, or email us if you are unsure.';
+
 const FAQ: { question: string; answer: string }[] = [
   {
     question: 'How long does a Cinque order take to make and dispatch?',
-    answer:
-      'Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are typically dispatched within 3–5 working days. Made-to-order and commissioned pieces have longer lead times, which are confirmed at the time of order.',
+    answer: LEAD_TIMES,
   },
   {
     question: 'Which countries does Cinque ship to?',
@@ -45,8 +50,7 @@ const FAQ: { question: string; answer: string }[] = [
   },
   {
     question: 'What is the returns policy?',
-    answer:
-      'Under the UK Consumer Contracts Regulations, you may cancel an eligible order within 14 days of receipt for a refund. Items must be returned unworn and in their original condition and packaging. Bespoke, commissioned, personalised or altered pieces are made to your specification and are not eligible for return unless faulty.',
+    answer: RETURNS,
   },
   {
     question: 'How do I return an item?',
@@ -78,11 +82,7 @@ export default function ShippingPage() {
       <P2 className="text-oslo">Last updated: September 2026</P2>
 
       <H3 as="h2" className="font-bold">Processing &amp; lead times</H3>
-      <P1>
-        Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are
-        typically dispatched within 3–5 working days. Made-to-order and commissioned pieces have
-        longer lead times, which are confirmed at the time of order.
-      </P1>
+      <P1>{LEAD_TIMES}</P1>
 
       <H3 as="h2" className="font-bold">Destinations &amp; delivery</H3>
       <P1>
@@ -102,12 +102,7 @@ export default function ShippingPage() {
       </P1>
 
       <H3 as="h2" className="font-bold">Returns</H3>
-      <P1>
-        Under the UK Consumer Contracts Regulations, you may cancel an eligible order within 14
-        days of receipt for a refund. Items must be returned unworn and in their original
-        condition and packaging. Bespoke, commissioned, personalised or altered pieces are made to
-        your specification and are not eligible for return unless faulty.
-      </P1>
+      <P1>{RETURNS}</P1>
 
       <H3 as="h2" className="font-bold">How to return</H3>
       <P1>

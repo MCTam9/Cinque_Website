@@ -22,7 +22,7 @@ const productCardProjection = `
     "images": images[]{ alt, asset },
     variants[]{
       _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
-      stockQuantity, allowBackorder,
+      stockQuantity, allowBackorder, madeToOrder,
       stone
     }
 `;
@@ -69,7 +69,7 @@ export const productBySlugQuery = groq`
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     variants[]{
       _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
-      weightGrams, stockQuantity, lowStockThreshold, allowBackorder,
+      weightGrams, stockQuantity, lowStockThreshold, allowBackorder, madeToOrder,
       stone
     }
   }
@@ -87,7 +87,8 @@ export const variantForCheckoutQuery = groq`
     title,
     status,
     "variant": variants[_key == $variantKey][0]{
-      _key, sku, priceGBP, stripeProductId, stripePriceId, stockQuantity, allowBackorder
+      _key, sku, priceGBP, stripeProductId, stripePriceId, stockQuantity, allowBackorder,
+      madeToOrder
     }
   }
 `;

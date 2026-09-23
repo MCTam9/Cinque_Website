@@ -6,6 +6,7 @@ import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
 import { rateLimit, clientIp } from '@/lib/rateLimit';
 import { SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
+import { CUSTOM_SIZE_MAX, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature/crypto & SDK require the Node.js runtime (not Edge).
@@ -20,6 +21,8 @@ const bodySchema = z.object({
         productId: z.string().min(1),
         variantKey: z.string().min(1),
         quantity: z.number().int().min(1).max(20),
+        // Made-to-order lines only: the size the customer typed on the PDP.
+        customSize: z.string().trim().min(1).max(CUSTOM_SIZE_MAX).optional(),
       })
     )
     .min(1)
@@ -41,6 +44,7 @@ type VariantResult = {
     stripePriceId?: string;
     stockQuantity: number;
     allowBackorder?: boolean;
+    madeToOrder?: boolean;
   } | null;
 };
 
@@ -75,6 +79,8 @@ export async function POST(req: Request) {
   const fulfillmentLines: FulfillmentLine[] = [];
   // Goods total from the trusted Sanity prices, for the free-shipping threshold.
   let subtotalPence = 0;
+  // "Twist Band (size N½)" for each made-to-order line, shown in Stripe's form.
+  const madeToOrderItems: string[] = [];
 
   // Validate every line against Sanity — price & stock come from the server,
   // NEVER from the client. This is the price-integrity boundary.
@@ -92,7 +98,21 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!variant.allowBackorder && variant.stockQuantity < line.quantity) {
+    // Made to order: a size is required, and stock is never the limit. Any size
+    // sent for an ordinary variant is ignored rather than trusted.
+    const customSize = variant.madeToOrder ? line.customSize : undefined;
+    if (variant.madeToOrder && !customSize) {
+      return NextResponse.json(
+        { error: `Please enter your size for ${result.title}.` },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !variant.madeToOrder &&
+      !variant.allowBackorder &&
+      variant.stockQuantity < line.quantity
+    ) {
       return NextResponse.json(
         { error: `Insufficient stock for ${variant.sku}.` },
         { status: 409 }
@@ -122,7 +142,13 @@ export async function POST(req: Request) {
       lineItems.push({ quantity: line.quantity, price_data: priceData });
     }
 
-    fulfillmentLines.push({ p: line.productId, v: line.variantKey, q: line.quantity });
+    fulfillmentLines.push({
+      p: line.productId,
+      v: line.variantKey,
+      q: line.quantity,
+      ...(customSize ? { s: customSize } : {}),
+    });
+    if (customSize) madeToOrderItems.push(`${result.title} (size ${customSize})`);
     subtotalPence += variant.priceGBP * line.quantity;
   }
 
@@ -170,6 +196,20 @@ export async function POST(req: Request) {
         },
       ],
       phone_number_collection: { enabled: true },
+      // Said once more right above the Pay button, so the lead time is agreed
+      // to, not just seen on the product page. Stripe caps this at 1200 chars.
+      ...(madeToOrderItems.length
+        ? {
+            custom_text: {
+              submit: {
+                message: `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}: ${madeToOrderItems.join(', ')}`.slice(
+                  0,
+                  1200
+                ),
+              },
+            },
+          }
+        : {}),
       metadata: { cart: cartMeta },
     } as SessionCreateParamsWithBranding);
 
