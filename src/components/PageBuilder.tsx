@@ -56,7 +56,8 @@ export type PageBlock =
   | BaseBlock;
 
 function img(source: SanityImage, width: number) {
-  return source.asset ? urlFor(source.asset).width(width).auto('format').url() : '';
+  // The whole image, not just its asset, so the Studio crop is applied.
+  return source.asset ? urlFor(source as never).width(width).auto('format').url() : '';
 }
 
 // ── Individual block renderers (placeholders) ──────────────────

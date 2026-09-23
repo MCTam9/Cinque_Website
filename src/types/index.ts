@@ -43,6 +43,9 @@ export type ProductCategory = 'rings' | 'earrings' | 'necklaces' | 'objects';
 export interface SanityImageRef {
   alt?: string;
   asset?: unknown;
+  /** Set in the Studio's crop tool; urlFor applies both when present. */
+  crop?: unknown;
+  hotspot?: unknown;
 }
 
 export interface CollectionRef {

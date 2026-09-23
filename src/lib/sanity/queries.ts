@@ -19,7 +19,7 @@ const productCardProjection = `
     category,
     edition,
     "collection": collection->{ title, "slug": slug.current, dropNumber },
-    "images": images[]{ alt, asset },
+    "images": images[]{ alt, asset, crop, hotspot },
     variants[]{
       _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
       stockQuantity, allowBackorder, madeToOrder,
@@ -50,7 +50,7 @@ export const productsByCategoryQuery = groq`
 export const collectionsQuery = groq`
   *[_type == "drop" && defined(slug.current)] | order(dropNumber desc) {
     _id, title, "slug": slug.current, dropNumber, releaseDate,
-    heroImage{ alt, asset }
+    heroImage{ alt, asset, crop, hotspot }
   }
 `;
 
@@ -65,7 +65,7 @@ export const productBySlugQuery = groq`
     edition,
     description,
     careInstructions,
-    "images": images[]{ alt, asset },
+    "images": images[]{ alt, asset, crop, hotspot },
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     variants[]{
       _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
@@ -97,15 +97,15 @@ export const variantForCheckoutQuery = groq`
 const pageContentProjection = groq`
   content[]{
     ...,
-    _type == "galleryBlock" => { ..., images[]{ alt, asset } },
-    image{ alt, asset }
+    _type == "galleryBlock" => { ..., images[]{ alt, asset, crop, hotspot } },
+    image{ alt, asset, crop, hotspot }
   }
 `;
 
 export const collectionBySlugQuery = groq`
   *[_type == "drop" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, dropNumber, releaseDate,
-    heroImage{ alt, asset },
+    heroImage{ alt, asset, crop, hotspot },
     ${pageContentProjection}
   }
 `;
@@ -117,7 +117,7 @@ export const collectionSlugsQuery = groq`
 export const pressBySlugQuery = groq`
   *[_type == "press" && slug.current == $slug][0]{
     _id, title, subtitle, venue, publication, location, startDate, endDate, description,
-    "images": images[]{ alt, asset }, externalUrl,
+    "images": images[]{ alt, asset, crop, hotspot }, externalUrl,
     ${pageContentProjection}
   }
 `;
@@ -140,7 +140,7 @@ export const pageSlugsQuery = groq`
 export const pressQuery = groq`
   *[_type == "press"] | order(startDate desc) {
     _id, title, subtitle, "slug": slug.current, venue, publication, location, startDate, endDate, description,
-    "images": images[]{ alt, asset }, externalUrl
+    "images": images[]{ alt, asset, crop, hotspot }, externalUrl
   }
 `;
 
@@ -150,7 +150,7 @@ export const pressQuery = groq`
 export const pressCardsQuery = groq`
   *[_type == "press" && defined(slug.current)] | order(startDate desc) {
     _id, title, "slug": slug.current,
-    "cover": images[defined(asset)][0]{ alt, asset }
+    "cover": images[defined(asset)][0]{ alt, asset, crop, hotspot }
   }
 `;
 
@@ -158,8 +158,8 @@ export const pressCardsQuery = groq`
 export const lookbookDropsQuery = groq`
   *[_type == "drop" && defined(slug.current)] | order(dropNumber desc) {
     _id, title, dropNumber, "slug": slug.current, intro,
-    heroImage{ alt, asset },
-    "images": images[]{ alt, asset }
+    heroImage{ alt, asset, crop, hotspot },
+    "images": images[]{ alt, asset, crop, hotspot }
   }
 `;
 
@@ -170,12 +170,12 @@ export const lookbookDropsQuery = groq`
 export const homePageQuery = groq`
   *[_id == "homePage"][0]{
     tagline,
-    "shopImages": shopImages[]{ alt, asset },
+    "shopImages": shopImages[]{ alt, asset, crop, hotspot },
     "lookbookOrder": lookbookOrder[]._ref,
     lookbookSeen,
     "pressOrder": pressOrder[]._ref,
     pressSeen,
-    "studioImages": studioImages[]{ alt, asset }
+    "studioImages": studioImages[]{ alt, asset, crop, hotspot }
   }
 `;
 
@@ -186,16 +186,16 @@ export const studioPageQuery = groq`
     label,
     about,
     instagramUrl,
-    portrait{ alt, asset },
-    bandImage{ alt, asset },
+    portrait{ alt, asset, crop, hotspot },
+    bandImage{ alt, asset, crop, hotspot },
     contactIntro,
     email,
     commissionNote,
     commissionChecklist,
     responseTime,
     address,
-    bespokeImage{ alt, asset },
-    "bespokeImages": bespokeImages[]{ alt, asset },
+    bespokeImage{ alt, asset, crop, hotspot },
+    "bespokeImages": bespokeImages[]{ alt, asset, crop, hotspot },
     bespokeIntro,
     bespokeProcessLabel,
     bespokeSteps[]{ number, title, body },
