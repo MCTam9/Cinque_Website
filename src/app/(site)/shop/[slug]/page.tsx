@@ -282,7 +282,7 @@ export default async function ProductPage({
                 <dd>
                   {product.collection?.slug ? (
                     <Link
-                      href={`/collections/${product.collection.slug}`}
+                      href={`/lookbook?drop=${product.collection.slug}`}
                       className="underline underline-offset-4 hover:text-redcurrent"
                     >
                       {drop}
