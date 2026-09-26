@@ -37,17 +37,16 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
           {product.title}
         </span>
 
-        <dl className="flex justify-between type-p2">
-          <div className="flex flex-col gap-0.5 text-oslo">
-            <dt>Drop</dt>
-            <dt>Material</dt>
-            <dt>Edition</dt>
-          </div>
-          <div className="flex flex-col gap-0.5 text-right text-graphite">
-            <dd>{product.drop || '—'}</dd>
-            <dd>{product.material || '—'}</dd>
-            <dd>{product.edition || '—'}</dd>
-          </div>
+        {/* One grid row per label/value pair, so a value that wraps (a long
+            drop name on a narrow card) pushes the rows below it down with it
+            instead of drifting out of line with its label. */}
+        <dl className="grid grid-cols-[auto_1fr] gap-y-0.5 type-p2">
+          <dt className="text-oslo">Drop</dt>
+          <dd className="text-right text-graphite">{product.drop || '—'}</dd>
+          <dt className="text-oslo">Material</dt>
+          <dd className="text-right text-graphite">{product.material || '—'}</dd>
+          <dt className="text-oslo">Edition</dt>
+          <dd className="text-right text-graphite">{product.edition || '—'}</dd>
         </dl>
 
         <span className={`type-p1 mt-auto text-right ${product.inStock ? '' : 'text-oslo'}`}>
