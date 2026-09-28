@@ -92,8 +92,9 @@ Pendant no. 01 with Chain in Drop 001, Sterling Silver.
 - **Number** — two digits, unique per type within the drop (check existing SKUs
   before picking one).
 - **Material** — `S` Sterling Silver / `G9` 9ct Gold / `G18` 18ct Gold / `P`
-  Platinum / `V` Gold Vermeil / `B` Brass / `M` custom or multiple materials.
-- **Size** — appended only when the variant has one (`CIN001-R02-S-M`).
+  Platinum / `V` Gold Vermeil / `B` Brass / `C` custom or multiple materials.
+- **Size** — appended only when the variant has one (`CIN001-R02-S-M`), or `C`
+  for a made-to-order custom size (`CIN001-R02-S-C`).
 
 Every SKU must be unique catalog-wide. Documented on the SKU field itself in
 Studio (`src/sanity/schemaTypes/objects/variant.ts`).

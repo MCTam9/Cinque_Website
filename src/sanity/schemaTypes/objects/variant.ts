@@ -24,8 +24,8 @@ export const variant = defineType({
         'Type: P Pendant, N Necklace, R Ring, E Earring, B Bracelet, O Object; add C for ' +
         'a piece sold with a chain (P01C). Number: two digits, unique per type within the drop. ' +
         'Material: S Sterling Silver, G9 9ct Gold, G18 18ct Gold, P Platinum, V Gold Vermeil, ' +
-        'B Brass, M custom / multiple materials. Append -Size only if the variant has one ' +
-        '(CIN001-R02-S-M). Every SKU must be unique across the whole catalog.',
+        'B Brass, C custom / multiple materials. Append -Size only if the variant has one ' +
+        '(CIN001-R02-S-M), or -C for a made-to-order custom size (CIN001-R02-S-C). Every SKU must be unique across the whole catalog.',
       validation: (rule) => rule.required(),
     }),
     defineField({
