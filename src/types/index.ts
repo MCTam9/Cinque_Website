@@ -10,7 +10,9 @@ export type MetalType =
   | 'sterling_silver'
   | 'platinum'
   | 'gold_vermeil'
-  | 'brass';
+  | 'brass'
+  /** Not one of the listed metals — the material is typed in `customMaterial`. */
+  | 'custom';
 
 export interface StoneSpec {
   stoneType?: string;
@@ -25,6 +27,8 @@ export interface Variant {
   _key: string;
   sku: string;
   metalType: MetalType;
+  /** The Material text when `metalType` is 'custom' (e.g. a piece in two metals). */
+  customMaterial?: string;
   metalFinish?: string;
   size?: string;
   stone?: StoneSpec;

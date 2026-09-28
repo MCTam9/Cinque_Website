@@ -5,7 +5,7 @@ import { sanityFetch } from '@/lib/sanity/fetch';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
-import { metalLabel, formatLabel, variantIsAvailable } from '@/lib/products';
+import { materialLabel, formatLabel, variantIsAvailable } from '@/lib/products';
 import ShopLayout from '@/components/ShopLayout';
 import JsonLd from '@/components/JsonLd';
 import { PortableText } from '@/components/PortableText';
@@ -110,7 +110,7 @@ export async function generateStaticParams() {
 
 function variantSwatch(v: Variant): string {
   if (v.madeToOrder) return 'Custom';
-  return v.size || metalLabel(v.metalType)?.replace(/_/g, ' ') || v.sku;
+  return v.size || materialLabel(v)?.replace(/_/g, ' ') || v.sku;
 }
 
 export default async function ProductPage({
@@ -142,7 +142,7 @@ export default async function ProductPage({
     sku: v.sku,
     swatch: variantSwatch(v),
     label:
-      [metalLabel(v.metalType), v.madeToOrder ? 'Made to order, custom size' : v.size]
+      [materialLabel(v), v.madeToOrder ? 'Made to order, custom size' : v.size]
         .filter(Boolean)
         .join(' · ') || v.sku,
     priceGBP: v.priceGBP,
@@ -155,7 +155,7 @@ export default async function ProductPage({
     (product.collection.dropNumber
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
-  const material = metalLabel(product.variants?.[0]?.metalType);
+  const material = materialLabel(product.variants?.[0]);
   // Distinct sizes across the variants (e.g. "M · P", or "M · Custom" when a
   // made-to-order variant is offered); empty for sizeless pieces.
   const sizes = Array.from(
