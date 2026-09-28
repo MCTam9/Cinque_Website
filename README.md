@@ -82,16 +82,18 @@ Notes:
 
 ### SKU convention
 
-`{Drop}-{Category}-{ProductCode}-{Metal}[-{Size}]`, e.g. `01-NEC-LFP-SS-M` for
-the Lace Fork Pendant (Drop 01, Necklace, Sterling Silver, size M).
+`CIN{Drop}-{Type}{Number}[C]-{Material}[-{Size}]`, e.g. `CIN001-P01C-S` for
+Pendant no. 01 with Chain in Drop 001, Sterling Silver.
 
-- **Drop** — the variant's drop's two-digit number (`00` for one-offs not tied
-  to a drop).
-- **Category** — `RIN` / `EAR` / `NEC` / `OBJ`.
-- **ProductCode** — a 3-letter mnemonic for the product, unique across the
-  catalog (check existing SKUs before picking one).
-- **Metal** — `9G` / `18G` / `SS` / `PT` / `GV` / `BR`; `MIX` (or your own short code) for a custom material.
-- **Size** — appended only when the variant has one.
+- **CIN{Drop}** — `CIN` plus the drop number in three digits (`CIN000` for
+  one-offs not tied to a drop).
+- **Type** — `P` Pendant / `N` Necklace / `R` Ring / `E` Earring / `B`
+  Bracelet / `O` Object. Add `C` for a piece sold with a chain (`P01C`).
+- **Number** — two digits, unique per type within the drop (check existing SKUs
+  before picking one).
+- **Material** — `S` Sterling Silver / `G9` 9ct Gold / `G18` 18ct Gold / `P`
+  Platinum / `V` Gold Vermeil / `B` Brass / `M` custom or multiple materials.
+- **Size** — appended only when the variant has one (`CIN001-R02-S-M`).
 
 Every SKU must be unique catalog-wide. Documented on the SKU field itself in
 Studio (`src/sanity/schemaTypes/objects/variant.ts`).
