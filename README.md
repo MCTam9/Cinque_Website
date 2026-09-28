@@ -90,7 +90,7 @@ the Lace Fork Pendant (Drop 01, Necklace, Sterling Silver, size M).
 - **Category** — `RIN` / `EAR` / `NEC` / `OBJ`.
 - **ProductCode** — a 3-letter mnemonic for the product, unique across the
   catalog (check existing SKUs before picking one).
-- **Metal** — `9G` / `18G` / `SS` / `PT` / `GV` / `BR`.
+- **Metal** — `9G` / `18G` / `SS` / `PT` / `GV` / `BR`; `MIX` (or your own short code) for a custom material.
 - **Size** — appended only when the variant has one.
 
 Every SKU must be unique catalog-wide. Documented on the SKU field itself in

@@ -20,7 +20,7 @@ export const variant = defineType({
       description:
         '{Drop}-{Category}-{ProductCode}-{Metal}[-{Size}], e.g. 01-NEC-LFP-SS-M ' +
         '(Drop 01, Necklace, Lace Fork Pendant, Sterling Silver, size M). ' +
-        'Category: RIN/EAR/NEC/OBJ. Metal: 9G/18G/SS/PT/GV/BR. Drop is the ' +
+        'Category: RIN/EAR/NEC/OBJ. Metal: 9G/18G/SS/PT/GV/BR (a custom material: MIX, or your own short code). Drop is the ' +
         "drop's two-digit number (00 for one-offs not tied to a drop). " +
         'ProductCode is a 3-letter mnemonic for the product — pick one not ' +
         'already used by another product. Append Size only if the variant has ' +
@@ -39,9 +39,27 @@ export const variant = defineType({
           { title: 'Platinum', value: 'platinum' },
           { title: 'Gold Vermeil', value: 'gold_vermeil' },
           { title: 'Brass', value: 'brass' },
+          { title: 'Other / multiple materials…', value: 'custom' },
         ],
       },
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: 'customMaterial',
+      title: 'Custom Material',
+      type: 'string',
+      description:
+        'Shown as the Material on the card and product page, e.g. "Sterling Silver & 18ct Gold" ' +
+        'or "Silver, Pearl". Use it for pieces that are more than one material.',
+      hidden: ({ parent }) => parent?.metalType !== 'custom',
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const parent = context.parent as { metalType?: string } | undefined;
+          if (parent?.metalType === 'custom' && !value?.trim()) {
+            return 'Type the material(s), or pick a Metal Type from the list.';
+          }
+          return true;
+        }),
     }),
     defineField({
       name: 'metalFinish',
@@ -124,14 +142,15 @@ export const variant = defineType({
     select: {
       sku: 'sku',
       metal: 'metalType',
+      customMaterial: 'customMaterial',
       size: 'size',
       stock: 'stockQuantity',
       madeToOrder: 'madeToOrder',
     },
-    prepare({ sku, metal, size, stock, madeToOrder }) {
+    prepare({ sku, metal, customMaterial, size, stock, madeToOrder }) {
       return {
         title: sku || 'Variant',
-        subtitle: [metal, size, madeToOrder ? 'made to order' : `stock: ${stock ?? 0}`]
+        subtitle: [metal === 'custom' ? customMaterial : metal, size, madeToOrder ? 'made to order' : `stock: ${stock ?? 0}`]
           .filter(Boolean)
           .join(' · '),
       };

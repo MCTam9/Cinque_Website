@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ProductCategory, Variant } from '@/types';
-import { metalLabel, formatLabel } from '@/lib/products';
+import { materialLabel, formatLabel } from '@/lib/products';
 import { categoryBy } from '@/lib/shop/categories';
 import { HOME_COUNTRY, SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
 
@@ -125,7 +125,7 @@ export function productSeoTitle(product: {
   const name = formatLabel(product.title)
     // Drop the leading "01/" code — meaningless in a search result.
     .replace(/^\d+\//, '');
-  const metal = metalLabel(product.variants?.[0]?.metalType);
+  const metal = materialLabel(product.variants?.[0]);
   const noun = product.category ? CATEGORY_SINGULAR[product.category] : undefined;
   const qualifier = [metal, noun].filter(Boolean).join(' ');
   return qualifier ? `${name} — ${qualifier}` : name;
@@ -146,7 +146,7 @@ export function productSeoDescription(product: {
   if (fromCms) return fromCms;
 
   const name = formatLabel(product.title).replace(/^\d+\//, '');
-  const metal = metalLabel(product.variants?.[0]?.metalType);
+  const metal = materialLabel(product.variants?.[0]);
   const noun = product.category ? CATEGORY_SINGULAR[product.category].toLowerCase() : 'piece';
   const made = metal ? `Handmade ${metal.toLowerCase()} ${noun}` : `Handmade ${noun}`;
   return `${made} — ${name} by Cinque®. Individually cast and hallmarked in London.`;

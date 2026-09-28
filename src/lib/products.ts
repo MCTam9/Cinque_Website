@@ -2,7 +2,7 @@ import { urlFor } from '@/lib/sanity/image';
 import type { MetalType, Product, ProductCardData, Variant } from '@/types';
 
 /** Metal enum → display label (spaced). */
-const METAL_LABELS: Record<MetalType, string> = {
+const METAL_LABELS: Record<Exclude<MetalType, 'custom'>, string> = {
   '9ct_gold': '9ct Gold',
   '18ct_gold': '18ct Gold',
   sterling_silver: 'Sterling Silver',
@@ -12,7 +12,19 @@ const METAL_LABELS: Record<MetalType, string> = {
 };
 
 export function metalLabel(metal?: MetalType): string | undefined {
-  return metal ? METAL_LABELS[metal] : undefined;
+  return metal && metal !== 'custom' ? METAL_LABELS[metal] : undefined;
+}
+
+/**
+ * The Material to show for a variant: the typed-in text for a custom material
+ * (a piece in more than one metal), otherwise the listed metal's label.
+ */
+export function materialLabel(
+  v?: Pick<Variant, 'metalType' | 'customMaterial'>
+): string | undefined {
+  if (!v) return undefined;
+  if (v.metalType === 'custom') return v.customMaterial?.trim() || undefined;
+  return metalLabel(v.metalType);
 }
 
 /**
@@ -79,7 +91,7 @@ export function toCardData(product: Product): ProductCardData {
     imageUrl,
     imageAlt: firstImage?.alt || product.title,
     priceGBP: minPrice,
-    material: metalLabel(defaultVariant?.metalType),
+    material: materialLabel(defaultVariant),
     drop: dropLabel(product.collection),
     edition: product.edition,
     size: defaultVariant?.size,

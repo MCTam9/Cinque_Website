@@ -21,7 +21,7 @@ const productCardProjection = `
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     "images": images[]{ alt, asset, crop, hotspot },
     variants[]{
-      _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
+      _key, sku, metalType, customMaterial, metalFinish, size, priceGBP, stripePriceId,
       stockQuantity, allowBackorder, madeToOrder,
       stone
     }
@@ -68,7 +68,7 @@ export const productBySlugQuery = groq`
     "images": images[]{ alt, asset, crop, hotspot },
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     variants[]{
-      _key, sku, metalType, metalFinish, size, priceGBP, stripePriceId,
+      _key, sku, metalType, customMaterial, metalFinish, size, priceGBP, stripePriceId,
       weightGrams, stockQuantity, lowStockThreshold, allowBackorder, madeToOrder,
       stone
     }
