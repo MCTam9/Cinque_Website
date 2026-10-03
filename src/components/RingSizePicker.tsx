@@ -114,6 +114,30 @@ const INITIAL = {
 
 type Pick = typeof INITIAL;
 
+const MORPH_MS = 320;
+const MORPH_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** The transform that lays `el` (origin top-left) exactly over `target`. */
+function overTarget(el: HTMLElement, target: HTMLElement): string {
+  const to = el.getBoundingClientRect();
+  const from = target.getBoundingClientRect();
+  return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
+}
+
+function fadeBackdrop(dialog: HTMLDialogElement, out: boolean) {
+  try {
+    dialog.animate([{ opacity: out ? 1 : 0 }, { opacity: out ? 0 : 1 }], {
+      duration: MORPH_MS,
+      fill: 'forwards',
+      pseudoElement: '::backdrop',
+    });
+  } catch {
+    // Older browsers can't animate ::backdrop; it just appears.
+  }
+}
+
 /**
  * Made-to-order ring size. A single row on the page; tapping it opens a sheet
  * (bottom of the screen on phones, centred on desktop) with two wheels: size
@@ -121,7 +145,8 @@ type Pick = typeof INITIAL;
  *
  * The wheels live behind a tap so a thumb scrolling the page can never land
  * on a size. Nothing is recorded until Done — a made-to-order piece can't be
- * returned — and closing any other way discards the change. Switching system
+ * returned — and closing any other way discards the change. The sheet grows
+ * out of the size row and shrinks back into it. Switching system
  * converts through circumference from the size last picked by hand, so
  * flicking UK → US → JP doesn't drift through rounding.
  */
@@ -131,6 +156,9 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
   const [draft, setDraft] = useState<Pick>(INITIAL);
   const [anchorCirc, setAnchorCirc] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const closing = useRef(false);
   const titleId = useId();
 
   const value = picked
@@ -148,7 +176,22 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      // Grow out of the size row: the box morphs, the contents fade in late
+      // so the text is never seen stretched.
+      const trigger = triggerRef.current;
+      if (trigger && !reducedMotion()) {
+        dialog.animate([{ transform: overTarget(dialog, trigger) }, { transform: 'none' }], {
+          duration: MORPH_MS,
+          easing: MORPH_EASE,
+        });
+        contentRef.current?.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], {
+          duration: MORPH_MS,
+        });
+        fadeBackdrop(dialog, false);
+      }
+    }
     if (!open && dialog.open) dialog.close();
     // The page behind must not scroll while the sheet is up (iOS ignores the
     // modal for this).
@@ -176,9 +219,34 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
     setAnchorCirc(options[i].circ);
   };
 
-  const done = () => {
-    setPicked(draft);
-    setOpen(false);
+  /** Shrink back into the size row, then close. `commit` is the Done pick. */
+  const close = (commit?: Pick) => {
+    if (closing.current) return;
+    if (commit) setPicked(commit);
+    const dialog = dialogRef.current;
+    const trigger = triggerRef.current;
+    if (!dialog || !trigger || reducedMotion()) {
+      setOpen(false);
+      return;
+    }
+    closing.current = true;
+    contentRef.current?.animate([{ opacity: 1 }, { opacity: 0, offset: 0.3 }, { opacity: 0 }], {
+      duration: MORPH_MS,
+      fill: 'forwards',
+    });
+    fadeBackdrop(dialog, true);
+    const shrink = dialog.animate(
+      [{ transform: 'none' }, { transform: overTarget(dialog, trigger) }],
+      { duration: MORPH_MS, easing: MORPH_EASE, fill: 'forwards' }
+    );
+    shrink.onfinish = () => {
+      // Close the element first so the sheet can't flash back at full size
+      // between dropping the animation and React re-rendering.
+      dialog.close();
+      dialog.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+      closing.current = false;
+      setOpen(false);
+    };
   };
 
   return (
@@ -186,6 +254,7 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
       <span className="type-p1 text-oslo">Your size</span>
       <button
         type="button"
+        ref={triggerRef}
         onClick={show}
         aria-haspopup="dialog"
         className="type-p1 flex min-h-[40px] w-full items-center justify-between border border-graphite px-[10px] text-left transition-colors hover:border-redcurrent"
@@ -201,23 +270,26 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
         aria-labelledby={titleId}
         onCancel={(e) => {
           e.preventDefault();
-          setOpen(false);
+          close();
         }}
         // A click on the dialog element itself is a click on the backdrop.
         onClick={(e) => {
-          if (e.target === e.currentTarget) setOpen(false);
+          if (e.target === e.currentTarget) close();
         }}
-        className="fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none border-0 border-t border-graphite bg-cararra p-0 text-graphite backdrop:bg-graphite/40 md:inset-0 md:m-auto md:h-fit md:max-w-md md:border"
+        className="fixed inset-x-0 bottom-0 top-auto m-0 origin-top-left w-full max-w-none border-0 border-t border-graphite bg-cararra p-0 text-graphite backdrop:bg-graphite/40 md:inset-0 md:m-auto md:h-fit md:max-w-md md:border"
       >
         {open && (
-          <div className="flex flex-col gap-[20px] px-[20px] pt-[20px] pb-[max(20px,env(safe-area-inset-bottom))]">
+          <div
+            ref={contentRef}
+            className="flex flex-col gap-[20px] px-[20px] pt-[20px] pb-[max(20px,env(safe-area-inset-bottom))]"
+          >
             <div className="flex items-center justify-between">
               <span id={titleId} className="type-h3">
                 Your size
               </span>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => close()}
                 className="type-p1 text-oslo underline underline-offset-4 hover:text-redcurrent"
               >
                 Cancel
@@ -242,7 +314,7 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
             </div>
             <button
               type="button"
-              onClick={done}
+              onClick={() => close(draft)}
               className="type-h3 min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent"
             >
               Done · {formatRingSize(system, options[draft.sizeIndex].label)}
