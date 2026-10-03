@@ -37,7 +37,7 @@ const FAQ: { question: string; answer: string }[] = [
   {
     question: 'Which countries does Cinque ship to?',
     answer:
-      'We currently ship to the United Kingdom, United States, France, Germany and Ireland. Orders are sent via a tracked, insured service; an estimated delivery window and tracking details are provided at checkout and by email once your order ships.',
+      'We currently ship to the United Kingdom and United States. Orders are sent via a tracked, insured service; an estimated delivery window and tracking details are provided at checkout and by email once your order ships.',
   },
   {
     question: 'How much does shipping cost?',
@@ -86,7 +86,7 @@ export default function ShippingPage() {
 
       <H3 as="h2" className="font-bold">Destinations &amp; delivery</H3>
       <P1>
-        We currently ship to the United Kingdom, United States, France, Germany and Ireland.
+        We currently ship to the United Kingdom and United States.
         Orders are sent via a tracked, insured service; an estimated delivery window and tracking
         details are provided at checkout and by email once your order ships.
       </P1>
