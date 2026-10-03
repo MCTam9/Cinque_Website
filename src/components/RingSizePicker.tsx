@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   RING_SIZE_OPTIONS,
   RING_SIZE_SYSTEMS,
@@ -107,66 +107,149 @@ function Wheel({
   );
 }
 
+const INITIAL = {
+  systemIndex: 0,
+  sizeIndex: RING_SIZE_OPTIONS.UK.findIndex((o) => o.label === 'N'),
+};
+
+type Pick = typeof INITIAL;
+
 /**
- * Made-to-order ring size: size system on the left, its sizes on the right.
+ * Made-to-order ring size. A single row on the page; tapping it opens a sheet
+ * (bottom of the screen on phones, centred on desktop) with two wheels: size
+ * system on the left, its sizes on the right.
  *
- * Reports "" until the buyer has actually picked a size — a made-to-order
- * piece can't be returned, so the wheel's resting position must never be
- * mistaken for a choice. Switching system keeps the same finger size by
- * converting through circumference — always from the size the buyer last
- * picked, so flicking UK → US → JP doesn't drift through rounding.
+ * The wheels live behind a tap so a thumb scrolling the page can never land
+ * on a size. Nothing is recorded until Done — a made-to-order piece can't be
+ * returned — and closing any other way discards the change. Switching system
+ * converts through circumference from the size last picked by hand, so
+ * flicking UK → US → JP doesn't drift through rounding.
  */
 export default function RingSizePicker({ onChange }: { onChange: (size: string) => void }) {
-  const [systemIndex, setSystemIndex] = useState(0);
-  const [sizeIndex, setSizeIndex] = useState(() =>
-    RING_SIZE_OPTIONS.UK.findIndex((o) => o.label === 'N')
-  );
-  const [chosen, setChosen] = useState(false);
-  // Circumference of the size last picked by hand; conversions start here.
-  const [anchorCirc, setAnchorCirc] = useState(() => RING_SIZE_OPTIONS.UK[sizeIndex].circ);
+  const [picked, setPicked] = useState<Pick | null>(null);
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Pick>(INITIAL);
+  const [anchorCirc, setAnchorCirc] = useState(0);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
-  const system = RING_SIZE_SYSTEMS[systemIndex];
-  const options = RING_SIZE_OPTIONS[system];
-  const value = chosen ? formatRingSize(system, options[sizeIndex].label) : '';
+  const value = picked
+    ? formatRingSize(
+        RING_SIZE_SYSTEMS[picked.systemIndex],
+        RING_SIZE_OPTIONS[RING_SIZE_SYSTEMS[picked.systemIndex]][picked.sizeIndex].label
+      )
+    : '';
 
   useEffect(() => {
     onChange(value);
   }, [value, onChange]);
 
-  const changeSystem = (i: number) => {
-    setSystemIndex(i);
-    setSizeIndex(nearestRingSize(RING_SIZE_SYSTEMS[i], anchorCirc));
+  // Open before the wheels' effects run, so they can scroll a visible list.
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+    // The page behind must not scroll while the sheet is up (iOS ignores the
+    // modal for this).
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+    return () => {
+      document.documentElement.style.overflow = '';
+    };
+  }, [open]);
+
+  const show = () => {
+    const start = picked ?? INITIAL;
+    setDraft(start);
+    setAnchorCirc(RING_SIZE_OPTIONS[RING_SIZE_SYSTEMS[start.systemIndex]][start.sizeIndex].circ);
+    setOpen(true);
   };
 
+  const system = RING_SIZE_SYSTEMS[draft.systemIndex];
+  const options = RING_SIZE_OPTIONS[system];
+
+  const changeSystem = (i: number) =>
+    setDraft({ systemIndex: i, sizeIndex: nearestRingSize(RING_SIZE_SYSTEMS[i], anchorCirc) });
+
   const changeSize = (i: number) => {
-    setSizeIndex(i);
+    setDraft((d) => ({ ...d, sizeIndex: i }));
     setAnchorCirc(options[i].circ);
-    setChosen(true);
+  };
+
+  const done = () => {
+    setPicked(draft);
+    setOpen(false);
   };
 
   return (
     <div className="flex flex-col gap-[6px]">
       <span className="type-p1 text-oslo">Your size</span>
-      <div className="flex border border-graphite">
-        <Wheel
-          label="Size system"
-          options={[...RING_SIZE_SYSTEMS]}
-          index={systemIndex}
-          onChange={changeSystem}
-          className="w-1/3 border-r border-graphite"
-        />
-        <Wheel
-          key={system}
-          label={`${system} ring size`}
-          options={options.map((o) => o.label)}
-          index={sizeIndex}
-          onChange={changeSize}
-          className="flex-1"
-        />
-      </div>
-      <span className="type-p1 text-oslo" aria-live="polite">
-        {chosen ? `Selected: ${value}` : 'Scroll or tap to choose your size'}
-      </span>
+      <button
+        type="button"
+        onClick={show}
+        aria-haspopup="dialog"
+        className="type-p1 flex min-h-[40px] w-full items-center justify-between border border-graphite px-[10px] text-left transition-colors hover:border-redcurrent"
+      >
+        <span className={picked ? 'text-graphite' : 'text-oslo'}>
+          {picked ? value : 'Choose your size'}
+        </span>
+        <span className="text-oslo">{picked ? 'Change' : '+'}</span>
+      </button>
+
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        onCancel={(e) => {
+          e.preventDefault();
+          setOpen(false);
+        }}
+        // A click on the dialog element itself is a click on the backdrop.
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setOpen(false);
+        }}
+        className="fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none border-0 border-t border-graphite bg-cararra p-0 text-graphite backdrop:bg-graphite/40 md:inset-0 md:m-auto md:h-fit md:max-w-md md:border"
+      >
+        {open && (
+          <div className="flex flex-col gap-[20px] px-[20px] pt-[20px] pb-[max(20px,env(safe-area-inset-bottom))]">
+            <div className="flex items-center justify-between">
+              <span id={titleId} className="type-h3">
+                Your size
+              </span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="type-p1 text-oslo underline underline-offset-4 hover:text-redcurrent"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="flex border border-graphite">
+              <Wheel
+                label="Size system"
+                options={[...RING_SIZE_SYSTEMS]}
+                index={draft.systemIndex}
+                onChange={changeSystem}
+                className="w-1/3 border-r border-graphite"
+              />
+              <Wheel
+                key={system}
+                label={`${system} ring size`}
+                options={options.map((o) => o.label)}
+                index={draft.sizeIndex}
+                onChange={changeSize}
+                className="flex-1"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={done}
+              className="type-h3 min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent"
+            >
+              Done · {formatRingSize(system, options[draft.sizeIndex].label)}
+            </button>
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }
