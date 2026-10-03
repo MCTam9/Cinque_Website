@@ -7,6 +7,7 @@ import { formatGBP } from '@/lib/products';
 import { CUSTOM_SIZE_MAX, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 import { H3, P1 } from '@/components/typography';
 import { RING_SIZE_CHART_ID } from '@/components/RingSizeChart';
+import RingSizePicker from '@/components/RingSizePicker';
 
 export interface PurchaseVariant {
   key: string;
@@ -24,21 +25,22 @@ export interface PurchaseVariant {
  * the price on the right, then a full-width bordered Add-to-cart button.
  *
  * A made-to-order option (swatch "Custom") adds the lead time and a required
- * "Your size" field between the two; Add to cart waits until it is filled.
+ * size between the two: a UK/US/EU/JP wheel for rings, free text otherwise.
+ * Add to cart waits until a size is given.
  */
 export default function ProductPurchase({
   productId,
   title,
   variants,
   imageUrl,
-  showRingSizeChartLink = false,
+  ring = false,
 }: {
   productId: string;
   title: string;
   variants: PurchaseVariant[];
   imageUrl?: string;
-  /** Rings only: link the size field to the ring size chart below. */
-  showRingSizeChartLink?: boolean;
+  /** Rings: pick the size on a UK/US/EU/JP wheel (not free text) and link the chart below. */
+  ring?: boolean;
 }) {
   const addLine = useCart((s) => s.addLine);
   const router = useRouter();
@@ -101,19 +103,23 @@ export default function ProductPurchase({
           <P1 className="text-graphite">
             Made to order · ships in {MADE_TO_ORDER_LEAD_TIME}
           </P1>
-          <label className="flex flex-col gap-[6px]">
-            <span className="type-p1 text-oslo">Your size</span>
-            <input
-              type="text"
-              value={customSize}
-              onChange={(e) => setCustomSize(e.target.value)}
-              maxLength={CUSTOM_SIZE_MAX}
-              required
-              placeholder={showRingSizeChartLink ? 'UK size, e.g. N½' : 'e.g. 45cm'}
-              className="type-p1 min-h-[40px] w-full border border-graphite bg-transparent px-[10px] text-graphite placeholder:text-oslo focus:border-redcurrent focus:outline-none"
-            />
-          </label>
-          {showRingSizeChartLink && (
+          {ring ? (
+            <RingSizePicker onChange={setCustomSize} />
+          ) : (
+            <label className="flex flex-col gap-[6px]">
+              <span className="type-p1 text-oslo">Your size</span>
+              <input
+                type="text"
+                value={customSize}
+                onChange={(e) => setCustomSize(e.target.value)}
+                maxLength={CUSTOM_SIZE_MAX}
+                required
+                placeholder="e.g. 45cm"
+                className="type-p1 min-h-[40px] w-full border border-graphite bg-transparent px-[10px] text-graphite placeholder:text-oslo focus:border-redcurrent focus:outline-none"
+              />
+            </label>
+          )}
+          {ring && (
             <a
               href={`#${RING_SIZE_CHART_ID}`}
               className="type-p1 w-fit text-oslo underline underline-offset-4 hover:text-redcurrent"
@@ -130,7 +136,13 @@ export default function ProductPurchase({
         disabled={!canAdd}
         className="type-h3 min-h-[40px] w-full border border-graphite text-graphite transition-colors hover:bg-graphite hover:text-cararra disabled:border-oslo disabled:text-oslo"
       >
-        {!selected?.inStock ? 'Sold out' : needsSize && !size ? 'Enter your size' : 'Add to cart'}
+        {!selected?.inStock
+          ? 'Sold out'
+          : needsSize && !size
+            ? ring
+              ? 'Choose your size'
+              : 'Enter your size'
+            : 'Add to cart'}
       </button>
     </div>
   );

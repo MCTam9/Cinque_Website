@@ -305,7 +305,7 @@ export default async function ProductPage({
               title={formatLabel(product.title)}
               variants={purchaseVariants}
               imageUrl={thumbUrl}
-              showRingSizeChartLink={product.category === 'rings'}
+              ring={product.category === 'rings'}
             />
           )}
 

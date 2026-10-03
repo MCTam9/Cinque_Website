@@ -1,24 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-/** UK ring sizes with US / EU / JP equivalents (JP to the nearest whole size), inner circumference and diameter (mm). */
-const ROWS = [
-  { uk: 'G', us: '3¼', eu: '44', jp: '4', circ: '44.3', dia: '14.1' },
-  { uk: 'H', us: '3¾', eu: '45.5', jp: '6', circ: '45.6', dia: '14.5' },
-  { uk: 'I', us: '4¼', eu: '46.5', jp: '7', circ: '46.8', dia: '14.9' },
-  { uk: 'J', us: '4¾', eu: '48', jp: '8', circ: '48.1', dia: '15.3' },
-  { uk: 'K', us: '5¼', eu: '49.5', jp: '9', circ: '49.3', dia: '15.7' },
-  { uk: 'L', us: '5¾', eu: '50.5', jp: '10', circ: '50.6', dia: '16.1' },
-  { uk: 'M', us: '6¼', eu: '52', jp: '12', circ: '51.9', dia: '16.5' },
-  { uk: 'N', us: '6¾', eu: '53', jp: '13', circ: '53.1', dia: '16.9' },
-  { uk: 'O', us: '7¼', eu: '54.5', jp: '14', circ: '54.4', dia: '17.3' },
-  { uk: 'P', us: '7¾', eu: '55.5', jp: '15', circ: '55.7', dia: '17.7' },
-  { uk: 'Q', us: '8¼', eu: '57', jp: '16', circ: '56.9', dia: '18.1' },
-  { uk: 'R', us: '8¾', eu: '58.5', jp: '17', circ: '58.1', dia: '18.5' },
-  { uk: 'S', us: '9¼', eu: '59.5', jp: '19', circ: '59.4', dia: '18.9' },
-  { uk: 'T', us: '9¾', eu: '61', jp: '20', circ: '60.9', dia: '19.4' },
-] as const;
+import { RING_SIZE_ROWS } from '@/lib/shop/ringSizes';
 
 /** Anchor the PDP's "Ring size chart" link (made-to-order size field) jumps to. */
 export const RING_SIZE_CHART_ID = 'ring-size-chart';
@@ -62,7 +45,7 @@ export default function RingSizeChart() {
               </tr>
             </thead>
             <tbody>
-              {ROWS.map((r) => (
+              {RING_SIZE_ROWS.map((r) => (
                 <tr key={r.uk} className="border-t border-oslo/30">
                   <td className="py-[10px] pr-8 md:pr-6">{r.uk}</td>
                   <td className="py-[10px] pr-8 md:pr-6">{r.us}</td>
