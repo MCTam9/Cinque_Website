@@ -19,6 +19,7 @@ import {
   shippingDetailsJsonLd,
 } from '@/lib/seo';
 import { categoryBy, isReservedShopSlug } from '@/lib/shop/categories';
+import { EU_PAUSE_NOTICE } from '@/lib/shop/shipping';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
 import ProductGallery from '@/components/ProductGallery';
 import RingSizeChart from '@/components/RingSizeChart';
@@ -307,6 +308,13 @@ export default async function ProductPage({
               showRingSizeChartLink={product.category === 'rings'}
             />
           )}
+
+          <P1 className="text-oslo">
+            {EU_PAUSE_NOTICE}{' '}
+            <Link href="/shipping" className="underline underline-offset-4 hover:text-redcurrent">
+              Shipping &amp; returns
+            </Link>
+          </P1>
 
           {/* The CMS description. Queried since day one but never rendered,
               which left the PDP with no prose for search engines to read. */}
