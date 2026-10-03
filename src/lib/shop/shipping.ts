@@ -17,6 +17,9 @@
 export const SHIP_COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'JP', name: 'Japan' },
 ] as const;
 
 export type ShipCountry = (typeof SHIP_COUNTRIES)[number]['code'];
