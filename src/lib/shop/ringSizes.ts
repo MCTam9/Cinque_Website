@@ -1,34 +1,49 @@
 /**
  * Ring sizes — the single source for the size chart and the PDP size picker.
  *
- * Every system is tied back to inner circumference (mm), which is what the
- * workshop actually makes to, so switching system in the picker can land on
- * the nearest equivalent size.
+ * Every system is defined by inner circumference (mm), which is what the
+ * workshop actually makes to, so the chart is computed rather than typed in
+ * and switching system in the picker lands on the nearest equivalent size.
+ * Checked against Cartier's published chart: every size agrees to within the
+ * rounding of its whole-millimetre rows.
+ *
+ *   UK: A = 37.5 mm, +1.25 mm per letter (+0.625 per half).
+ *   US: diameter = 11.63 + 0.8128 × size, i.e. 36.54 + 2.553 × size round.
+ *   EU: the circumference in mm.
+ *   JP: circumference − 40 (1 mm per size).
  */
 
-/** UK ring sizes with US / EU / JP equivalents (JP to the nearest whole size), inner circumference and diameter (mm). */
-export const RING_SIZE_ROWS = [
-  { uk: 'G', us: '3¼', eu: '44', jp: '4', circ: '44.3', dia: '14.1' },
-  { uk: 'H', us: '3¾', eu: '45.5', jp: '6', circ: '45.6', dia: '14.5' },
-  { uk: 'I', us: '4¼', eu: '46.5', jp: '7', circ: '46.8', dia: '14.9' },
-  { uk: 'J', us: '4¾', eu: '48', jp: '8', circ: '48.1', dia: '15.3' },
-  { uk: 'K', us: '5¼', eu: '49.5', jp: '9', circ: '49.3', dia: '15.7' },
-  { uk: 'L', us: '5¾', eu: '50.5', jp: '10', circ: '50.6', dia: '16.1' },
-  { uk: 'M', us: '6¼', eu: '52', jp: '12', circ: '51.9', dia: '16.5' },
-  { uk: 'N', us: '6¾', eu: '53', jp: '13', circ: '53.1', dia: '16.9' },
-  { uk: 'O', us: '7¼', eu: '54.5', jp: '14', circ: '54.4', dia: '17.3' },
-  { uk: 'P', us: '7¾', eu: '55.5', jp: '15', circ: '55.7', dia: '17.7' },
-  { uk: 'Q', us: '8¼', eu: '57', jp: '16', circ: '56.9', dia: '18.1' },
-  { uk: 'R', us: '8¾', eu: '58.5', jp: '17', circ: '58.1', dia: '18.5' },
-  { uk: 'S', us: '9¼', eu: '59.5', jp: '19', circ: '59.4', dia: '18.9' },
-  { uk: 'T', us: '9¾', eu: '61', jp: '20', circ: '60.9', dia: '19.4' },
-  { uk: 'U', us: '10¼', eu: '62', jp: '21', circ: '62.1', dia: '19.8' },
-  { uk: 'V', us: '10¾', eu: '63.5', jp: '23', circ: '63.4', dia: '20.2' },
-  { uk: 'W', us: '11¼', eu: '64.5', jp: '24', circ: '64.6', dia: '20.6' },
-  { uk: 'X', us: '11¾', eu: '66', jp: '25', circ: '65.9', dia: '21.0' },
-  { uk: 'Y', us: '12¼', eu: '67', jp: '26', circ: '67.2', dia: '21.4' },
-  { uk: 'Z', us: '12¾', eu: '68.5', jp: '27', circ: '68.4', dia: '21.8' },
-] as const;
+const ukCirc = (letter: string) => 37.5 + 1.25 * (letter.charCodeAt(0) - 65);
+const usCirc = (size: number) => 36.54 + 2.553 * size;
+const jpCirc = (size: number) => 40 + size;
+
+/** "6", "6¼", "6½", "6¾" — `n` rounded to the nearest step of `step`. */
+function fraction(n: number, step: 0.25 | 0.5): string {
+  const r = Math.round(n / step) * step;
+  const whole = Math.floor(r);
+  return `${whole}${{ 0: '', 0.25: '¼', 0.5: '½', 0.75: '¾' }[r - whole]}`;
+}
+
+function range(from: number, to: number, step: number): number[] {
+  const out: number[] = [];
+  for (let n = from; n <= to + 1e-9; n += step) out.push(Math.round(n / step) * step);
+  return out;
+}
+
+const UK_LETTERS = 'GHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/** UK ring sizes G–Z with US / EU / JP equivalents, inner circumference and diameter (mm). */
+export const RING_SIZE_ROWS = UK_LETTERS.map((uk) => {
+  const circ = ukCirc(uk);
+  return {
+    uk,
+    us: fraction((circ - 36.54) / 2.553, 0.25),
+    eu: `${Math.round(circ)}`,
+    jp: `${Math.round(circ - 40)}`,
+    circ: circ.toFixed(1),
+    dia: (circ / Math.PI).toFixed(1),
+  };
+});
 
 export const RING_SIZE_SYSTEMS = ['UK', 'US', 'EU', 'JP'] as const;
 export type RingSizeSystem = (typeof RING_SIZE_SYSTEMS)[number];
@@ -39,33 +54,19 @@ export interface RingSizeOption {
   circ: number;
 }
 
-const half = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.floor(n)}½`);
-
-function range(from: number, to: number, step: number): number[] {
-  const out: number[] = [];
-  for (let n = from; n <= to + 1e-9; n += step) out.push(Math.round(n * 2) / 2);
-  return out;
-}
-
-/** UK letters G–Z with half sizes; halves sit midway between the letters. */
-const UK: RingSizeOption[] = RING_SIZE_ROWS.flatMap((row, i) => {
-  const circ = Number(row.circ);
-  const next = RING_SIZE_ROWS[i + 1];
-  return next
-    ? [{ label: row.uk, circ }, { label: `${row.uk}½`, circ: (circ + Number(next.circ)) / 2 }]
-    : [{ label: row.uk, circ }];
-});
-
-/**
- * The selectable sizes per system, all spanning the same range as the chart.
- * US: diameter = 11.63 + 0.8128 × size. EU: the circumference itself.
- * JP: diameter = 13 + (size − 1) / 3.
- */
+/** The selectable sizes per system, all spanning UK G to Z. */
 export const RING_SIZE_OPTIONS: Record<RingSizeSystem, RingSizeOption[]> = {
-  UK,
-  US: range(3, 12.5, 0.5).map((n) => ({ label: half(n), circ: Math.PI * (11.63 + 0.8128 * n) })),
-  EU: range(44, 68, 1).map((n) => ({ label: `${n}`, circ: n })),
-  JP: range(4, 27, 1).map((n) => ({ label: `${n}`, circ: Math.PI * (13 + (n - 1) / 3) })),
+  UK: UK_LETTERS.flatMap((l, i) =>
+    i < UK_LETTERS.length - 1
+      ? [
+          { label: l, circ: ukCirc(l) },
+          { label: `${l}½`, circ: ukCirc(l) + 0.625 },
+        ]
+      : [{ label: l, circ: ukCirc(l) }]
+  ),
+  US: range(3, 12.5, 0.5).map((n) => ({ label: fraction(n, 0.5), circ: usCirc(n) })),
+  EU: range(45, 69, 1).map((n) => ({ label: `${n}`, circ: n })),
+  JP: range(5, 29, 1).map((n) => ({ label: `${n}`, circ: jpCirc(n) })),
 };
 
 /** Index of the size in `system` closest to circumference `circ`. */

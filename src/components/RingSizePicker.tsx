@@ -113,12 +113,17 @@ function Wheel({
  * Reports "" until the buyer has actually picked a size — a made-to-order
  * piece can't be returned, so the wheel's resting position must never be
  * mistaken for a choice. Switching system keeps the same finger size by
- * converting through circumference.
+ * converting through circumference — always from the size the buyer last
+ * picked, so flicking UK → US → JP doesn't drift through rounding.
  */
 export default function RingSizePicker({ onChange }: { onChange: (size: string) => void }) {
   const [systemIndex, setSystemIndex] = useState(0);
-  const [sizeIndex, setSizeIndex] = useState(() => nearestRingSize('UK', 53.1)); // UK N
+  const [sizeIndex, setSizeIndex] = useState(() =>
+    RING_SIZE_OPTIONS.UK.findIndex((o) => o.label === 'N')
+  );
   const [chosen, setChosen] = useState(false);
+  // Circumference of the size last picked by hand; conversions start here.
+  const [anchorCirc, setAnchorCirc] = useState(() => RING_SIZE_OPTIONS.UK[sizeIndex].circ);
 
   const system = RING_SIZE_SYSTEMS[systemIndex];
   const options = RING_SIZE_OPTIONS[system];
@@ -129,13 +134,13 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
   }, [value, onChange]);
 
   const changeSystem = (i: number) => {
-    const circ = options[sizeIndex].circ;
     setSystemIndex(i);
-    setSizeIndex(nearestRingSize(RING_SIZE_SYSTEMS[i], circ));
+    setSizeIndex(nearestRingSize(RING_SIZE_SYSTEMS[i], anchorCirc));
   };
 
   const changeSize = (i: number) => {
     setSizeIndex(i);
+    setAnchorCirc(options[i].circ);
     setChosen(true);
   };
 
