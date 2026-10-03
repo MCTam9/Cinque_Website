@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
 import { H1, H3, P1, P2 } from '@/components/typography';
-import { SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
+import { EU_PAUSE_NOTICE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
 import { MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 
 export const metadata: Metadata = {
@@ -25,6 +25,11 @@ export const metadata: Metadata = {
 const SHIPPING_COSTS = `UK delivery is ${formatPence(SHIPPING_RATES.domesticPence)} and international delivery is ${formatPence(SHIPPING_RATES.internationalPence)}. Orders of ${formatPence(SHIPPING_RATES.freeFromPence)} or more ship free to every country we deliver to.`;
 
 // Shared by the FAQ and the prose below, like SHIPPING_COSTS.
+const DESTINATIONS = 'We currently ship to the United Kingdom, United States, Canada, Australia and Japan. Orders are sent via a tracked, insured service; an estimated delivery window and tracking details are provided at checkout and by email once your order ships.';
+
+// Must match IMPORT_CHARGES in lib/shop/shipping.ts.
+const DUTIES = 'For orders to the United States, Canada and Australia, import duties and taxes are included in the price you pay at checkout, so there is nothing more to pay on delivery. For orders to Japan, import duties and consumption tax are charged by Japanese customs and collected by Japan Post on delivery, with a small handling fee; these are the recipient’s responsibility and are not included in the order total.';
+
 const LEAD_TIMES = `Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are typically dispatched within 3–5 working days. Made-to-order pieces are made to the size you enter at checkout and are dispatched within ${MADE_TO_ORDER_LEAD_TIME}. Commissioned pieces have longer lead times, which are confirmed at the time of order.`;
 
 const RETURNS = 'Under the UK Consumer Contracts Regulations, you may cancel an eligible order within 14 days of receipt for a refund. Items must be returned unworn and in their original condition and packaging. Made-to-order pieces are made to the size you give us, and bespoke, commissioned, personalised or altered pieces are made to your specification; none of these are eligible for return unless faulty. Please check your size against our ring size chart before ordering, or email us if you are unsure.';
@@ -36,8 +41,7 @@ const FAQ: { question: string; answer: string }[] = [
   },
   {
     question: 'Which countries does Cinque ship to?',
-    answer:
-      'We currently ship to the United Kingdom, United States, France, Germany and Ireland. Orders are sent via a tracked, insured service; an estimated delivery window and tracking details are provided at checkout and by email once your order ships.',
+    answer: `${DESTINATIONS} ${EU_PAUSE_NOTICE}`,
   },
   {
     question: 'How much does shipping cost?',
@@ -45,8 +49,7 @@ const FAQ: { question: string; answer: string }[] = [
   },
   {
     question: 'Are import duties and taxes included?',
-    answer:
-      'Orders shipped outside the UK may be subject to import duties and taxes levied by the destination country. These charges are the responsibility of the recipient and are not included in the order total.',
+    answer: DUTIES,
   },
   {
     question: 'What is the returns policy?',
@@ -79,27 +82,20 @@ export default function ShippingPage() {
         }}
       />
       <H1>Shipping &amp; Returns</H1>
-      <P2 className="text-oslo">Last updated: September 2026</P2>
+      <P2 className="text-oslo">Last updated: October 2026</P2>
 
       <H3 as="h2" className="font-bold">Processing &amp; lead times</H3>
       <P1>{LEAD_TIMES}</P1>
 
       <H3 as="h2" className="font-bold">Destinations &amp; delivery</H3>
-      <P1>
-        We currently ship to the United Kingdom, United States, France, Germany and Ireland.
-        Orders are sent via a tracked, insured service; an estimated delivery window and tracking
-        details are provided at checkout and by email once your order ships.
-      </P1>
+      <P1>{DESTINATIONS}</P1>
+      <P1>{EU_PAUSE_NOTICE}</P1>
 
       <H3 as="h2" className="font-bold">Shipping costs</H3>
       <P1>{SHIPPING_COSTS}</P1>
 
       <H3 as="h2" className="font-bold">Duties &amp; taxes</H3>
-      <P1>
-        Orders shipped outside the UK may be subject to import duties and taxes levied by the
-        destination country. These charges are the responsibility of the recipient and are not
-        included in the order total.
-      </P1>
+      <P1>{DUTIES}</P1>
 
       <H3 as="h2" className="font-bold">Returns</H3>
       <P1>{RETURNS}</P1>

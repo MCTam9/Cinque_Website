@@ -17,9 +17,9 @@
 export const SHIP_COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'US', name: 'United States' },
-  { code: 'FR', name: 'France' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'IE', name: 'Ireland' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'JP', name: 'Japan' },
 ] as const;
 
 export type ShipCountry = (typeof SHIP_COUNTRIES)[number]['code'];
@@ -30,6 +30,35 @@ export const SHIP_COUNTRY_CODES = SHIP_COUNTRIES.map((c) => c.code) as [
 ];
 
 export const HOME_COUNTRY: ShipCountry = 'GB';
+
+/**
+ * Who pays import duties and taxes, per destination. Every country must be
+ * listed, so adding one to SHIP_COUNTRIES forces a decision here.
+ *
+ * 'included': we prepay them (Royal Mail PDDP or equivalent), so the buyer has
+ * nothing to pay on delivery. 'buyer': the destination collects them from the
+ * recipient on delivery. 'none': domestic, no customs.
+ */
+export const IMPORT_CHARGES: Record<ShipCountry, 'none' | 'included' | 'buyer'> = {
+  GB: 'none',
+  US: 'included',
+  CA: 'included',
+  AU: 'included',
+  JP: 'buyer',
+};
+
+/** Checkout notice on import charges for `country`; null for the UK. */
+export function importChargesNotice(country: ShipCountry): string | null {
+  const charges = IMPORT_CHARGES[country];
+  if (charges === 'none') return null;
+  return charges === 'included'
+    ? 'Import duties and taxes are included. There is nothing more to pay on delivery.'
+    : 'Import duties and consumption tax are charged by Japanese customs and collected by Japan Post on delivery, with a small handling fee. They are the recipient’s responsibility and are not included in the order total.';
+}
+
+/** Shown on the /shipping page and each product page while EU shipping is off. */
+export const EU_PAUSE_NOTICE =
+  'Due to recent changes to EU import rules, we have paused shipping to the European Union. We hope to resume soon.';
 
 export const SHIPPING_RATES = {
   domesticPence: 499,

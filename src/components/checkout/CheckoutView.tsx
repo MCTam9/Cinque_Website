@@ -7,10 +7,10 @@ import { EmbeddedCheckout } from '@/components/checkout/EmbeddedCheckout';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 import {
-  HOME_COUNTRY,
   SHIP_COUNTRIES,
   countryName,
   formatPence,
+  importChargesNotice,
   isShipCountry,
   shippingQuote,
   type ShipCountry,
@@ -43,6 +43,7 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
 
   // Display only: the checkout API recomputes this from trusted prices.
   const quote = shippingQuote(country, subtotal);
+  const importNotice = importChargesNotice(country);
 
   return (
     <Container className={contentPadY}>
@@ -85,12 +86,7 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
             </button>
           </P1>
         )}
-        {country !== HOME_COUNTRY && (
-          <P1 className="text-oslo">
-            Import duties and taxes may be charged on delivery and are the recipient&rsquo;s
-            responsibility.
-          </P1>
-        )}
+        {importNotice && <P1 className="text-oslo">{importNotice}</P1>}
       </div>
 
       <EmbeddedCheckout lines={checkoutLines} country={country} />
