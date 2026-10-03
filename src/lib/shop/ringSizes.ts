@@ -22,6 +22,12 @@ export const RING_SIZE_ROWS = [
   { uk: 'R', us: '8¾', eu: '58.5', jp: '17', circ: '58.1', dia: '18.5' },
   { uk: 'S', us: '9¼', eu: '59.5', jp: '19', circ: '59.4', dia: '18.9' },
   { uk: 'T', us: '9¾', eu: '61', jp: '20', circ: '60.9', dia: '19.4' },
+  { uk: 'U', us: '10¼', eu: '62', jp: '21', circ: '62.1', dia: '19.8' },
+  { uk: 'V', us: '10¾', eu: '63.5', jp: '23', circ: '63.4', dia: '20.2' },
+  { uk: 'W', us: '11¼', eu: '64.5', jp: '24', circ: '64.6', dia: '20.6' },
+  { uk: 'X', us: '11¾', eu: '66', jp: '25', circ: '65.9', dia: '21.0' },
+  { uk: 'Y', us: '12¼', eu: '67', jp: '26', circ: '67.2', dia: '21.4' },
+  { uk: 'Z', us: '12¾', eu: '68.5', jp: '27', circ: '68.4', dia: '21.8' },
 ] as const;
 
 export const RING_SIZE_SYSTEMS = ['UK', 'US', 'EU', 'JP'] as const;
@@ -41,7 +47,7 @@ function range(from: number, to: number, step: number): number[] {
   return out;
 }
 
-/** UK letters G–T with half sizes; halves sit midway between the letters. */
+/** UK letters G–Z with half sizes; halves sit midway between the letters. */
 const UK: RingSizeOption[] = RING_SIZE_ROWS.flatMap((row, i) => {
   const circ = Number(row.circ);
   const next = RING_SIZE_ROWS[i + 1];
@@ -57,9 +63,9 @@ const UK: RingSizeOption[] = RING_SIZE_ROWS.flatMap((row, i) => {
  */
 export const RING_SIZE_OPTIONS: Record<RingSizeSystem, RingSizeOption[]> = {
   UK,
-  US: range(3, 10, 0.5).map((n) => ({ label: half(n), circ: Math.PI * (11.63 + 0.8128 * n) })),
-  EU: range(44, 61, 1).map((n) => ({ label: `${n}`, circ: n })),
-  JP: range(4, 20, 1).map((n) => ({ label: `${n}`, circ: Math.PI * (13 + (n - 1) / 3) })),
+  US: range(3, 12.5, 0.5).map((n) => ({ label: half(n), circ: Math.PI * (11.63 + 0.8128 * n) })),
+  EU: range(44, 68, 1).map((n) => ({ label: `${n}`, circ: n })),
+  JP: range(4, 27, 1).map((n) => ({ label: `${n}`, circ: Math.PI * (13 + (n - 1) / 3) })),
 };
 
 /** Index of the size in `system` closest to circumference `circ`. */
