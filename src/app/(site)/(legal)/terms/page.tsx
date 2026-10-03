@@ -12,7 +12,7 @@ export default function TermsPage() {
   return (
     <>
       <H1>Terms &amp; Conditions</H1>
-      <P2 className="text-oslo">Last updated: July 2026</P2>
+      <P2 className="text-oslo">Last updated: October 2026</P2>
 
       <P1>
         These terms govern your use of this website and any purchase you make from Cinque®. By
@@ -21,9 +21,25 @@ export default function TermsPage() {
 
       <H3 as="h2" className="font-bold">Products</H3>
       <P1>
-        All pieces are handmade, cast and hallmarked in London. Because of the handmade nature,
-        each piece is unique and slight variations in colour, finish and dimensions are inherent
-        and not defects. Images are representative; no exact replicas are produced.
+        All pieces are handmade and cast in London. Because of the handmade nature, each piece is
+        unique and slight variations in colour, finish and dimensions are inherent and not
+        defects. Images are representative; no exact replicas are produced.
+      </P1>
+
+      <H3 as="h2" className="font-bold">Hallmarking</H3>
+      <P1>
+        Under the UK Hallmarking Act 1973, precious-metal pieces at or above a set weight must be
+        hallmarked by an independent assay office before they can be sold as silver or gold. We
+        hallmark at the London Assay Office:
+      </P1>
+      <ul className="type-p1 list-disc pl-[20px] text-graphite">
+        <li>silver pieces weighing 7.78 g or more</li>
+        <li>gold pieces weighing 1 g or more</li>
+      </ul>
+      <P1>
+        Pieces below these weights are exempt by law and are not hallmarked. They are made from the
+        same sterling silver or carat gold as our hallmarked pieces. If you would like to know
+        whether a particular piece is hallmarked, please email us before ordering.
       </P1>
 
       <H3 as="h2" className="font-bold">Pricing &amp; payment</H3>
