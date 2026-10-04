@@ -8,10 +8,10 @@
 
 export const MADE_TO_ORDER_LEAD_TIME = '8–12 weeks';
 
-/** Longest custom size a customer can enter, e.g. "N½" or "17.5mm". */
+/** Longest custom size a customer can enter, e.g. "UK N (US 6¾)" or "17.5mm". */
 export const CUSTOM_SIZE_MAX = 20;
 
-/** "Made to order · Size N½ · ships in 8–12 weeks" — one line, every surface. */
+/** "Made to order · Size UK N · ships in 8–12 weeks" — one line, every surface. */
 export function madeToOrderNote(customSize?: string | null): string {
   return [
     'Made to order',

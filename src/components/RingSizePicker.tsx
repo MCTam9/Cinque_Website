@@ -2,10 +2,10 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
-  RING_SIZE_OPTIONS,
+  RING_SIZE_ROWS,
   RING_SIZE_SYSTEMS,
   formatRingSize,
-  nearestRingSize,
+  ringSizeLabel,
 } from '@/lib/shop/ringSizes';
 
 const ITEM_H = 40; // px per row
@@ -109,7 +109,7 @@ function Wheel({
 
 const INITIAL = {
   systemIndex: 0,
-  sizeIndex: RING_SIZE_OPTIONS.UK.findIndex((o) => o.label === 'N'),
+  row: RING_SIZE_ROWS.findIndex((r) => r.uk === 'N'),
 };
 
 type Pick = typeof INITIAL;
@@ -146,27 +146,20 @@ function fadeBackdrop(dialog: HTMLDialogElement, out: boolean) {
  * The wheels live behind a tap so a thumb scrolling the page can never land
  * on a size. Nothing is recorded until Done — a made-to-order piece can't be
  * returned — and closing any other way discards the change. The sheet grows
- * out of the size row and shrinks back into it. Switching system
- * converts through circumference from the size last picked by hand, so
- * flicking UK → US → JP doesn't drift through rounding.
+ * out of the size row and shrinks back into it. Each wheel row is a row of the
+ * size chart, so switching system just relabels the same size.
  */
 export default function RingSizePicker({ onChange }: { onChange: (size: string) => void }) {
   const [picked, setPicked] = useState<Pick | null>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Pick>(INITIAL);
-  const [anchorCirc, setAnchorCirc] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const closing = useRef(false);
   const titleId = useId();
 
-  const value = picked
-    ? formatRingSize(
-        RING_SIZE_SYSTEMS[picked.systemIndex],
-        RING_SIZE_OPTIONS[RING_SIZE_SYSTEMS[picked.systemIndex]][picked.sizeIndex].label
-      )
-    : '';
+  const value = picked ? formatRingSize(RING_SIZE_SYSTEMS[picked.systemIndex], picked.row) : '';
 
   useEffect(() => {
     onChange(value);
@@ -202,22 +195,13 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
   }, [open]);
 
   const show = () => {
-    const start = picked ?? INITIAL;
-    setDraft(start);
-    setAnchorCirc(RING_SIZE_OPTIONS[RING_SIZE_SYSTEMS[start.systemIndex]][start.sizeIndex].circ);
+    setDraft(picked ?? INITIAL);
     setOpen(true);
   };
 
   const system = RING_SIZE_SYSTEMS[draft.systemIndex];
-  const options = RING_SIZE_OPTIONS[system];
-
-  const changeSystem = (i: number) =>
-    setDraft({ systemIndex: i, sizeIndex: nearestRingSize(RING_SIZE_SYSTEMS[i], anchorCirc) });
-
-  const changeSize = (i: number) => {
-    setDraft((d) => ({ ...d, sizeIndex: i }));
-    setAnchorCirc(options[i].circ);
-  };
+  const changeSystem = (i: number) => setDraft((d) => ({ ...d, systemIndex: i }));
+  const changeSize = (i: number) => setDraft((d) => ({ ...d, row: i }));
 
   /** Shrink back into the size row, then close. `commit` is the Done pick. */
   const close = (commit?: Pick) => {
@@ -306,8 +290,8 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
               <Wheel
                 key={system}
                 label={`${system} ring size`}
-                options={options.map((o) => o.label)}
-                index={draft.sizeIndex}
+                options={RING_SIZE_ROWS.map((_, row) => ringSizeLabel(system, row))}
+                index={draft.row}
                 onChange={changeSize}
                 className="flex-1"
               />
@@ -317,7 +301,7 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
               onClick={() => close(draft)}
               className="type-h3 min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent"
             >
-              Done · {formatRingSize(system, options[draft.sizeIndex].label)}
+              Done · {formatRingSize(system, draft.row)}
             </button>
           </div>
         )}
