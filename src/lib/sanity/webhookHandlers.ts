@@ -5,6 +5,7 @@ import { pathsFor } from './revalidatePaths';
 import { syncProductToStripe, type SyncVariantInput } from '@/lib/stripe/sync';
 import { sendShippingConfirmation } from '@/lib/fulfillment/email';
 import { getOrderContact } from '@/lib/stripe/customer';
+import { importChargesNoticeFor } from '@/lib/shop/shipping';
 
 /**
  * The three things a Sanity content change can trigger, as plain functions so
@@ -105,7 +106,7 @@ export async function handleOrderUpdate(body: SanityWebhookBody): Promise<boolea
   const shouldEmail = body.status === 'shipped' && !!body.tracking && !body.sentAt;
   if (!shouldEmail) return false;
 
-  const { email } = await getOrderContact(body.stripeSessionId);
+  const { email, address } = await getOrderContact(body.stripeSessionId);
   if (!email) {
     // No recipient means no email is possible — and no amount of retrying will
     // conjure one. Leave shippedEmailSentAt unset so a human can resend once
@@ -125,6 +126,7 @@ export async function handleOrderUpdate(body: SanityWebhookBody): Promise<boolea
     orderNumber: body.orderNumber ?? '',
     carrier: body.carrier,
     trackingNumber: body.tracking,
+    importNotice: importChargesNoticeFor(address?.country),
   });
 
   await sanityWriteClient

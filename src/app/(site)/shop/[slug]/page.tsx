@@ -20,7 +20,12 @@ import {
   shippingDetailsJsonLd,
 } from '@/lib/seo';
 import { categoryBy, isReservedShopSlug } from '@/lib/shop/categories';
-import { EU_PAUSE_NOTICE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
+import {
+  EU_PAUSE_NOTICE,
+  INTERNATIONAL_DUTIES_NOTE,
+  SHIPPING_RATES,
+  formatPence,
+} from '@/lib/shop/shipping';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
 import ProductGallery from '@/components/ProductGallery';
 import Disclosure from '@/components/Disclosure';
@@ -355,9 +360,10 @@ export default async function ProductPage({
                   </div>
                 ))}
               </dl>
+              <P1>{INTERNATIONAL_DUTIES_NOTE}</P1>
               <P1 className="text-oslo">{EU_PAUSE_NOTICE}</P1>
               <Link
-                href="/shipping"
+                href="/shipping#duties"
                 className="w-fit underline underline-offset-4 hover:text-redcurrent"
               >
                 Full shipping &amp; returns policy

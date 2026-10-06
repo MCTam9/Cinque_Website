@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { useCart } from '@/store/cart';
 import { EmbeddedCheckout } from '@/components/checkout/EmbeddedCheckout';
 import Container, { contentPadY } from '@/components/Container';
+import ImportChargesNotice from '@/components/ImportChargesNotice';
 import { H1, P1 } from '@/components/typography';
 import {
   SHIP_COUNTRIES,
   countryName,
   formatPence,
-  importChargesNotice,
   isShipCountry,
   shippingQuote,
   type ShipCountry,
@@ -43,7 +43,6 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
 
   // Display only: the checkout API recomputes this from trusted prices.
   const quote = shippingQuote(country, subtotal);
-  const importNotice = importChargesNotice(country);
 
   return (
     <Container className={contentPadY}>
@@ -86,7 +85,7 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
             </button>
           </P1>
         )}
-        {importNotice && <P1 className="text-oslo">{importNotice}</P1>}
+        <ImportChargesNotice country={country} />
       </div>
 
       <EmbeddedCheckout lines={checkoutLines} country={country} />

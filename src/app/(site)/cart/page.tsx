@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { cartLineId, useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
-import { SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
+import { INTERNATIONAL_DUTIES_NOTE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
 import { madeToOrderNote } from '@/lib/shop/madeToOrder';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
@@ -155,6 +155,12 @@ export default function CartPage() {
               {subtotal >= SHIPPING_RATES.freeFromPence
                 ? 'Your order ships free'
                 : `${formatPence(SHIPPING_RATES.freeFromPence - subtotal)} away from free shipping`}
+            </P1>
+            <P1 className="text-graphite">
+              {INTERNATIONAL_DUTIES_NOTE}{' '}
+              <Link href="/shipping#duties" className="underline underline-offset-4 hover:text-redcurrent">
+                Details
+              </Link>
             </P1>
           </div>
           <Link

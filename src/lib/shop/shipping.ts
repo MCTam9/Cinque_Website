@@ -37,23 +37,73 @@ export const HOME_COUNTRY: ShipCountry = 'GB';
  *
  * 'included': we prepay them (Royal Mail PDDP or equivalent), so the buyer has
  * nothing to pay on delivery. 'buyer': the destination collects them from the
- * recipient on delivery. 'none': domestic, no customs.
+ * recipient on delivery (DAP). 'none': domestic, no customs.
+ *
+ * Since October 2026 every international destination is 'buyer': the site
+ * states that import duties, taxes and carrier handling fees are not included.
+ * Deliberately the cautious claim — if the studio later prepays some (e.g.
+ * Royal Mail PDDP to the US), switch that country to 'included'.
  */
 export const IMPORT_CHARGES: Record<ShipCountry, 'none' | 'included' | 'buyer'> = {
   GB: 'none',
-  US: 'included',
-  CA: 'included',
-  AU: 'included',
+  US: 'buyer',
+  CA: 'buyer',
+  AU: 'buyer',
   JP: 'buyer',
 };
+
+/**
+ * Each destination's customs authority and its own guidance on what a buyer
+ * pays on goods ordered from abroad — linked wherever the duties notice shows,
+ * so the buyer can check the rules with the people who set them.
+ */
+export const IMPORT_AUTHORITY: Record<ShipCountry, { name: string; url: string } | null> = {
+  GB: null,
+  US: {
+    name: 'U.S. Customs and Border Protection',
+    url: 'https://www.cbp.gov/trade/basic-import-export/internet-purchases',
+  },
+  CA: {
+    name: 'the Canada Border Services Agency',
+    url: 'https://www.cbsa-asfc.gc.ca/import/postal-postale/menu-eng.html',
+  },
+  AU: {
+    name: 'the Australian Border Force',
+    url: 'https://www.abf.gov.au/buying-online',
+  },
+  JP: {
+    name: 'Japan Customs',
+    url: 'https://www.customs.go.jp/english/c-answer_e/kokusaiyubin/6101_e.htm',
+  },
+};
+
+/** Third-party estimator, offered as a rough guide only — we quote no figures. */
+export const DUTIES_CALCULATOR = {
+  name: 'SimplyDuty',
+  url: 'https://www.simplyduty.com/import-calculator/',
+} as const;
+
+/** The short, country-agnostic line for the PDP and cart. */
+export const INTERNATIONAL_DUTIES_NOTE =
+  'International orders: import duties and taxes are not included in the price and are payable by you on delivery.';
 
 /** Checkout notice on import charges for `country`; null for the UK. */
 export function importChargesNotice(country: ShipCountry): string | null {
   const charges = IMPORT_CHARGES[country];
   if (charges === 'none') return null;
-  return charges === 'included'
-    ? 'Import duties and taxes are included. There is nothing more to pay on delivery.'
-    : 'Import duties and consumption tax are charged by Japanese customs and collected by Japan Post on delivery, with a small handling fee. They are the recipient’s responsibility and are not included in the order total.';
+  if (charges === 'included') {
+    return 'Import duties and taxes are included. There is nothing more to pay on delivery.';
+  }
+  const authority = IMPORT_AUTHORITY[country]?.name ?? 'the destination’s customs authority';
+  return `Import duties, taxes and any carrier handling fees are not included in your order total. They are set by ${authority} and are payable by you before or on delivery.`;
+}
+
+/**
+ * The same notice for a raw country code off a Stripe address (emails), which
+ * may be anything; null for the UK or a code we don't ship to.
+ */
+export function importChargesNoticeFor(code: string | null | undefined): string | null {
+  return isShipCountry(code) ? importChargesNotice(code) : null;
 }
 
 /** Shown on the /shipping page and each product page while EU shipping is off. */

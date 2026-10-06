@@ -44,8 +44,10 @@ export default function TermsPage() {
 
       <H3 as="h2" className="font-bold">Pricing &amp; payment</H3>
       <P1>
-        Prices are shown in pounds sterling (GBP) and include VAT where applicable. Payment is
-        processed securely by Stripe. We reserve the right to correct pricing errors and to decline
+        Prices are shown in pounds sterling (GBP) and include VAT where applicable. For orders
+        delivered outside the United Kingdom, prices and delivery charges do not include import
+        duties, taxes or carrier handling fees; these are set by the destination country and
+        are payable by you on or before delivery. Payment is processed securely by Stripe. We reserve the right to correct pricing errors and to decline
         or cancel an order affected by an obvious error.
       </P1>
 
