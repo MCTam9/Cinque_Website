@@ -1,5 +1,6 @@
 import { urlFor } from '@/lib/sanity/image';
-import type { MetalType, Product, ProductCardData, Variant } from '@/types';
+import { materialGroupOf, sortByMaterialThenCategory, type MaterialGroup } from '@/lib/shop/materials';
+import type { CardSize, MetalType, Product, ProductCardData, SanityImageRef, Variant } from '@/types';
 
 /** Metal enum → display label (spaced). */
 const METAL_LABELS: Record<Exclude<MetalType, 'custom'>, string> = {
@@ -63,6 +64,45 @@ function dropLabel(collection?: Product['collection']): string | undefined {
   return name;
 }
 
+/** The variant a card represents: the first available one, else the first. */
+function defaultVariantOf(product: Product): Variant | undefined {
+  const variants = product.variants ?? [];
+  return variants.find(variantIsAvailable) ?? variants[0];
+}
+
+/** The Shop section a product is listed under, from its default variant's metal. */
+export function productMaterialGroup(product: Product): MaterialGroup {
+  return materialGroupOf(defaultVariantOf(product)?.metalType);
+}
+
+/** Shop order: gold first, then silver, then other; category and A–Z within. */
+export function sortProductsForShop(products: Product[]): Product[] {
+  return sortByMaterialThenCategory(products, productMaterialGroup);
+}
+
+function cardSizeOf(product: Product): CardSize {
+  return product.cardSize === 2 || product.cardSize === 3 ? product.cardSize : 1;
+}
+
+type Fractions = Partial<Record<'top' | 'bottom' | 'left' | 'right' | 'x' | 'y', number>>;
+
+/**
+ * The Studio hotspot as a CSS object-position within the Studio crop, so a
+ * wide card's image keeps its focal point whichever way `object-cover` trims
+ * it (landscape on desktop, portrait on mobile). Centre when none is set.
+ */
+function focalPosition(img: SanityImageRef): string {
+  const hotspot = img.hotspot as Fractions | undefined;
+  if (typeof hotspot?.x !== 'number' || typeof hotspot?.y !== 'number') return '50% 50%';
+  const crop = (img.crop as Fractions | undefined) ?? {};
+  const within = (point: number, start = 0, end = 0) => {
+    const span = 1 - start - end;
+    const v = span > 0 ? (point - start) / span : 0.5;
+    return Math.round(Math.min(1, Math.max(0, v)) * 100);
+  };
+  return `${within(hotspot.x, crop.left, crop.right)}% ${within(hotspot.y, crop.top, crop.bottom)}%`;
+}
+
 /**
  * Flatten a Sanity product into presentation-ready card data (server-side, so
  * urlFor / image building never ships to the client). The default variant is
@@ -70,7 +110,7 @@ function dropLabel(collection?: Product['collection']): string | undefined {
  */
 export function toCardData(product: Product): ProductCardData {
   const variants = product.variants ?? [];
-  const defaultVariant = variants.find(variantIsAvailable) ?? variants[0];
+  const defaultVariant = defaultVariantOf(product);
   const minPrice = variants.length
     ? Math.min(...variants.map((v) => v.priceGBP))
     : (defaultVariant?.priceGBP ?? 0);
@@ -83,6 +123,14 @@ export function toCardData(product: Product): ProductCardData {
         .fit('crop')
         .url()
     : undefined;
+
+  // Wide cards change shape between breakpoints (landscape across two columns
+  // on desktop, portrait in one on mobile), so their image is fetched at the
+  // Studio crop's own aspect and trimmed in CSS around the hotspot instead of
+  // being cut to 2:3 here.
+  const cardSize = cardSizeOf(product);
+  const wideImage = product.cardImage?.asset ? product.cardImage : firstImage;
+  const wide = cardSize > 1 && wideImage?.asset;
 
   return {
     productId: product._id,
@@ -98,5 +146,14 @@ export function toCardData(product: Product): ProductCardData {
     variantKey: defaultVariant?._key,
     sku: defaultVariant?.sku,
     inStock: defaultVariant ? variantIsAvailable(defaultVariant) : false,
+    materialGroup: productMaterialGroup(product),
+    cardSize,
+    ...(wide
+      ? {
+          wideImageUrl: urlFor(wideImage as never).width(1600).url(),
+          wideImagePosition: focalPosition(wideImage),
+          wideImageAlt: wideImage.alt || product.title,
+        }
+      : {}),
   };
 }

@@ -6,7 +6,7 @@ import ShopLayout from '@/components/ShopLayout';
 import { sanityFetch } from '@/lib/sanity/fetch';
 import { shopProductsQuery } from '@/lib/sanity/queries';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
-import { sortByCategoryThenTitle } from '@/lib/shop/categories';
+import { sortProductsForShop } from '@/lib/products';
 import type { Product } from '@/types';
 
 export const revalidate = 60;
@@ -26,8 +26,9 @@ export const metadata: Metadata = {
  * /shop/<category>; this page always lists everything.
  */
 export default async function ShopPage() {
-  // Grouped by category in sidebar order, A–Z within each.
-  const products = sortByCategoryThenTitle(
+  // Grouped by material (gold first), then category in sidebar order, A–Z —
+  // the order ProductGrid lays them out in, so the ItemList below matches.
+  const products = sortProductsForShop(
     await sanityFetch<Product[]>({
       label: 'shopProducts',
       query: shopProductsQuery,

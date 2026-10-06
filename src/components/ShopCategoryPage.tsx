@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import ProductGrid from '@/components/ProductGrid';
 import RingSizeChart from '@/components/RingSizeChart';
@@ -6,6 +7,7 @@ import { P1 } from '@/components/typography';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import { categoryBy } from '@/lib/shop/categories';
 import { getCategoryProducts } from '@/lib/shop/getCategoryProducts';
+import { sortProductsForShop } from '@/lib/products';
 import type { ProductCategory } from '@/types';
 
 /**
@@ -18,7 +20,8 @@ import type { ProductCategory } from '@/types';
 export default async function ShopCategoryPage({ category }: { category: ProductCategory }) {
   const { label, description } = categoryBy(category);
 
-  const products = await getCategoryProducts(category);
+  // Material order (gold first), as ProductGrid shows them.
+  const products = sortProductsForShop(await getCategoryProducts(category));
 
   return (
     <ShopLayout active={category} filterable titleAs="p">
@@ -47,7 +50,18 @@ export default async function ShopCategoryPage({ category }: { category: Product
       )}
 
       <h1 className="type-h2 mb-[10px]">{label}</h1>
-      <P1 className="mb-[30px] max-w-[60ch] text-graphite">{description}</P1>
+      <P1 className={`${category === 'rings' ? 'mb-[10px]' : 'mb-[30px]'} max-w-[60ch] text-graphite`}>
+        {description}
+      </P1>
+      {category === 'rings' && (
+        <P1 className="mb-[30px] max-w-[60ch] text-graphite">
+          Engagement rings and wedding bands are also made to commission, in the metal, stone and
+          size of your choosing.{' '}
+          <Link href="/studio#bespoke" className="underline underline-offset-4 hover:text-redcurrent">
+            Bespoke engagement &amp; wedding rings
+          </Link>
+        </P1>
+      )}
 
       {products.length === 0 ? (
         // 200, not 404: a category that empties out temporarily should not

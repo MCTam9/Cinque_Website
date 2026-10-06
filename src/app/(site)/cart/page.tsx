@@ -78,7 +78,7 @@ export default function CartPage() {
                     alt={l.title}
                     fill
                     sizes="80px"
-                    className="object-cover"
+                    className="img-bw object-cover"
                   />
                 )}
               </div>

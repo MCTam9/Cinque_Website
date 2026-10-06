@@ -235,7 +235,6 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
 
   return (
     <div className="flex flex-col gap-[6px]">
-      <span className="type-p1 text-oslo">Your size</span>
       <button
         type="button"
         ref={triggerRef}

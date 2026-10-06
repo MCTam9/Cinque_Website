@@ -22,12 +22,75 @@ import { useEffect } from 'react';
  *
  * Desktop keeps the CSS hover behaviour; reduced-motion falls back to
  * always-colour and this effect no-ops. Mounted once in the site layout.
+ *
+ * Also, on every device: the colour → black & white fade each photo opens
+ * with (see globals.css). An image stays in colour until it has loaded, then
+ * gets `.bw-in`, which plays the fade. It is keyed to the load rather than to
+ * the element mounting because the two often differ: a lazy or slow image
+ * loads long after its element exists, and switching Lookbook drops swaps the
+ * photo inside elements React keeps. A new `src` drops the class, so the
+ * incoming photo also starts in colour.
  */
 
 /** Finger travel (px) past which a touch is a scroll/drag rather than a tap. */
 const TAP_SLOP = 10;
 
+/** Restart the fade on a just-loaded image (removing and re-adding the class). */
+function fadeIn(img: HTMLImageElement) {
+  img.classList.remove('bw-in');
+  void img.offsetWidth; // flush, so the re-added class starts the animation over
+  img.classList.add('bw-in');
+}
+
+const isBwImage = (n: unknown): n is HTMLImageElement =>
+  n instanceof HTMLImageElement && n.classList.contains('img-bw');
+
+const isLoaded = (img: HTMLImageElement) => img.complete && img.naturalWidth > 0;
+
 export default function ImageColorReveal() {
+  // The opening colour → black & white fade, on every device.
+  useEffect(() => {
+    // Already loaded before hydration: fade from now.
+    document.querySelectorAll('img.img-bw').forEach((img) => {
+      if (isBwImage(img) && isLoaded(img)) fadeIn(img);
+    });
+
+    // `load` doesn't bubble, so listen in the capture phase.
+    const onLoad = (ev: Event) => {
+      if (isBwImage(ev.target)) fadeIn(ev.target);
+    };
+    document.addEventListener('load', onLoad, true);
+
+    const observer = new MutationObserver((records) => {
+      for (const r of records) {
+        if (r.type === 'attributes') {
+          // A new photo in the same element: colour until it loads.
+          if (isBwImage(r.target)) r.target.classList.remove('bw-in');
+          continue;
+        }
+        // Inserted already loaded (its load event fired while detached).
+        r.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) return;
+          const imgs = isBwImage(node) ? [node] : Array.from(node.querySelectorAll('img.img-bw'));
+          imgs.forEach((img) => {
+            if (isBwImage(img) && isLoaded(img)) fadeIn(img);
+          });
+        });
+      }
+    });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['src'],
+    });
+
+    return () => {
+      document.removeEventListener('load', onLoad, true);
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     const isTouch = window.matchMedia('(hover: none)').matches;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -16,15 +16,17 @@ import {
   productSeoDescription,
   productSeoTitle,
   RETURN_POLICY,
+  ringOccasionLabels,
   shippingDetailsJsonLd,
 } from '@/lib/seo';
 import { categoryBy, isReservedShopSlug } from '@/lib/shop/categories';
-import { EU_PAUSE_NOTICE } from '@/lib/shop/shipping';
+import { EU_PAUSE_NOTICE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
 import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
 import ProductGallery from '@/components/ProductGallery';
+import Disclosure from '@/components/Disclosure';
 import RingSizeChart from '@/components/RingSizeChart';
 import type { PortableTextBlock } from '@portabletext/types';
-import type { CollectionRef, ProductCategory, SanityImageRef, Variant } from '@/types';
+import type { CollectionRef, ProductCategory, RingOccasion, SanityImageRef, Variant } from '@/types';
 
 // Previously `force-dynamic`, because JsonLd read the CSP nonce via
 // next/headers() and that dynamic API conflicted with generateStaticParams
@@ -39,6 +41,7 @@ interface PDPProduct {
   status: string;
   category?: ProductCategory;
   edition?: string;
+  ringOccasions?: RingOccasion[];
   description?: PortableTextBlock[];
   careInstructions?: string;
   images?: SanityImageRef[];
@@ -110,7 +113,7 @@ export async function generateStaticParams() {
 }
 
 function variantSwatch(v: Variant): string {
-  if (v.madeToOrder) return 'Custom';
+  if (v.madeToOrder) return 'Made to Order';
   return v.size || materialLabel(v)?.replace(/_/g, ' ') || v.sku;
 }
 
@@ -143,7 +146,7 @@ export default async function ProductPage({
     sku: v.sku,
     swatch: variantSwatch(v),
     label:
-      [materialLabel(v), v.madeToOrder ? 'Made to order, custom size' : v.size]
+      [materialLabel(v), v.madeToOrder ? 'Made to order, your size' : v.size]
         .filter(Boolean)
         .join(' · ') || v.sku,
     priceGBP: v.priceGBP,
@@ -157,13 +160,18 @@ export default async function ProductPage({
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
   const material = materialLabel(product.variants?.[0]);
-  // Distinct sizes across the variants (e.g. "M · P", or "M · Custom" when a
+  // Distinct sizes across the variants (e.g. "M · P", or "M · Made to Order" when a
   // made-to-order variant is offered); empty for sizeless pieces.
   const sizes = Array.from(
     new Set(
-      (product.variants ?? []).map((v) => (v.madeToOrder ? 'Custom' : v.size)).filter(Boolean)
+      (product.variants ?? []).map((v) => (v.madeToOrder ? 'Made to Order' : v.size)).filter(Boolean)
     )
   ).join(' · ');
+  // Rings tagged in the Studio as engagement rings / wedding bands.
+  const occasions = ringOccasionLabels(product).map((o) => o.toLowerCase());
+  const occasionPhrase = occasions
+    .map((o) => `${/^[aeiou]/.test(o) ? 'an' : 'a'} ${o}`)
+    .join(' or ');
   const minPrice = product.variants?.length
     ? Math.min(...product.variants.map((v) => v.priceGBP))
     : 0;
@@ -185,6 +193,7 @@ export default async function ProductPage({
           // that made every product in the catalog identical.
           description: productSeoDescription(product),
           brand: { '@type': 'Brand', name: 'Cinque' },
+          ...(occasions.length ? { keywords: occasions.join(', ') } : {}),
           ...(material ? { material } : {}),
           ...(product.category ? { category: categoryBy(product.category).label } : {}),
           ...(product.variants?.[0]?.metalFinish
@@ -299,6 +308,16 @@ export default async function ProductPage({
             </div>
           </dl>
 
+          {occasions.length > 0 && (
+            <P1 className="text-graphite">
+              Suitable as {occasionPhrase}. Matching bands and bespoke versions can be{' '}
+              <Link href="/studio#bespoke" className="underline underline-offset-4 hover:text-redcurrent">
+                made to commission
+              </Link>
+              .
+            </P1>
+          )}
+
           {purchaseVariants.length > 0 && (
             <ProductPurchase
               productId={product._id}
@@ -308,13 +327,6 @@ export default async function ProductPage({
               ring={product.category === 'rings'}
             />
           )}
-
-          <P1 className="text-oslo">
-            {EU_PAUSE_NOTICE}{' '}
-            <Link href="/shipping" className="underline underline-offset-4 hover:text-redcurrent">
-              Shipping &amp; returns
-            </Link>
-          </P1>
 
           {/* The CMS description. Queried since day one but never rendered,
               which left the PDP with no prose for search engines to read. */}
@@ -327,12 +339,37 @@ export default async function ProductPage({
             </div>
           )}
 
-          {product.careInstructions && (
-            <div>
-              <P1 className="mb-[10px] font-bold">After Care</P1>
-              <P1 className="whitespace-pre-line text-graphite">{product.careInstructions}</P1>
-            </div>
-          )}
+          {/* Shipping, then After Care, each collapsed behind its heading. */}
+          <div className="flex flex-col gap-[10px]">
+            <Disclosure title="Shipping & Returns">
+              {/* One rate per row, laid out like the cart's shipping summary. */}
+              <dl className="flex flex-col gap-0.5">
+                {[
+                  ['UK', formatPence(SHIPPING_RATES.domesticPence)],
+                  ['International', formatPence(SHIPPING_RATES.internationalPence)],
+                  [`Orders ${formatPence(SHIPPING_RATES.freeFromPence)}+`, 'Free'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between">
+                    <dt className="text-oslo">{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <P1 className="text-oslo">{EU_PAUSE_NOTICE}</P1>
+              <Link
+                href="/shipping"
+                className="w-fit underline underline-offset-4 hover:text-redcurrent"
+              >
+                Full shipping &amp; returns policy
+              </Link>
+            </Disclosure>
+
+            {product.careInstructions && (
+              <Disclosure title="After Care">
+                <P1 className="whitespace-pre-line">{product.careInstructions}</P1>
+              </Disclosure>
+            )}
+          </div>
         </div>
       </div>
 

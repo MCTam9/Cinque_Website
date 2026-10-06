@@ -4,6 +4,8 @@
  * `sanity typegen` later — this hand-written set keeps the scaffold moving.)
  */
 
+import type { MaterialGroup } from '@/lib/shop/materials';
+
 export type MetalType =
   | '9ct_gold'
   | '18ct_gold'
@@ -119,6 +121,12 @@ export interface StudioPageDoc {
   seoDescription?: string;
 }
 
+/** How many grid columns a Shop card spans (Studio: Card size). */
+export type CardSize = 1 | 2 | 3;
+
+/** Rings only: what a ring can be bought as, for search and the PDP. */
+export type RingOccasion = 'engagement' | 'wedding';
+
 export interface Product {
   _id: string;
   title: string;
@@ -129,6 +137,9 @@ export interface Product {
   collection?: CollectionRef;
   images?: SanityImageRef[];
   variants: Variant[];
+  cardSize?: CardSize;
+  /** Optional landscape shot for a wide card; falls back to images[0]. */
+  cardImage?: SanityImageRef;
 }
 
 /** Flat, presentation-ready data for a product card (computed server-side). */
@@ -146,6 +157,14 @@ export interface ProductCardData {
   variantKey?: string;
   sku?: string;
   inStock: boolean;
+  /** Which Shop section the card sits in (from its default variant's metal). */
+  materialGroup: MaterialGroup;
+  /** Columns spanned on desktop; mobile caps it at 2. */
+  cardSize: CardSize;
+  /** Wide cards only: an uncropped-aspect image and its focal point as CSS object-position. */
+  wideImageUrl?: string;
+  wideImagePosition?: string;
+  wideImageAlt?: string;
 }
 
 /** A line in the client-side cart (Zustand). */

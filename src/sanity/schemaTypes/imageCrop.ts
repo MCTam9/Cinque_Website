@@ -16,6 +16,7 @@ const RATIO_2_3 = { title: '2:3 (site)', aspectRatio: 2 / 3 };
 const RATIO_3_4 = { title: '3:4 (product page)', aspectRatio: 3 / 4 };
 const RATIO_5_7 = { title: '5:7 (studio portrait)', aspectRatio: 5 / 7 };
 const RATIO_21_9 = { title: '21:9 (wide band)', aspectRatio: 21 / 9 };
+const RATIO_4_3 = { title: '4:3 (extra-wide shop card, desktop)', aspectRatio: 4 / 3 };
 
 /** Images the storefront always renders in a 2:3 portrait frame. */
 export const crop2x3: HotspotOptions = { previews: [RATIO_2_3] };
@@ -32,3 +33,9 @@ export const crop21x9: HotspotOptions = { previews: [RATIO_21_9] };
  * judged against each.
  */
 export const cropProduct: HotspotOptions = { previews: [RATIO_2_3, RATIO_3_4] };
+
+/**
+ * A wide Shop card's photo: landscape across two columns on desktop, 2:3 in one
+ * column on phones (and on Wide cards). The card trims around the hotspot.
+ */
+export const cropWideCard: HotspotOptions = { previews: [RATIO_4_3, RATIO_2_3] };

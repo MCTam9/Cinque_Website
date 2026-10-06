@@ -24,7 +24,7 @@ export interface PurchaseVariant {
  * PDP purchase panel (Figma): a row of square option buttons on the left and
  * the price on the right, then a full-width bordered Add-to-cart button.
  *
- * A made-to-order option (swatch "Custom") adds the lead time and a required
+ * A made-to-order option (swatch "Made to Order") adds the lead time and a required
  * size between the two: a UK/US/EU/JP wheel for rings, free text otherwise.
  * Add to cart waits until a size is given.
  */
