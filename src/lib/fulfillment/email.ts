@@ -192,6 +192,13 @@ export interface OrderConfirmationInput {
   shippingGBP?: number | null;
   totalGBP: number;
   currency: string;
+  /** International (DAP) orders: who pays import charges. Omitted for the UK. */
+  importNotice?: string | null;
+}
+
+/** The import-charges paragraph for the buyer's emails; empty for the UK. */
+function importNoticeHtml(notice: string | null | undefined): string {
+  return notice ? `<p style="margin:20px 0 0 0;">${escapeHtml(notice)}</p>` : '';
 }
 
 /** Line items (with thumbnails), shipping and the total, shared by both order emails. */
@@ -249,6 +256,7 @@ export async function sendOrderConfirmation(
     `<p style="margin:0 0 4px 0;">Order confirmed.</p>
      <p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
      ${orderTable(input.lines, input.shippingGBP, input.totalGBP, input.currency)}
+     ${importNoticeHtml(input.importNotice)}
      <p style="margin:28px 0 0 0;color:${BRAND.oslo};">We&rsquo;ll email you again when your order ships.</p>`
   );
   return send({ to: input.to, subject: `Your Cinque order ${input.orderNumber}`, html });
@@ -317,6 +325,8 @@ export interface ShippingConfirmationInput {
   orderNumber: string;
   carrier?: string | null;
   trackingNumber?: string | null;
+  /** International (DAP) orders: a reminder that import charges are due on delivery. */
+  importNotice?: string | null;
 }
 
 export async function sendShippingConfirmation(
@@ -332,7 +342,7 @@ export async function sendShippingConfirmation(
     : '';
   const html = shell(
     'Your order is on its way',
-    `<p>Order <strong>${escapeHtml(input.orderNumber)}</strong> has shipped.</p>${tracking}`
+    `<p>Order <strong>${escapeHtml(input.orderNumber)}</strong> has shipped.</p>${tracking}${importNoticeHtml(input.importNotice)}`
   );
   return send({ to: input.to, subject: `Your Cinque order has shipped`, html });
 }

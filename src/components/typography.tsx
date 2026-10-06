@@ -10,12 +10,18 @@ type TypeProps = {
   children: ReactNode;
   className?: string;
   as?: ElementType;
+  /** For in-page anchors, e.g. /studio#bespoke. */
+  id?: string;
 };
 
 function make(defaultTag: ElementType, typeClass: string) {
-  return function TypeComponent({ children, className = '', as }: TypeProps) {
+  return function TypeComponent({ children, className = '', as, id }: TypeProps) {
     const Tag = as ?? defaultTag;
-    return <Tag className={`${typeClass} ${className}`.trim()}>{children}</Tag>;
+    return (
+      <Tag id={id} className={`${typeClass} ${className}`.trim()}>
+        {children}
+      </Tag>
+    );
   };
 }
 

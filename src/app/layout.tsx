@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: '%s / Cinque',
   },
   description:
-    'Cinque® — jewellery and object maker. Sealing memories into a tactile archive. Individually made, cast and hallmarked in London.',
+    'Cinque® — jewellery and object maker. Individually made, cast and hallmarked in London, including bespoke engagement rings and wedding bands.',
   applicationName: 'Cinque',
   openGraph: {
     type: 'website',

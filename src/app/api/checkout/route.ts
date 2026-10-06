@@ -5,7 +5,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
 import { rateLimit, clientIp } from '@/lib/rateLimit';
-import { SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
+import { SHIP_COUNTRY_CODES, importChargesNotice, shippingQuote } from '@/lib/shop/shipping';
 import { CUSTOM_SIZE_MAX, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 import type { FulfillmentLine } from '@/types';
 
@@ -154,6 +154,10 @@ export async function POST(req: Request) {
 
   const { country } = parsed.data;
   const shipping = shippingQuote(country, subtotalPence);
+  // Outside the UK the buyer pays import charges on delivery (DAP). Said again
+  // inside Stripe's form, right under the address, so it is in front of them
+  // at the moment they commit — not only on the page around the iframe.
+  const dutiesNotice = importChargesNotice(country);
 
   // Compact fulfillment map for the webhook. Stripe metadata values cap at 500
   // chars; guard it. (Large carts → future: persist a draft order + reference.)
@@ -196,17 +200,25 @@ export async function POST(req: Request) {
         },
       ],
       phone_number_collection: { enabled: true },
-      // Said once more right above the Pay button, so the lead time is agreed
-      // to, not just seen on the product page. Stripe caps this at 1200 chars.
-      ...(madeToOrderItems.length
+      // Stripe caps each message at 1200 chars.
+      ...(madeToOrderItems.length || dutiesNotice
         ? {
             custom_text: {
-              submit: {
-                message: `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}: ${madeToOrderItems.join(', ')}`.slice(
-                  0,
-                  1200
-                ),
-              },
+              ...(dutiesNotice
+                ? { shipping_address: { message: dutiesNotice.slice(0, 1200) } }
+                : {}),
+              // Said once more right above the Pay button, so the lead time is
+              // agreed to, not just seen on the product page.
+              ...(madeToOrderItems.length
+                ? {
+                    submit: {
+                      message: `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}: ${madeToOrderItems.join(', ')}`.slice(
+                        0,
+                        1200
+                      ),
+                    },
+                  }
+                : {}),
             },
           }
         : {}),

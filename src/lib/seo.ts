@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import type { ProductCategory, Variant } from '@/types';
+import type { ProductCategory, RingOccasion, Variant } from '@/types';
 import { materialLabel, formatLabel } from '@/lib/products';
 import { categoryBy } from '@/lib/shop/categories';
 import { HOME_COUNTRY, SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
@@ -23,6 +23,23 @@ const CATEGORY_SINGULAR: Record<ProductCategory, string> = {
   necklaces: 'Necklace',
   objects: 'Object',
 };
+
+/** What a ring tagged in the Studio ("Also suitable as") is called in search. */
+export const RING_OCCASION_LABELS: Record<RingOccasion, string> = {
+  engagement: 'Engagement Ring',
+  wedding: 'Wedding Band',
+};
+
+/** The occasion nouns for a product, e.g. ["Engagement Ring", "Wedding Band"]. */
+export function ringOccasionLabels(product: {
+  category?: ProductCategory;
+  ringOccasions?: RingOccasion[];
+}): string[] {
+  if (product.category !== 'rings') return [];
+  return (product.ringOccasions ?? [])
+    .filter((o): o is RingOccasion => o in RING_OCCASION_LABELS)
+    .map((o) => RING_OCCASION_LABELS[o]);
+}
 
 /**
  * Shipping and returns terms, mirrored into Product structured data.
@@ -103,7 +120,17 @@ export function organizationJsonLd() {
     url: siteUrl,
     logo: absoluteUrl('/figma/cinque-logo.png'),
     description:
-      'Jewellery and object maker. Individually made, cast and hallmarked in London.',
+      'Jewellery and object maker. Individually made, cast and hallmarked in London, ' +
+      'including bespoke engagement rings and wedding bands made to commission.',
+    knowsAbout: [
+      'Engagement rings',
+      'Wedding bands',
+      'Wedding rings',
+      'Bespoke jewellery',
+      'Lost-wax casting',
+      '9ct and 18ct gold jewellery',
+      'Sterling silver jewellery',
+    ],
     sameAs: [INSTAGRAM_URL],
   };
 }
@@ -121,12 +148,17 @@ export function productSeoTitle(product: {
   title: string;
   category?: ProductCategory;
   variants?: Variant[];
+  ringOccasions?: RingOccasion[];
 }): string {
   const name = formatLabel(product.title)
     // Drop the leading "01/" code — meaningless in a search result.
     .replace(/^\d+\//, '');
   const metal = materialLabel(product.variants?.[0]);
-  const noun = product.category ? CATEGORY_SINGULAR[product.category] : undefined;
+  // A ring tagged as a wedding band is titled as one ("… 18ct Gold Wedding
+  // Band"); tagged as both, the first tag names it.
+  const noun =
+    ringOccasionLabels(product)[0] ??
+    (product.category ? CATEGORY_SINGULAR[product.category] : undefined);
   const qualifier = [metal, noun].filter(Boolean).join(' ');
   return qualifier ? `${name} — ${qualifier}` : name;
 }
@@ -141,15 +173,39 @@ export function productSeoDescription(product: {
   category?: ProductCategory;
   description?: unknown;
   variants?: Variant[];
+  ringOccasions?: RingOccasion[];
 }): string {
-  const fromCms = truncate(portableTextToPlain(product.description), 155);
-  if (fromCms) return fromCms;
+  const occasions = ringOccasionLabels(product).map((o) => o.toLowerCase());
+  // Tagged rings lead with what they are for, so the snippet carries the
+  // words "engagement ring" / "wedding band" even over CMS copy that doesn't.
+  const lead = occasions.length ? `${capitalise(joinAnd(occasions))}. ` : '';
+  const fromCms = truncate(portableTextToPlain(product.description), 155 - lead.length);
+  if (fromCms) return `${lead}${fromCms}`;
 
   const name = formatLabel(product.title).replace(/^\d+\//, '');
   const metal = materialLabel(product.variants?.[0]);
-  const noun = product.category ? CATEGORY_SINGULAR[product.category].toLowerCase() : 'piece';
+  const noun =
+    occasions.length > 0
+      ? joinOr(occasions)
+      : product.category
+        ? CATEGORY_SINGULAR[product.category].toLowerCase()
+        : 'piece';
   const made = metal ? `Handmade ${metal.toLowerCase()} ${noun}` : `Handmade ${noun}`;
   return `${made} — ${name} by Cinque®. Individually cast and hallmarked in London.`;
+}
+
+function capitalise(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** "engagement ring and wedding band" */
+function joinAnd(items: string[]): string {
+  return items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0] ?? '';
+}
+
+/** "engagement ring or wedding band" */
+function joinOr(items: string[]): string {
+  return items.length > 1 ? `${items.slice(0, -1).join(', ')} or ${items.at(-1)}` : items[0] ?? '';
 }
 
 export function categoryMetadata(
@@ -159,14 +215,16 @@ export function categoryMetadata(
    *  not churn when stock comes back. */
   { empty = false }: { empty?: boolean } = {}
 ): Metadata {
-  const { label, description } = categoryBy(value);
+  const category = categoryBy(value);
+  const { description } = category;
+  const title = 'seoTitle' in category ? category.seoTitle : category.label;
   const path = `/shop/${value}`;
   return {
-    title: label,
+    title,
     description,
     alternates: { canonical: path },
     ...(empty ? { robots: { index: false, follow: true } } : {}),
-    openGraph: { title: `${label} — Cinque`, description, url: absoluteUrl(path) },
+    openGraph: { title: `${title} — Cinque`, description, url: absoluteUrl(path) },
   };
 }
 

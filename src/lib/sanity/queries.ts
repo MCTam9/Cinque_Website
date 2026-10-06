@@ -20,6 +20,8 @@ const productCardProjection = `
     edition,
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     "images": images[]{ alt, asset, crop, hotspot },
+    cardSize,
+    cardImage{ alt, asset, crop, hotspot },
     variants[]{
       _key, sku, metalType, customMaterial, metalFinish, size, priceGBP, stripePriceId,
       stockQuantity, allowBackorder, madeToOrder,
@@ -63,6 +65,7 @@ export const productBySlugQuery = groq`
     status,
     category,
     edition,
+    ringOccasions,
     description,
     careInstructions,
     "images": images[]{ alt, asset, crop, hotspot },

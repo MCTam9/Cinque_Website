@@ -25,7 +25,7 @@ const INSTAGRAM = 'https://www.instagram.com/cinque.made';
  */
 const DEFAULTS = {
   seoDescription:
-    'Cinque® founder Cindy Liu — jewellery and object making as a form of memory archive. Handmade and cast in London.',
+    'Jewellery as a memory archive, handmade and cast in London by Cindy Liu. For bespoke pieces, engagement rings and wedding bands, leave us a message.',
   label: '[Cinque: five]',
   about: [
     'Cinque founder Cindy Liu, with backgrounds in architecture and metalsmithing, practises jewellery and object making as a form of memory archive.',
@@ -46,6 +46,7 @@ const DEFAULTS = {
   address: 'Cinque® Studio\nLondon, W2',
   bespokeIntro: [
     'At Cinque, each jewellery piece is conceived as a quiet archive of meaning — shaped with care and made to hold memory in precious metal.',
+    'Whether you want to capture a memorable moment — an engagement, a wedding — or hold a quieter memory of your own, each commission is shaped around it: engagement rings, wedding bands and one-of-a-kind pieces alike.',
     'Developed in close dialogue and crafted in London, each piece emerges through drawing, material exploration, and meticulous making.',
   ],
   bespokeProcessLabel: 'Bespoke Commission Process',
@@ -95,7 +96,7 @@ function getStudioPage() {
 export async function generateMetadata(): Promise<Metadata> {
   const studio = await getStudioPage();
   return {
-    title: 'Studio',
+    title: 'Studio, Bespoke Engagement & Wedding Rings',
     description: studio?.seoDescription?.trim() || DEFAULTS.seoDescription,
     alternates: { canonical: '/studio' },
   };
@@ -197,9 +198,25 @@ export default async function StudioPage() {
           knowsAbout: [
             'bespoke jewellery commissions',
             'engagement rings',
+            'wedding bands',
+            'wedding rings',
             'lost-wax casting',
             'London hallmarking',
           ],
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          '@id': absoluteUrl('/studio#bespoke'),
+          name: 'Bespoke engagement rings and wedding bands',
+          serviceType: 'Bespoke jewellery commission',
+          url: absoluteUrl('/studio#bespoke'),
+          description:
+            'Engagement rings and wedding bands designed in consultation and handmade, cast and hallmarked in London, in 9ct or 18ct gold or sterling silver.',
+          provider: { '@id': absoluteUrl('/studio#studio') },
+          areaServed: SHIPPING.countries.map((c) => ({ '@type': 'Country', name: c })),
         }}
       />
       {bespokeSteps && bespokeSteps.length > 0 && (
@@ -260,8 +277,10 @@ export default async function StudioPage() {
         )}
       </section>
 
-      {/* Bespoke */}
-      <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Bespoke</H2>
+      {/* Bespoke — anchored, so the Rings page and ring PDPs can link here. */}
+      <H2 id="bespoke" className="mb-[10px] scroll-mt-[80px] border-b border-oslo pb-[10px]">
+        Bespoke
+      </H2>
       <section className="mb-[40px] grid grid-cols-1 gap-[30px] md:mb-[60px] md:grid-cols-3">
         <div className="flex flex-col gap-[30px] md:col-span-2">
           {bespokeImages.length > 0 && (

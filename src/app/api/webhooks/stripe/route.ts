@@ -13,6 +13,7 @@ import {
 import { contactFromSession } from '@/lib/stripe/customer';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import { madeToOrderNote } from '@/lib/shop/madeToOrder';
+import { importChargesNoticeFor } from '@/lib/shop/shipping';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature verification uses Node crypto — Edge would break it.
@@ -241,6 +242,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       shippingGBP: session.shipping_cost?.amount_total ?? null,
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',
+      importNotice: importChargesNoticeFor(contact.address?.country),
     });
   } catch (err) {
     console.error('[webhook] email placeholder error', err);

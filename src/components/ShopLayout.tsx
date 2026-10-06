@@ -3,41 +3,40 @@ import Link from 'next/link';
 import { contentPadY, shellGrid } from '@/components/Container';
 import { H1, P2 } from '@/components/typography';
 import CategoryDisclosure from '@/components/CategoryDisclosure';
-import { SHOP_CATEGORIES } from '@/lib/shop/categories';
+import { MATERIAL_GROUPS } from '@/lib/shop/materials';
 
 /**
  * Shared Shop chrome (Figma): the SHOP heading + subtitle in the centre column
- * with a rule beneath it, and a matching rule above the SHOP_CATEGORY sidebar
+ * with a rule beneath it, and a matching rule above the MATERIAL sidebar
  * in the left 0.25fr gutter. Catalog (Shop) and product page (PDP) both render
  * inside it; `children` go in the centre column. `filterable` shows the mobile
- * FILTER control (catalog only).
+ * MATERIAL control (catalog only).
  */
-// 'All' plus the shared category list — the categories themselves live in
-// src/lib/shop/categories.ts, which the routes and the Sanity slug validation
-// also read, so this list cannot drift from the routes that exist.
-const CATEGORIES = [
-  { label: 'All', value: 'all' },
-  ...SHOP_CATEGORIES.map((c) => ({ label: c.label, value: c.value })),
+// 'All' plus the material sections of the /shop grid (src/lib/shop/materials.ts),
+// linked as anchors on that one page rather than as routes of their own. The
+// category routes (/shop/rings, …) still exist for search — they are just no
+// longer listed here.
+const MATERIALS = [
+  { label: 'All', value: 'all', href: '/shop' },
+  ...MATERIAL_GROUPS.map((g) => ({ label: g.label, value: g.value, href: `/shop#${g.value}` })),
 ] as const;
 
-function CategoryList({ active }: { active: string }) {
+function MaterialList({ active }: { active: string }) {
   return (
     <ul className="flex flex-col gap-[10px]">
-      {CATEGORIES.map((c) => {
-        const isActive = c.value === active;
-        // Real routes now, not query strings — see src/lib/shop/categories.ts.
-        const href = c.value === 'all' ? '/shop' : `/shop/${c.value}`;
+      {MATERIALS.map((m) => {
+        const isActive = m.value === active;
         return (
-          <li key={c.value}>
+          <li key={m.value}>
             <Link
-              href={href}
+              href={m.href}
               className={`type-h3 transition-colors ${
                 isActive
                   ? 'text-redcurrent underline underline-offset-4'
                   : 'text-graphite hover:text-redcurrent'
               }`}
             >
-              {c.label}
+              {m.label}
             </Link>
           </li>
         );
@@ -87,16 +86,16 @@ export default function ShopLayout({
           Contact us if you would like a bespoke commission
         </Link>
         {filterable && (
-          <CategoryDisclosure className="md:hidden">
-            <CategoryList active={active} />
+          <CategoryDisclosure label="MATERIAL" className="md:hidden">
+            <MaterialList active={active} />
           </CategoryDisclosure>
         )}
       </header>
 
-      {/* Category sidebar — left gutter (desktop), top-aligned with the grid */}
+      {/* Material sidebar — left gutter (desktop), top-aligned with the grid */}
       <aside className="hidden pt-[10px] md:col-start-1 md:row-start-2 md:block md:pr-4">
-        <P2 className="mb-[10px] text-oslo">CATEGORY</P2>
-        <CategoryList active={active} />
+        <P2 className="mb-[10px] text-oslo">MATERIAL</P2>
+        <MaterialList active={active} />
       </aside>
 
       {/* Centre column content */}

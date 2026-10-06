@@ -136,7 +136,7 @@ export const variant = defineType({
       initialValue: false,
       description:
         'Sold regardless of stock, which is not tracked. The customer enters their own size, ' +
-        'and the site shows an 8–12 week lead time. Leave Size blank — the option shows as "Custom".',
+        'and the site shows an 8–12 week lead time. Leave Size blank — the option shows as "Made to Order".',
     }),
   ],
   preview: {

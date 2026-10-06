@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
 import { H1, H3, P1, P2 } from '@/components/typography';
-import { EU_PAUSE_NOTICE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
+import {
+  DUTIES_CALCULATOR,
+  EU_PAUSE_NOTICE,
+  IMPORT_AUTHORITY,
+  SHIPPING_RATES,
+  SHIP_COUNTRIES,
+  formatPence,
+} from '@/lib/shop/shipping';
 import { MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 
 export const metadata: Metadata = {
@@ -27,8 +34,8 @@ const SHIPPING_COSTS = `UK delivery is ${formatPence(SHIPPING_RATES.domesticPenc
 // Shared by the FAQ and the prose below, like SHIPPING_COSTS.
 const DESTINATIONS = 'We currently ship to the United Kingdom, United States, Canada, Australia and Japan. Orders are sent via a tracked, insured service; an estimated delivery window and tracking details are provided at checkout and by email once your order ships.';
 
-// Must match IMPORT_CHARGES in lib/shop/shipping.ts.
-const DUTIES = 'For orders to the United States, Canada and Australia, import duties and taxes are included in the price you pay at checkout, so there is nothing more to pay on delivery. For orders to Japan, import duties and consumption tax are charged by Japanese customs and collected by Japan Post on delivery, with a small handling fee; these are the recipient’s responsibility and are not included in the order total.';
+// Must match IMPORT_CHARGES in lib/shop/shipping.ts (every destination 'buyer').
+const DUTIES = 'For orders outside the United Kingdom, our prices and delivery charges do not include import duties, taxes (such as sales tax, GST or consumption tax) or carrier handling fees. These are set by the customs authority of the destination country, collected by the carrier or postal service before or on delivery, and are the recipient’s responsibility. We cannot predict the exact amount, as it depends on the value of your order and your country’s rules; please check with your local customs authority before ordering.';
 
 const LEAD_TIMES = `Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are typically dispatched within 3–5 working days. Made-to-order pieces are made to the size you enter at checkout and are dispatched within ${MADE_TO_ORDER_LEAD_TIME}. Commissioned pieces have longer lead times, which are confirmed at the time of order.`;
 
@@ -48,7 +55,7 @@ const FAQ: { question: string; answer: string }[] = [
     answer: SHIPPING_COSTS,
   },
   {
-    question: 'Are import duties and taxes included?',
+    question: 'Are import duties and taxes included in the price?',
     answer: DUTIES,
   },
   {
@@ -94,8 +101,42 @@ export default function ShippingPage() {
       <H3 as="h2" className="font-bold">Shipping costs</H3>
       <P1>{SHIPPING_COSTS}</P1>
 
-      <H3 as="h2" className="font-bold">Duties &amp; taxes</H3>
+      <H3 as="h2" id="duties" className="scroll-mt-[80px] font-bold">
+        Duties &amp; taxes
+      </H3>
       <P1>{DUTIES}</P1>
+      <P1>Guidance from each destination&rsquo;s customs authority:</P1>
+      <ul className="type-p1 flex list-none flex-col gap-[4px]">
+        {SHIP_COUNTRIES.map(({ code, name }) => {
+          const authority = IMPORT_AUTHORITY[code];
+          if (!authority) return null;
+          return (
+            <li key={code}>
+              {name}:{' '}
+              <a
+                href={authority.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 hover:text-redcurrent"
+              >
+                {authority.name.replace(/^the /, '')}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      <P1>
+        For a rough estimate before you order, you can use a third-party calculator such as{' '}
+        <a
+          href={DUTIES_CALCULATOR.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-4 hover:text-redcurrent"
+        >
+          {DUTIES_CALCULATOR.name}
+        </a>
+        . Estimates are a guide only; the amount you pay is set by customs.
+      </P1>
 
       <H3 as="h2" className="font-bold">Returns</H3>
       <P1>{RETURNS}</P1>

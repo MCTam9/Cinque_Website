@@ -16,11 +16,15 @@ export const SHOP_CATEGORIES = [
   {
     value: 'rings',
     label: 'Rings',
+    // The search title. Engagement and wedding rings are what people
+    // actually search for (and write in about), so the page says so.
+    seoTitle: 'Rings, Wedding Bands & Engagement Rings',
     // Written per category rather than templated: four listing pages that
     // differ only by a substituted noun read as duplicate content.
     description:
-      'Handmade rings in sterling silver, 9ct and 18ct gold. Individually cast, ' +
-      'finished and hallmarked in London, with bespoke and engagement commissions.',
+      'Handmade rings, wedding bands and engagement rings in 9ct and 18ct gold and ' +
+      'sterling silver. Individually cast, finished and hallmarked in London, with ' +
+      'bespoke engagement and wedding ring commissions.',
   },
   {
     value: 'earrings',
@@ -46,28 +50,12 @@ export const SHOP_CATEGORIES = [
 ] as const satisfies readonly {
   value: ProductCategory;
   label: string;
+  /** Search <title> when it should say more than the label. */
+  seoTitle?: string;
   description: string;
 }[];
 
 export type ShopCategory = (typeof SHOP_CATEGORIES)[number];
-
-/**
- * Catalog order for the All listing: grouped by category in sidebar order, then
- * A–Z by title within each. Anything without a known category goes last.
- */
-export function sortByCategoryThenTitle<T extends { category?: string; title: string }>(
-  products: T[]
-): T[] {
-  const rank = (c?: string) => {
-    const i = SHOP_CATEGORIES.findIndex((cat) => cat.value === c);
-    return i === -1 ? SHOP_CATEGORIES.length : i;
-  };
-  return [...products].sort(
-    (a, b) =>
-      rank(a.category) - rank(b.category) ||
-      a.title.localeCompare(b.title, 'en-GB', { sensitivity: 'base' })
-  );
-}
 
 /** Route paths for every category, e.g. ['/shop/rings', …]. */
 export const CATEGORY_PATHS = SHOP_CATEGORIES.map((c) => `/shop/${c.value}`);

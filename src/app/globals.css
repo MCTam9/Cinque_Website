@@ -80,11 +80,35 @@
    Image treatment — black & white, colour on hover.
    Applied via the `img-bw` class on images. On touch devices (no hover)
    images show in colour. Respects reduced-motion.
+
+   Every image shows in colour until its photo has loaded, then fades to
+   black & white over 3s. <ImageColorReveal> adds `.bw-in` on each load — the
+   first load, a client-side page change, a lazy image scrolled near, or a new
+   photo in the same element (switching Lookbook drops) — so the fade plays
+   whenever a photo appears, not when an element happens to mount. No
+   fill-mode, so once the fade ends the resting grayscale(1) takes over again
+   and the hover / tap reveals work exactly as before.
    ─────────────────────────────────────────────────────────────── */
+/* Outside @layer so Tailwind never purges it. */
+@keyframes img-bw-intro {
+  from {
+    filter: grayscale(0);
+  }
+  to {
+    filter: grayscale(1);
+  }
+}
+
 @layer utilities {
   .img-bw {
     filter: grayscale(1);
     transition: filter 500ms ease;
+  }
+  .img-bw:not(.bw-in) {
+    filter: grayscale(0);
+  }
+  .img-bw.bw-in {
+    animation: img-bw-intro 3s ease;
   }
   @media (hover: hover) {
     .img-bw:hover,
@@ -111,13 +135,14 @@
   @media (prefers-reduced-motion: reduce) {
     .img-bw {
       transition: none;
+      animation: none;
     }
   }
 }
 
 /* ───────────────────────────────────────────────────────────────
    Dropdown / disclosure motion — the mobile MENU, the lookbook's
-   SHOW ALL drop list and the shop's CATEGORY filter.
+   SHOW ALL drop list and the shop's MATERIAL filter.
 
    All three share one ease and one pair of durations. The ease is a
    plain ease-out rather than an expo one: expo puts half the travel
@@ -133,7 +158,7 @@
 
      .dropdown-panel    in flow (MENU, SHOW ALL) — animates its own
                         height, so the page below travels with it
-     .dropdown-overlay  floating (CATEGORY) — nothing to displace, so
+     .dropdown-overlay  floating (MATERIAL) — nothing to displace, so
                         it just fades and slides
 
    Both open with the short fade and the long move, so the panel is

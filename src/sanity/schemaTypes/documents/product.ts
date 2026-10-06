@@ -1,5 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
-import { cropProduct } from '../imageCrop';
+import { cropProduct, cropWideCard } from '../imageCrop';
 import { isReservedShopSlug } from '@/lib/shop/categories';
 
 export const product = defineType({
@@ -62,6 +62,23 @@ export const product = defineType({
         ],
         layout: 'radio',
       },
+    }),
+    defineField({
+      name: 'ringOccasions',
+      title: 'Also suitable as',
+      type: 'array',
+      group: 'content',
+      of: [defineArrayMember({ type: 'string' })],
+      options: {
+        list: [
+          { title: 'Engagement ring', value: 'engagement' },
+          { title: 'Wedding band', value: 'wedding' },
+        ],
+        layout: 'grid',
+      },
+      description:
+        'Rings only. Adds "engagement ring" / "wedding band" to the search title and a line on the product page.',
+      hidden: ({ document }) => document?.category !== 'rings',
     }),
     defineField({
       name: 'edition',
@@ -131,6 +148,45 @@ export const product = defineType({
               validation: (rule) => rule.required(),
             }),
           ],
+        }),
+      ],
+    }),
+    defineField({
+      name: 'cardSize',
+      title: 'Shop card size',
+      type: 'number',
+      group: 'content',
+      description:
+        'How many columns this piece takes in the Shop grid. Wide cards show the photo on the left ' +
+        'and the details in the right-hand column. Phones show at most 2 columns. Sold-out pieces ' +
+        'always show at standard size.',
+      options: {
+        list: [
+          { title: 'Standard (1 column)', value: 1 },
+          { title: 'Wide (2 columns)', value: 2 },
+          { title: 'Extra wide (3 columns)', value: 3 },
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+      initialValue: 1,
+    }),
+    defineField({
+      name: 'cardImage',
+      title: 'Wide card image',
+      type: 'image',
+      group: 'content',
+      description:
+        'Optional. A landscape photo for a Wide or Extra wide card; without one the first image is used. ' +
+        'Set the hotspot on the part that must stay in view — the card trims around it.',
+      options: { hotspot: cropWideCard },
+      hidden: ({ document }) => !document?.cardSize || document.cardSize === 1,
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt Text',
+          type: 'string',
+          validation: (rule) => rule.required(),
         }),
       ],
     }),
