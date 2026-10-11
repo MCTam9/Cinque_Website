@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { cartLineId, linePriceGBP, useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
 import { INTERNATIONAL_DUTIES_NOTE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
-import { madeToOrderNote } from '@/lib/shop/madeToOrder';
+import { MADE_TO_ORDER_LINE, priceRows } from '@/lib/shop/madeToOrder';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
 
@@ -69,67 +69,79 @@ export default function CartPage() {
       <div className="grid grid-cols-1 gap-[30px] md:grid-cols-[1fr_320px] md:gap-[40px]">
         {/* Line items */}
         <ul className="flex flex-col divide-y divide-oslo/40 border-y border-oslo/40">
-          {lines.map((l) => (
-            <li key={cartLineId(l)} className="flex gap-[20px] py-[20px]">
-              <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-cloud/30">
-                {l.imageUrl && (
-                  <Image
-                    src={l.imageUrl}
-                    alt={l.title}
-                    fill
-                    sizes="80px"
-                    className="img-bw object-cover"
-                  />
-                )}
-              </div>
-
-              <div className="flex flex-1 flex-col gap-1">
-                <P1>{l.title}</P1>
-                <P2 className="text-oslo">{l.sku}</P2>
-                {l.madeToOrder && (
-                  <P2 className="text-graphite">{madeToOrderNote(l.customSize, l.engraving, l.largeSizeGBP)}</P2>
-                )}
-                {l.notes && <P2 className="line-clamp-2 text-oslo">Notes: {l.notes}</P2>}
-
-                <div className="mt-auto flex items-center gap-[10px]">
-                  <div className="flex items-center border border-oslo">
-                    <button
-                      type="button"
-                      aria-label="Decrease quantity"
-                      disabled={l.quantity <= 1}
-                      onClick={() =>
-                        updateQuantity(cartLineId(l), Math.max(1, l.quantity - 1))
-                      }
-                      className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
-                    >
-                      −
-                    </button>
-                    <span className="type-p2 min-w-[28px] text-center">{l.quantity}</span>
-                    <button
-                      type="button"
-                      aria-label="Increase quantity"
-                      disabled={l.quantity >= MAX_QTY}
-                      onClick={() =>
-                        updateQuantity(cartLineId(l), Math.min(MAX_QTY, l.quantity + 1))
-                      }
-                      className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeLine(cartLineId(l))}
-                    className="type-p2 text-oslo underline underline-offset-4 hover:text-redcurrent"
-                  >
-                    Remove
-                  </button>
+          {lines.map((l) => {
+            const rows = priceRows(l);
+            return (
+              <li key={cartLineId(l)} className="flex gap-[20px] py-[20px]">
+                <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-cloud/30">
+                  {l.imageUrl && (
+                    <Image
+                      src={l.imageUrl}
+                      alt={l.title}
+                      fill
+                      sizes="80px"
+                      className="img-bw object-cover"
+                    />
+                  )}
                 </div>
-              </div>
 
-              <P1 className="shrink-0">{formatGBP(linePriceGBP(l) * l.quantity)}</P1>
-            </li>
-          ))}
+                <div className="flex flex-1 flex-col gap-1">
+                  <P1>{l.title}</P1>
+                  <P2 className="text-oslo">{l.sku}</P2>
+                  {l.madeToOrder && <P2 className="text-graphite">{MADE_TO_ORDER_LINE}</P2>}
+                  {l.customSize && <P2 className="text-graphite">Size {l.customSize}</P2>}
+                  {/* One row per priced item, amounts right-aligned with the line total. */}
+                  {rows && (
+                    <dl className="type-p2 mt-[6px] flex flex-col gap-0.5 text-graphite">
+                      {rows.map((r) => (
+                        <div key={r.label} className="flex justify-between gap-[10px]">
+                          <dt>{r.label}</dt>
+                          <dd className="shrink-0 tabular-nums">{formatGBP(r.amount)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                  {l.notes && <P2 className="line-clamp-2 text-oslo">Notes: {l.notes}</P2>}
+
+                  <div className="mt-auto flex items-center gap-[10px] pt-[10px]">
+                    <div className="flex items-center border border-oslo">
+                      <button
+                        type="button"
+                        aria-label="Decrease quantity"
+                        disabled={l.quantity <= 1}
+                        onClick={() => updateQuantity(cartLineId(l), Math.max(1, l.quantity - 1))}
+                        className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
+                      >
+                        −
+                      </button>
+                      <span className="type-p2 min-w-[28px] text-center">{l.quantity}</span>
+                      <button
+                        type="button"
+                        aria-label="Increase quantity"
+                        disabled={l.quantity >= MAX_QTY}
+                        onClick={() =>
+                          updateQuantity(cartLineId(l), Math.min(MAX_QTY, l.quantity + 1))
+                        }
+                        className="min-h-[44px] min-w-[44px] type-p1 hover:text-redcurrent disabled:cursor-not-allowed disabled:text-oslo"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeLine(cartLineId(l))}
+                      className="type-p2 text-oslo underline underline-offset-4 hover:text-redcurrent"
+                    >
+                      Remove
+                    </button>
+                    <P1 className="ml-auto shrink-0 tabular-nums">
+                      {formatGBP(linePriceGBP(l) * l.quantity)}
+                    </P1>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Summary */}
@@ -159,7 +171,10 @@ export default function CartPage() {
             </P1>
             <P1 className="text-graphite">
               {INTERNATIONAL_DUTIES_NOTE}{' '}
-              <Link href="/shipping#duties" className="underline underline-offset-4 hover:text-redcurrent">
+              <Link
+                href="/shipping#duties"
+                className="underline underline-offset-4 hover:text-redcurrent"
+              >
                 Details
               </Link>
             </P1>

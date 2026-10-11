@@ -7,9 +7,10 @@
  * The PDP, cart, checkout API, Stripe and both order emails all read from here.
  */
 
-import { formatPence } from './shipping';
-
 export const MADE_TO_ORDER_LEAD_TIME = '8–12 weeks';
+
+/** The PDP and cart line for a made-to-order piece. */
+export const MADE_TO_ORDER_LINE = `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}`;
 
 /** Longest custom size a customer can enter, e.g. "UK N (US 6¾)" or "17.5mm". */
 export const CUSTOM_SIZE_MAX = 20;
@@ -34,22 +35,35 @@ export const NOTES_MAX = 200;
 export const NOTES_HINT =
   'Only for changes we’ve already agreed with you by email or Instagram. Anything new, please message us before ordering.';
 
+/** A cart or order line, as far as its price breakdown needs. */
+export interface PricedLine {
+  /** The piece itself, per piece (pence). */
+  unitPriceGBP: number;
+  quantity: number;
+  largeSizeGBP?: number | null;
+  engraving?: string | null;
+  engravingGBP?: number | null;
+}
+
+/** A line's total: the piece plus any larger size and engraving, times quantity (pence). */
+export const lineTotalGBP = (l: PricedLine) =>
+  (l.unitPriceGBP + (l.largeSizeGBP ?? 0) + (l.engravingGBP ?? 0)) * l.quantity;
+
 /**
- * "Made to order · Size UK Y · Larger size +£75 · Engraving “J&M” · ships in
- * 8–12 weeks" — one line, every surface.
+ * What a made-to-order ring's price is made of, one row each, for a line with
+ * a paid extra: the ring, then its larger size and engraving. Amounts cover
+ * the line's quantity, so the rows add up to the line total under them. Null
+ * when there's nothing to break down. The cart and both order emails show it.
  */
-export function madeToOrderNote(
-  customSize?: string | null,
-  engraving?: string | null,
-  largeSizeGBP?: number | null
-): string {
-  return [
-    'Made to order',
-    customSize ? `Size ${customSize}` : null,
-    largeSizeGBP ? `Larger size +${formatPence(largeSizeGBP)}` : null,
-    engraving ? `Engraving “${engraving}”` : null,
-    `ships in ${MADE_TO_ORDER_LEAD_TIME}`,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+export function priceRows(l: PricedLine): { label: string; amount: number }[] | null {
+  const extras = [
+    l.largeSizeGBP ? { label: 'Larger size', amount: l.largeSizeGBP } : null,
+    l.engraving ? { label: `Engraving “${l.engraving}”`, amount: l.engravingGBP ?? 0 } : null,
+  ].filter((r): r is { label: string; amount: number } => r !== null);
+  if (extras.length === 0) return null;
+  const times = l.quantity > 1 ? ` × ${l.quantity}` : '';
+  return [{ label: 'Ring', amount: l.unitPriceGBP }, ...extras].map((r) => ({
+    label: `${r.label}${times}`,
+    amount: r.amount * l.quantity,
+  }));
 }

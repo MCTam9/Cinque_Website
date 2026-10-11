@@ -2,6 +2,7 @@ import 'server-only';
 import { serverEnv } from '@/lib/serverEnv';
 import { publicEnv } from '@/lib/env';
 import type { OrderContact } from '@/lib/stripe/customer';
+import { MADE_TO_ORDER_LINE, lineTotalGBP, priceRows } from '@/lib/shop/madeToOrder';
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -103,8 +104,8 @@ function shell(title: string, bodyHtml: string): string {
           <tr>
             <td style="padding:0 32px 32px 32px;">
               <div style="border-top:1px solid ${BRAND.cloud};padding-top:20px;font-family:${BRAND.font};font-size:11px;line-height:18px;color:${BRAND.oslo};">
-                <a href="https://www.instagram.com/cinque.made" style="color:${BRAND.graphite};text-decoration:none;">Follow us on Instagram &middot; @cinque.made</a><br><br>
-                CINQUE &middot; <a href="https://cinque.studio" style="color:${BRAND.oslo};text-decoration:none;">cinque.studio</a>
+                <a href="https://www.instagram.com/cinque.made" style="color:${BRAND.graphite};text-decoration:none;">Follow us on Instagram / @cinque.made</a><br><br>
+                CINQUE / <a href="https://cinque.studio" style="color:${BRAND.oslo};text-decoration:none;">cinque.studio</a>
               </div>
             </td>
           </tr>
@@ -183,10 +184,15 @@ export interface OrderConfirmationInput {
     title: string;
     sku: string;
     quantity: number;
+    /** The piece itself, per piece (pence); a larger size and engraving are added on top. */
     unitPriceGBP: number;
     imageUrl?: string | null;
-    /** e.g. "Made to order · Size UK N · Engraving “J&M” · ships in 8–12 weeks". */
-    note?: string;
+    madeToOrder?: boolean;
+    /** Made to order: "UK Y (US 12¼)". */
+    customSize?: string;
+    largeSizeGBP?: number;
+    engraving?: string;
+    engravingGBP?: number;
     /** Made-to-order rings: changes already agreed with the studio. */
     notes?: string;
   }>;
@@ -203,13 +209,20 @@ function importNoticeHtml(notice: string | null | undefined): string {
   return notice ? `<p style="margin:20px 0 0 0;">${escapeHtml(notice)}</p>` : '';
 }
 
-/** Line items (with thumbnails), shipping and the total, shared by both order emails. */
+/**
+ * Line items (with thumbnails), shipping and the total, shared by both order
+ * emails. Laid out like the cart: the piece's details one per line, then each
+ * priced item (ring, larger size, engraving) on its own row with its amount in
+ * the price column, and the line total under them.
+ */
 function orderTable(
   lines: OrderConfirmationInput['lines'],
   shippingGBP: number | null | undefined,
   totalGBP: number,
   currency: string
 ): string {
+  const small = `font-size:12px;line-height:18px;`;
+  const rule = `border-bottom:1px solid ${BRAND.cloud};`;
   const rows = lines
     .map((l) => {
       // Left-aligned product thumbnail. Retina: request 2x, display 56px square.
@@ -218,14 +231,43 @@ function orderTable(
              <img src="${escapeHtml(l.imageUrl)}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;border:1px solid ${BRAND.cloud};" />
            </td>`
         : '';
-      return `<tr>
-          <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};vertical-align:top;">
+      // Breakdown rows line up under the text, past the thumbnail.
+      const indent = l.imageUrl ? 'padding-left:70px;' : '';
+      const details = [
+        `<span style="color:${BRAND.oslo};${small}">${escapeHtml(l.sku)} &times; ${l.quantity}</span>`,
+        l.madeToOrder ? `<span style="${small}">${escapeHtml(MADE_TO_ORDER_LINE)}</span>` : '',
+        l.customSize ? `<span style="${small}">Size ${escapeHtml(l.customSize)}</span>` : '',
+      ]
+        .filter(Boolean)
+        .map((d) => `<br>${d}`)
+        .join('');
+      const breakdown = priceRows(l) ?? [];
+      const notes = l.notes
+        ? `<tr><td colspan="2" style="padding:4px 0 0 0;${indent}${small}color:${BRAND.oslo};">Notes: ${escapeHtml(l.notes)}</td></tr>`
+        : '';
+      const total = money(lineTotalGBP(l), currency);
+      // A line with no breakdown keeps its total beside the piece.
+      const head = `<tr>
+          <td style="padding:12px 0 ${breakdown.length || notes ? '6px' : '12px'} 0;vertical-align:top;${breakdown.length || notes ? '' : rule}">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
               ${thumb}
-              <td style="vertical-align:top;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">${escapeHtml(l.title)}<br><span style="color:${BRAND.oslo};font-size:12px;">${escapeHtml(l.sku)} &times; ${l.quantity}</span>${l.note ? `<br><span style="font-size:12px;">${escapeHtml(l.note)}</span>` : ''}${l.notes ? `<br><span style="font-size:12px;color:${BRAND.oslo};">Notes: ${escapeHtml(l.notes)}</span>` : ''}</td>
+              <td style="vertical-align:top;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">${escapeHtml(l.title)}${details}</td>
             </tr></table>
           </td>
-          <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};text-align:right;vertical-align:top;white-space:nowrap;">${money(l.unitPriceGBP * l.quantity, currency)}</td>
+          <td style="padding:12px 0 ${breakdown.length || notes ? '6px' : '12px'} 0;text-align:right;vertical-align:bottom;white-space:nowrap;${breakdown.length || notes ? '' : rule}">${breakdown.length || notes ? '' : total}</td>
+        </tr>`;
+      if (!breakdown.length && !notes) return head;
+      const items = breakdown
+        .map(
+          (r) => `<tr>
+          <td style="padding:2px 0;${indent}${small}">${escapeHtml(r.label)}</td>
+          <td style="padding:2px 0;text-align:right;white-space:nowrap;${small}">${money(r.amount, currency)}</td>
+        </tr>`
+        )
+        .join('');
+      return `${head}${items}${notes}<tr>
+          <td style="padding:6px 0 12px 0;${rule}"></td>
+          <td style="padding:6px 0 12px 0;text-align:right;white-space:nowrap;${rule}">${total}</td>
         </tr>`;
     })
     .join('');

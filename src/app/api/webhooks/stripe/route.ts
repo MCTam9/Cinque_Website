@@ -12,7 +12,7 @@ import {
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
-import { ENGRAVING_PRICE_PENCE, madeToOrderNote } from '@/lib/shop/madeToOrder';
+import { ENGRAVING_PRICE_PENCE } from '@/lib/shop/madeToOrder';
 import { importChargesNoticeFor } from '@/lib/shop/shipping';
 import type { FulfillmentLine } from '@/types';
 
@@ -238,9 +238,13 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     title: l.titleSnapshot,
     sku: l.sku,
     quantity: l.quantity,
-    unitPriceGBP: l.unitPriceGBP + (l.engravingGBP ?? 0) + (l.largeSizeGBP ?? 0),
+    unitPriceGBP: l.unitPriceGBP,
     imageUrl: l.imageUrl,
-    note: l.madeToOrder ? madeToOrderNote(l.customSize, l.engraving, l.largeSizeGBP) : undefined,
+    madeToOrder: l.madeToOrder,
+    customSize: l.customSize,
+    largeSizeGBP: l.largeSizeGBP,
+    engraving: l.engraving,
+    engravingGBP: l.engravingGBP,
     notes: l.notes,
   }));
 

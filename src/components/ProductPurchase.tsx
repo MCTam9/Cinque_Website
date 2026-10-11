@@ -5,11 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
-import {
-  CUSTOM_SIZE_MAX,
-  ENGRAVING_PRICE_PENCE,
-  MADE_TO_ORDER_LEAD_TIME,
-} from '@/lib/shop/madeToOrder';
+import { CUSTOM_SIZE_MAX, ENGRAVING_PRICE_PENCE, MADE_TO_ORDER_LINE } from '@/lib/shop/madeToOrder';
 import { H3, P1 } from '@/components/typography';
 import { RING_SIZE_CHART_ID } from '@/components/RingSizeChart';
 import RingSizePicker from '@/components/RingSizePicker';
@@ -131,7 +127,7 @@ export default function ProductPurchase({
 
       {needsSize && (
         <div className="flex flex-col gap-[10px]">
-          <P1 className="text-graphite">Made to order · ships in {MADE_TO_ORDER_LEAD_TIME}</P1>
+          <P1 className="text-graphite">{MADE_TO_ORDER_LINE}</P1>
           {ring ? (
             <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
           ) : (
