@@ -47,6 +47,7 @@ type VariantResult = {
   title: string;
   status: string;
   category?: string;
+  offerEngraving?: boolean;
   variant: {
     _key: string;
     sku: string;
@@ -115,10 +116,12 @@ export async function POST(req: Request) {
     // Made to order: a size is required, and stock is never the limit. Any size
     // sent for an ordinary variant is ignored rather than trusted.
     const customSize = variant.madeToOrder ? line.customSize : undefined;
-    // Engraving and notes exist only on made-to-order rings; anything sent for
-    // another variant is dropped, never trusted (and never charged).
+    // Notes exist only on made-to-order rings, engraving only where the Admin
+    // offers it; anything sent for another variant is dropped, never trusted
+    // (and never charged).
     const ringExtras = variant.madeToOrder && result.category === 'rings';
-    const engraving = ringExtras ? line.engraving || undefined : undefined;
+    const engraving =
+      ringExtras && result.offerEngraving ? line.engraving || undefined : undefined;
     const notes = ringExtras ? line.notes || undefined : undefined;
     if (variant.madeToOrder && !customSize) {
       return NextResponse.json(

@@ -31,7 +31,8 @@ export interface PurchaseVariant {
  *
  * A made-to-order option (swatch "Made to Order") adds the lead time and a required
  * size between the two: a UK/US/EU/JP wheel for rings, free text otherwise.
- * Made-to-order rings also offer a paid engraving and notes. Add to cart waits
+ * Made-to-order rings also take notes, and a paid engraving where the Admin
+ * offers one. Add to cart waits
  * until a size is given.
  */
 export default function ProductPurchase({
@@ -40,6 +41,7 @@ export default function ProductPurchase({
   variants,
   imageUrl,
   ring = false,
+  engraving: offerEngraving = false,
 }: {
   productId: string;
   title: string;
@@ -47,6 +49,8 @@ export default function ProductPurchase({
   imageUrl?: string;
   /** Rings: pick the size on a UK/US/EU/JP wheel (not free text) and link the chart below. */
   ring?: boolean;
+  /** Ring with "Offer engraving" on in the Admin: made to order can add a £30 engraving. */
+  engraving?: boolean;
 }) {
   const addLine = useCart((s) => s.addLine);
   const router = useRouter();
@@ -59,9 +63,9 @@ export default function ProductPurchase({
   const selected = variants.find((v) => v.key === selectedKey) ?? firstAvailable;
   const size = customSize.trim();
   const needsSize = Boolean(selected?.madeToOrder);
-  // Engraving and notes only exist on a made-to-order ring.
+  // Notes exist on any made-to-order ring; engraving only where the Admin offers it.
   const extras = needsSize && ring;
-  const engravingText = extras ? engraving.trim() : '';
+  const engravingText = extras && offerEngraving ? engraving.trim() : '';
   const notesText = extras ? notes.trim() : '';
   const engravingGBP = engravingText ? ENGRAVING_PRICE_PENCE : 0;
   const canAdd = Boolean(selected?.inStock) && (!needsSize || size.length > 0);
@@ -146,6 +150,7 @@ export default function ProductPurchase({
           )}
           {extras && (
             <MadeToOrderExtras
+              offerEngraving={offerEngraving}
               engraving={engraving}
               onEngravingChange={setEngraving}
               notes={notes}

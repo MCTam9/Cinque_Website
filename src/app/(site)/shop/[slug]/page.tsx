@@ -47,6 +47,7 @@ interface PDPProduct {
   category?: ProductCategory;
   edition?: string;
   ringOccasions?: RingOccasion[];
+  offerEngraving?: boolean;
   description?: PortableTextBlock[];
   careInstructions?: string;
   images?: SanityImageRef[];
@@ -330,6 +331,7 @@ export default async function ProductPage({
               variants={purchaseVariants}
               imageUrl={thumbUrl}
               ring={product.category === 'rings'}
+              engraving={product.category === 'rings' && Boolean(product.offerEngraving)}
             />
           )}
 

@@ -14,6 +14,11 @@
  * the Product's default_price at it and archives the old one. Idempotent — a
  * second run makes no writes.
  *
+ * Like the webhook, a variant only keeps a Stripe Product whose metadata names
+ * it: a product duplicated in the Studio carries the original's IDs, and gets
+ * its own Product + Price here. Because this script sees the whole catalog it
+ * also archives a superseded Price once no variant references it any more.
+ *
  * Reads credentials from .env.local. Whether this touches TEST or LIVE Stripe
  * data is decided entirely by STRIPE_SECRET_KEY; the script prints which.
  */
@@ -70,8 +75,22 @@ const products = await sanity.fetch(
 
 let created = 0;
 let repriced = 0;
+let moved = 0;
 let unchanged = 0;
 let skipped = 0;
+
+/** Every Price some variant still points at — never archive one of these. */
+const referenced = new Map();
+for (const product of products) {
+  for (const v of product.variants ?? []) {
+    if (v.stripePriceId) referenced.set(v.stripePriceId, (referenced.get(v.stripePriceId) ?? 0) + 1);
+  }
+}
+
+const ownsProduct = (p, productId, variantKey) =>
+  p.metadata?.sanityProductId === productId && p.metadata?.variantKey === variantKey;
+const defaultPriceId = (p) =>
+  typeof p.default_price === 'string' ? p.default_price : (p.default_price?.id ?? null);
 
 /**
  * Write a variant's Stripe IDs back into Sanity immediately, rather than
@@ -110,45 +129,47 @@ for (const product of products) {
     };
     const patch = { _key: variant._key };
 
-    // ── 1. Stripe Product for this SKU.
-    let stripeProductId = variant.stripeProductId;
-    if (!stripeProductId) {
-      if (DRY_RUN) {
-        console.log(`  + ${variant.sku}: would create Stripe product "${name}"`);
-      } else {
-        const createdProduct = await stripe.products.create({ name, active: isActive, metadata });
-        stripeProductId = createdProduct.id;
-        patch.stripeProductId = createdProduct.id;
-        console.log(`  + ${variant.sku}: product ${createdProduct.id}`);
-      }
-    } else {
+    // ── 1. This variant's OWN Stripe Product.
+    let existing = null;
+    if (variant.stripeProductId) {
       try {
-        const existing = await stripe.products.retrieve(stripeProductId);
-        if (existing.name !== name || existing.active !== isActive) {
-          if (!DRY_RUN) {
-            await stripe.products.update(stripeProductId, { name, active: isActive, metadata });
-          }
-          console.log(`  ~ ${variant.sku}: product name/active updated`);
-        }
+        existing = await stripe.products.retrieve(variant.stripeProductId);
       } catch {
-        // Referenced product is gone from Stripe (deleted by hand) — recreate.
-        if (DRY_RUN) {
-          console.log(`  + ${variant.sku}: would recreate missing product ${stripeProductId}`);
-        } else {
-          const recreated = await stripe.products.create({ name, active: isActive, metadata });
-          stripeProductId = recreated.id;
-          patch.stripeProductId = recreated.id;
-          console.log(`  + ${variant.sku}: recreated product ${recreated.id}`);
-        }
+        console.log(`  ! ${variant.sku}: product ${variant.stripeProductId} missing from Stripe`);
       }
     }
+    if (existing && !ownsProduct(existing, product._id, variant._key)) {
+      console.log(
+        `  ! ${variant.sku}: product ${existing.id} belongs to ${existing.metadata?.sku ?? 'another variant'} — giving this variant its own`
+      );
+      existing = null;
+      moved++;
+    }
 
-    // ── 2. Active Price matching priceGBP.
+    let stripeProductId = existing?.id;
+    if (existing) {
+      if (existing.name !== name || existing.active !== isActive) {
+        if (!DRY_RUN) await stripe.products.update(existing.id, { name, active: isActive, metadata });
+        console.log(`  ~ ${variant.sku}: product name/active updated`);
+      }
+    } else if (DRY_RUN) {
+      console.log(`  + ${variant.sku}: would create Stripe product "${name}"`);
+    } else {
+      const createdProduct = await stripe.products.create({ name, active: isActive, metadata });
+      stripeProductId = createdProduct.id;
+      patch.stripeProductId = createdProduct.id;
+      console.log(`  + ${variant.sku}: product ${createdProduct.id}`);
+    }
+
+    // ── 2. An active Price, on this Product, matching priceGBP.
     let needNewPrice = true;
+    let oldPriceIsOurs = false;
     if (variant.stripePriceId) {
       try {
         const price = await stripe.prices.retrieve(variant.stripePriceId);
-        if (price.active && price.currency === 'gbp' && price.unit_amount === variant.priceGBP) {
+        const priceProduct = typeof price.product === 'string' ? price.product : price.product.id;
+        oldPriceIsOurs = Boolean(existing) && priceProduct === existing.id;
+        if (oldPriceIsOurs && price.active && price.currency === 'gbp' && price.unit_amount === variant.priceGBP) {
           needNewPrice = false;
         }
       } catch {
@@ -157,15 +178,28 @@ for (const product of products) {
     }
 
     if (!needNewPrice) {
+      if (defaultPriceId(existing) !== variant.stripePriceId) {
+        if (!DRY_RUN) await stripe.products.update(existing.id, { default_price: variant.stripePriceId });
+        console.log(`  ~ ${variant.sku}: default price pointed back at ${variant.stripePriceId}`);
+      }
       console.log(`  = ${variant.sku}: already ${gbp(variant.priceGBP)}`);
       unchanged++;
-      if (!DRY_RUN) await writeBack(product._id, patch);
       continue;
     }
 
+    // The superseded Price may be archived once nothing references it: ours
+    // always; someone else's only when this was its last user.
+    const oldPrice = variant.stripePriceId;
+    const archivable =
+      oldPrice && (oldPriceIsOurs || (referenced.get(oldPrice) ?? 0) <= 1);
+
     if (DRY_RUN) {
-      console.log(`  + ${variant.sku}: would create price ${gbp(variant.priceGBP)}`);
-      if (variant.stripePriceId) repriced++;
+      console.log(
+        `  + ${variant.sku}: would create price ${gbp(variant.priceGBP)}${
+          oldPrice ? `; ${archivable ? 'archive' : 'keep (still used elsewhere)'} ${oldPrice}` : ''
+        }`
+      );
+      if (oldPrice) repriced++;
       else created++;
       continue;
     }
@@ -177,26 +211,34 @@ for (const product of products) {
     });
     await stripe.products.update(stripeProductId, { default_price: newPrice.id });
 
-    if (variant.stripePriceId) {
-      // Archive the superseded price — in-flight checkout sessions keep working.
-      try {
-        await stripe.prices.update(variant.stripePriceId, { active: false });
-      } catch {
-        /* best-effort archive */
+    // ── 3. Record the IDs in Sanity before archiving anything, so checkout
+    // switches to the new Price before the old one stops working.
+    patch.stripePriceId = newPrice.id;
+    await writeBack(product._id, patch);
+
+    if (oldPrice) {
+      if (archivable) {
+        // In-flight checkout sessions keep working with an archived price.
+        try {
+          await stripe.prices.update(oldPrice, { active: false });
+        } catch {
+          /* best-effort archive */
+        }
       }
+      referenced.set(oldPrice, (referenced.get(oldPrice) ?? 1) - 1);
       repriced++;
     } else {
       created++;
     }
 
-    patch.stripePriceId = newPrice.id;
-    console.log(`  + ${variant.sku}: price ${newPrice.id} (${gbp(variant.priceGBP)})`);
-
-    // ── 3. Record the IDs in Sanity before moving on.
-    await writeBack(product._id, patch);
+    console.log(
+      `  + ${variant.sku}: price ${newPrice.id} (${gbp(variant.priceGBP)})${
+        oldPrice ? `; ${archivable ? 'archived' : 'kept'} ${oldPrice}` : ''
+      }`
+    );
   }
 }
 
 console.log(
-  `\n${DRY_RUN ? 'Would create' : 'Created'} ${created} price(s), reprice ${repriced}, ${unchanged} already in sync, ${skipped} incomplete variant(s).\n`
+  `\n${DRY_RUN ? 'Would create' : 'Created'} ${created} price(s), reprice ${repriced}, give ${moved} variant(s) their own product, ${unchanged} already in sync, ${skipped} incomplete variant(s).\n`
 );

@@ -20,6 +20,12 @@ import { stripe } from '@/lib/stripe';
  *    ONLY when a Stripe ID was created or changed. When nothing changed it
  *    returns no patch, so the write-back doesn't retrigger an endless
  *    webhook → sync → write loop.
+ *  - A variant only uses a Stripe Product whose metadata names it (Sanity
+ *    product id + variant key). Duplicating a product in the Studio copies the
+ *    read-only Stripe IDs too, and before this check every copy reused — and
+ *    renamed, repriced and archived prices on — the original's Product. A
+ *    variant holding someone else's Product now gets its own, and never
+ *    touches the other one.
  */
 
 export interface SyncVariantInput {
@@ -45,6 +51,20 @@ export interface VariantPatch {
   stripePriceId?: string;
 }
 
+/** Whether a Stripe Product belongs to this Sanity product + variant. */
+export function ownsProduct(
+  p: import('stripe').Stripe.Product,
+  sanityProductId: string,
+  variantKey: string
+): boolean {
+  return p.metadata?.sanityProductId === sanityProductId && p.metadata?.variantKey === variantKey;
+}
+
+function defaultPriceId(p: import('stripe').Stripe.Product): string | null {
+  const d = p.default_price;
+  return typeof d === 'string' ? d : (d?.id ?? null);
+}
+
 export async function syncProductToStripe(
   product: SyncProductInput
 ): Promise<VariantPatch[]> {
@@ -63,32 +83,39 @@ export async function syncProductToStripe(
       sku: variant.sku,
     };
 
-    // ── 1. Ensure the Stripe Product exists (and reflects name/active state).
-    let stripeProductId = variant.stripeProductId;
-    if (!stripeProductId) {
+    // ── 1. Ensure this variant has its OWN Stripe Product (and name/active).
+    let existing: import('stripe').Stripe.Product | null = null;
+    if (variant.stripeProductId) {
+      try {
+        existing = await stripe.products.retrieve(variant.stripeProductId);
+      } catch {
+        // Referenced product vanished (e.g. deleted in Stripe) — recreate below.
+      }
+    }
+    if (existing && !ownsProduct(existing, product._id, variant._key)) existing = null;
+
+    let stripeProductId: string;
+    if (existing) {
+      stripeProductId = existing.id;
+      if (existing.name !== name || existing.active !== isActive) {
+        await stripe.products.update(stripeProductId, { name, active: isActive, metadata });
+      }
+    } else {
       const created = await stripe.products.create({ name, active: isActive, metadata });
       stripeProductId = created.id;
       patch.stripeProductId = created.id;
-    } else {
-      try {
-        const existing = await stripe.products.retrieve(stripeProductId);
-        if (existing.name !== name || existing.active !== isActive) {
-          await stripe.products.update(stripeProductId, { name, active: isActive, metadata });
-        }
-      } catch {
-        // Referenced product vanished (e.g. deleted in Stripe) — recreate.
-        const recreated = await stripe.products.create({ name, active: isActive, metadata });
-        stripeProductId = recreated.id;
-        patch.stripeProductId = recreated.id;
-      }
     }
 
-    // ── 2. Ensure an active Price matching priceGBP.
+    // ── 2. Ensure an active Price, on this Product, matching priceGBP.
     let needNewPrice = true;
+    let oldPriceIsOurs = false;
     if (variant.stripePriceId) {
       try {
         const price = await stripe.prices.retrieve(variant.stripePriceId);
+        const priceProduct = typeof price.product === 'string' ? price.product : price.product.id;
+        oldPriceIsOurs = priceProduct === stripeProductId;
         if (
+          oldPriceIsOurs &&
           price.active &&
           price.currency === 'gbp' &&
           price.unit_amount === variant.priceGBP
@@ -108,8 +135,9 @@ export async function syncProductToStripe(
       });
       // Point the product's default price at the new one.
       await stripe.products.update(stripeProductId, { default_price: newPrice.id });
-      // Archive the superseded price (kept working for in-flight sessions).
-      if (variant.stripePriceId) {
+      // Archive the superseded price (kept working for in-flight sessions) —
+      // only if it was ours; another variant may still be charging with it.
+      if (variant.stripePriceId && oldPriceIsOurs) {
         try {
           await stripe.prices.update(variant.stripePriceId, { active: false });
         } catch {
@@ -117,6 +145,9 @@ export async function syncProductToStripe(
         }
       }
       patch.stripePriceId = newPrice.id;
+    } else if (existing && defaultPriceId(existing) !== variant.stripePriceId) {
+      // A copy may have moved the default elsewhere; point it back.
+      await stripe.products.update(stripeProductId, { default_price: variant.stripePriceId });
     }
 
     // Only emit a patch when something actually changed (loop protection).

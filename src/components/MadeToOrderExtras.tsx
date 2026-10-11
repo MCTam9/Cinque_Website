@@ -119,13 +119,15 @@ function OptionPanel({
   );
 }
 
-/** Engraving (£30, 10 characters) and notes for a made-to-order ring. */
+/** Engraving (£30, 10 characters, where offered) and notes for a made-to-order ring. */
 export default function MadeToOrderExtras({
+  offerEngraving,
   engraving,
   onEngravingChange,
   notes,
   onNotesChange,
 }: {
+  offerEngraving: boolean;
   engraving: string;
   onEngravingChange: (value: string) => void;
   notes: string;
@@ -133,15 +135,17 @@ export default function MadeToOrderExtras({
 }) {
   return (
     <div className="flex flex-col gap-[10px]">
-      <OptionPanel
-        label="Engraving"
-        price={formatGBP(ENGRAVING_PRICE_PENCE)}
-        value={engraving}
-        onChange={onEngravingChange}
-        max={ENGRAVING_MAX}
-        placeholder={`${ENGRAVING_MAX} characters`}
-        filter={engravable}
-      />
+      {offerEngraving && (
+        <OptionPanel
+          label="Engraving"
+          price={formatGBP(ENGRAVING_PRICE_PENCE)}
+          value={engraving}
+          onChange={onEngravingChange}
+          max={ENGRAVING_MAX}
+          placeholder={`${ENGRAVING_MAX} characters`}
+          filter={engravable}
+        />
+      )}
       <OptionPanel
         label="Notes"
         value={notes}
