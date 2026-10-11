@@ -12,7 +12,7 @@ import {
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
-import { madeToOrderNote } from '@/lib/shop/madeToOrder';
+import { ENGRAVING_PRICE_PENCE, madeToOrderNote } from '@/lib/shop/madeToOrder';
 import { importChargesNoticeFor } from '@/lib/shop/shipping';
 import type { FulfillmentLine } from '@/types';
 
@@ -139,6 +139,10 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       ? urlFor(doc.image).width(112).height(112).fit('crop').url()
       : null;
     const madeToOrder = Boolean(doc.variant.madeToOrder);
+    // Engraving and notes were validated (made-to-order rings only) and the
+    // engraving charged at checkout; notes travel in metadata key `n<index>`.
+    const engraving = madeToOrder ? fl.e : undefined;
+    const notes = madeToOrder ? session.metadata?.[`n${i}`] : undefined;
     orderLines.push({
       // Indexed: two sizes of one made-to-order variant are two lines.
       _key: `${fl.p}-${fl.v}-${i}`,
@@ -150,6 +154,8 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       quantity: fl.q,
       unitPriceGBP: doc.variant.priceGBP as number,
       ...(madeToOrder ? { madeToOrder: true, customSize: fl.s ?? '' } : {}),
+      ...(engraving ? { engraving, engravingGBP: ENGRAVING_PRICE_PENCE } : {}),
+      ...(notes ? { notes } : {}),
       imageUrl,
     });
   }
@@ -229,9 +235,10 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     title: l.titleSnapshot,
     sku: l.sku,
     quantity: l.quantity,
-    unitPriceGBP: l.unitPriceGBP,
+    unitPriceGBP: l.unitPriceGBP + (l.engravingGBP ?? 0),
     imageUrl: l.imageUrl,
-    note: l.madeToOrder ? madeToOrderNote(l.customSize) : undefined,
+    note: l.madeToOrder ? madeToOrderNote(l.customSize, l.engraving) : undefined,
+    notes: l.notes,
   }));
 
   try {

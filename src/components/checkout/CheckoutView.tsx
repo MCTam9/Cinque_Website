@@ -27,6 +27,8 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
     variantKey: l.variantKey,
     quantity: l.quantity,
     ...(l.customSize ? { customSize: l.customSize } : {}),
+    ...(l.engraving ? { engraving: l.engraving } : {}),
+    ...(l.notes ? { notes: l.notes } : {}),
   }));
 
   if (checkoutLines.length === 0) {

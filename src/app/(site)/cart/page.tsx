@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { cartLineId, useCart } from '@/store/cart';
+import { cartLineId, linePriceGBP, useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
 import { INTERNATIONAL_DUTIES_NOTE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
 import { madeToOrderNote } from '@/lib/shop/madeToOrder';
@@ -87,8 +87,9 @@ export default function CartPage() {
                 <P1>{l.title}</P1>
                 <P2 className="text-oslo">{l.sku}</P2>
                 {l.madeToOrder && (
-                  <P2 className="text-graphite">{madeToOrderNote(l.customSize)}</P2>
+                  <P2 className="text-graphite">{madeToOrderNote(l.customSize, l.engraving)}</P2>
                 )}
+                {l.notes && <P2 className="line-clamp-2 text-oslo">Notes: {l.notes}</P2>}
 
                 <div className="mt-auto flex items-center gap-[10px]">
                   <div className="flex items-center border border-oslo">
@@ -126,7 +127,7 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <P1 className="shrink-0">{formatGBP(l.unitPriceGBP * l.quantity)}</P1>
+              <P1 className="shrink-0">{formatGBP(linePriceGBP(l) * l.quantity)}</P1>
             </li>
           ))}
         </ul>

@@ -240,12 +240,13 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
         ref={triggerRef}
         onClick={show}
         aria-haspopup="dialog"
-        className="type-p1 flex min-h-[40px] w-full items-center justify-between border border-graphite px-[10px] text-left transition-colors hover:border-redcurrent"
+        // Red once a size is chosen, like a selected option swatch.
+        className={`type-p1 flex min-h-[40px] w-full items-center justify-between border px-[10px] text-left transition-colors ${
+          picked ? 'border-redcurrent text-redcurrent' : 'border-graphite hover:border-redcurrent'
+        }`}
       >
-        <span className={picked ? 'text-graphite' : 'text-oslo'}>
-          {picked ? value : 'Choose your size'}
-        </span>
-        <span className="text-oslo">{picked ? 'Change' : '+'}</span>
+        <span className={picked ? '' : 'text-oslo'}>{picked ? value : 'Choose your size'}</span>
+        <span className={picked ? '' : 'text-oslo'}>{picked ? 'Change' : '+'}</span>
       </button>
 
       <dialog

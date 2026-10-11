@@ -185,8 +185,10 @@ export interface OrderConfirmationInput {
     quantity: number;
     unitPriceGBP: number;
     imageUrl?: string | null;
-    /** e.g. "Made to order · Size N½ · ships in 8–12 weeks". */
+    /** e.g. "Made to order · Size UK N · Engraving “J&M” · ships in 8–12 weeks". */
     note?: string;
+    /** Made-to-order rings: changes already agreed with the studio. */
+    notes?: string;
   }>;
   /** Shipping charged, in pence; 0 shows as "Free", omitted hides the row. */
   shippingGBP?: number | null;
@@ -220,7 +222,7 @@ function orderTable(
           <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};vertical-align:top;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
               ${thumb}
-              <td style="vertical-align:top;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">${escapeHtml(l.title)}<br><span style="color:${BRAND.oslo};font-size:12px;">${escapeHtml(l.sku)} &times; ${l.quantity}</span>${l.note ? `<br><span style="font-size:12px;">${escapeHtml(l.note)}</span>` : ''}</td>
+              <td style="vertical-align:top;font-family:${BRAND.font};font-size:14px;line-height:20px;color:${BRAND.graphite};">${escapeHtml(l.title)}<br><span style="color:${BRAND.oslo};font-size:12px;">${escapeHtml(l.sku)} &times; ${l.quantity}</span>${l.note ? `<br><span style="font-size:12px;">${escapeHtml(l.note)}</span>` : ''}${l.notes ? `<br><span style="font-size:12px;color:${BRAND.oslo};">Notes: ${escapeHtml(l.notes)}</span>` : ''}</td>
             </tr></table>
           </td>
           <td style="padding:12px 0;border-bottom:1px solid ${BRAND.cloud};text-align:right;vertical-align:top;white-space:nowrap;">${money(l.unitPriceGBP * l.quantity, currency)}</td>

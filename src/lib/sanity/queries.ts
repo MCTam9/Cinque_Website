@@ -89,6 +89,7 @@ export const variantForCheckoutQuery = groq`
     _id,
     title,
     status,
+    category,
     "variant": variants[_key == $variantKey][0]{
       _key, sku, priceGBP, stripeProductId, stripePriceId, stockQuantity, allowBackorder,
       madeToOrder
