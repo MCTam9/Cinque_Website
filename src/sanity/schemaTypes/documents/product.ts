@@ -1,7 +1,14 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 import { cropProduct, cropWideCard } from '../imageCrop';
 import { isReservedShopSlug } from '@/lib/shop/categories';
-import { LARGE_SIZE_LETTERS, RING_SIZE_ROWS } from '@/lib/shop/ringSizes';
+import { LARGE_SIZE_LETTERS, RING_SIZE_ROWS, silverOnly } from '@/lib/shop/ringSizes';
+
+/** Larger ring sizes are an option on rings that aren't silver only. */
+const offersLargeSizes = (document?: Record<string, unknown>) =>
+  document?.category === 'rings' &&
+  !silverOnly(
+    (document.variants as { metalType?: string }[] | undefined)?.map((v) => v.metalType)
+  );
 
 export const product = defineType({
   name: 'product',
@@ -97,14 +104,15 @@ export const product = defineType({
       type: 'string',
       group: 'content',
       description:
-        'Rings only. Standard Made to Order sizes are UK G–T. Pick a size here to also sell UK U up to it, at the surcharge below. Leave empty for G–T only.',
+        'Gold rings only. Standard Made to Order sizes are UK G–T. Pick a size here to also sell UK U up to it, at the surcharge below. Leave empty for G–T only.',
       options: {
         list: LARGE_SIZE_LETTERS.map((uk) => {
           const row = RING_SIZE_ROWS.find((r) => r.uk === uk)!;
           return { title: `UK ${uk} (US ${row.us})`, value: uk };
         }),
       },
-      hidden: ({ document }) => document?.category !== 'rings',
+      // Not offered on silver: hidden when every variant is sterling silver.
+      hidden: ({ document }) => !offersLargeSizes(document),
     }),
     defineField({
       name: 'largeSizeSurchargeGBP',
@@ -114,7 +122,7 @@ export const product = defineType({
       description:
         'Added to the Made to Order price for UK U and above, e.g. £75.00 → 7500. Leave empty or 0 to sell larger sizes at the normal price.',
       validation: (rule) => rule.min(0).integer(),
-      hidden: ({ document }) => document?.category !== 'rings' || !document?.largeSizesUpTo,
+      hidden: ({ document }) => !offersLargeSizes(document) || !document?.largeSizesUpTo,
     }),
     defineField({
       name: 'edition',

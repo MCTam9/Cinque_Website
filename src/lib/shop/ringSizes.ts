@@ -108,16 +108,23 @@ export function ringSizeCharge(
   return { ok: true, surchargeGBP: isLargeRow(row) ? (large?.surchargeGBP ?? 0) : 0 };
 }
 
+/** A product made only in silver: larger sizes aren't offered on it. */
+export const silverOnly = (metals?: (string | null | undefined)[] | null) =>
+  Boolean(metals?.length) && metals!.every((m) => m === 'sterling_silver');
+
 /**
  * The product's larger sizes from its Admin fields, or null when it offers
- * none. Shared by the PDP and the checkout API so they always agree.
+ * none (or is silver only). Shared by the PDP and the checkout API so they
+ * always agree.
  */
 export function largeSizesOf(doc: {
   category?: string | null;
   largeSizesUpTo?: string | null;
   largeSizeSurchargeGBP?: number | null;
+  variants?: { metalType?: string | null }[] | null;
 }): LargeSizes | null {
   if (doc.category !== 'rings' || !doc.largeSizesUpTo) return null;
+  if (silverOnly(doc.variants?.map((v) => v.metalType))) return null;
   if (!LARGE_SIZE_LETTERS.includes(doc.largeSizesUpTo)) return null;
   return { upTo: doc.largeSizesUpTo, surchargeGBP: Math.max(0, doc.largeSizeSurchargeGBP ?? 0) };
 }

@@ -96,6 +96,7 @@ export const variantForCheckoutQuery = groq`
     offerEngraving,
     largeSizesUpTo,
     largeSizeSurchargeGBP,
+    "variants": variants[]{ metalType },
     "variant": variants[_key == $variantKey][0]{
       _key, sku, priceGBP, stripeProductId, stripePriceId, stockQuantity, allowBackorder,
       madeToOrder

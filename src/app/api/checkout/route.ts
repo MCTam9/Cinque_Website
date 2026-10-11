@@ -52,6 +52,7 @@ type VariantResult = {
   offerEngraving?: boolean;
   largeSizesUpTo?: string | null;
   largeSizeSurchargeGBP?: number | null;
+  variants?: { metalType?: string | null }[] | null;
   variant: {
     _key: string;
     sku: string;
