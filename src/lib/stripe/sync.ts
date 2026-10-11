@@ -158,3 +158,41 @@ export async function syncProductToStripe(
 
   return patches;
 }
+
+/**
+ * The Stripe IDs a checkout may charge a variant with. `priceId` is set only
+ * when the synced Price is active, in GBP, at the variant's current Sanity
+ * amount, and on a Product that belongs to this variant; `productId` only when
+ * that Product does. Anything else — a sync still running or failed, a
+ * duplicated product still holding its source's IDs, an archived price — comes
+ * back null, and the caller prices the line from the Sanity amount instead.
+ * Sanity stays the price of record either way.
+ */
+export async function chargeableStripeIds(
+  sanityProductId: string,
+  variant: { _key: string; priceGBP: number; stripeProductId?: string; stripePriceId?: string }
+): Promise<{ priceId: string | null; productId: string | null }> {
+  let product: import('stripe').Stripe.Product | null = null;
+  let priceId: string | null = null;
+  try {
+    if (variant.stripePriceId) {
+      const price = await stripe.prices.retrieve(variant.stripePriceId, { expand: ['product'] });
+      if (typeof price.product === 'object' && !price.product.deleted) product = price.product;
+      if (
+        price.active &&
+        price.currency === 'gbp' &&
+        price.unit_amount === variant.priceGBP &&
+        product?.id === variant.stripeProductId
+      ) {
+        priceId = price.id;
+      }
+    }
+    if (variant.stripeProductId && product?.id !== variant.stripeProductId) {
+      product = await stripe.products.retrieve(variant.stripeProductId);
+    }
+  } catch {
+    // Missing in Stripe, or Stripe unreachable: fall back to the Sanity amount.
+  }
+  const owned = product !== null && ownsProduct(product, sanityProductId, variant._key);
+  return { priceId: owned ? priceId : null, productId: owned ? product!.id : null };
+}

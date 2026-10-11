@@ -67,6 +67,9 @@ export function revalidateFor(type: string, slug?: string): string[] {
  */
 export async function syncProduct(body: SanityWebhookBody): Promise<number> {
   if (!body._id || !body.title) return 0;
+  // Only published products. A draft's id ("drafts.<id>") would be stamped on
+  // the Stripe Product, and the published document would then not own it.
+  if (body._id.startsWith('drafts.') || body._id.startsWith('versions.')) return 0;
 
   const patches = await syncProductToStripe({
     _id: body._id,

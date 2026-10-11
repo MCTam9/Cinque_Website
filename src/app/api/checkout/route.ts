@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { stripe } from '@/lib/stripe';
+import { chargeableStripeIds } from '@/lib/stripe/sync';
 import { sanityClient } from '@/lib/sanity/client';
 import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
@@ -141,20 +142,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Prefer a synced Stripe Price for integrity; fall back to server price_data.
-    if (variant.stripePriceId) {
-      lineItems.push({ price: variant.stripePriceId, quantity: line.quantity });
+    // Charge the synced Stripe Price only when it matches the Sanity amount and
+    // belongs to this variant; otherwise build the price from the Sanity amount
+    // (attached to the variant's own Stripe Product when it has one). A sync
+    // still running after a price change or a Studio duplicate can't make a
+    // buyer pay a stale or borrowed price.
+    const synced = await chargeableStripeIds(result._id, variant);
+    if (synced.priceId) {
+      lineItems.push({ price: synced.priceId, quantity: line.quantity });
     } else {
-      // No synced Price yet (sync pending/failed). Build the price server-side
-      // from the trusted Sanity amount. If the variant already has a synced
-      // Stripe PRODUCT, attach to it so the mapping stays closed — otherwise
-      // create a named ad-hoc product as a last resort.
       const priceData: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem.PriceData =
-        variant.stripeProductId
+        synced.productId
           ? {
               currency: 'gbp',
               unit_amount: variant.priceGBP, // already in pence
-              product: variant.stripeProductId,
+              product: synced.productId,
             }
           : {
               currency: 'gbp',
