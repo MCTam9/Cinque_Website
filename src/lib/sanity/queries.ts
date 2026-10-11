@@ -67,6 +67,8 @@ export const productBySlugQuery = groq`
     edition,
     ringOccasions,
     offerEngraving,
+    largeSizesUpTo,
+    largeSizeSurchargeGBP,
     description,
     careInstructions,
     "images": images[]{ alt, asset, crop, hotspot },
@@ -92,6 +94,9 @@ export const variantForCheckoutQuery = groq`
     status,
     category,
     offerEngraving,
+    largeSizesUpTo,
+    largeSizeSurchargeGBP,
+    "variants": variants[]{ metalType },
     "variant": variants[_key == $variantKey][0]{
       _key, sku, priceGBP, stripeProductId, stripePriceId, stockQuantity, allowBackorder,
       madeToOrder

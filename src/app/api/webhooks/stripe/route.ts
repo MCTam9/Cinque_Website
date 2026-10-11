@@ -142,6 +142,8 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     // Engraving and notes were validated (made-to-order rings only) and the
     // engraving charged at checkout; notes travel in metadata key `n<index>`.
     const engraving = madeToOrder ? fl.e : undefined;
+    // The larger-size surcharge the checkout charged for this line (pence).
+    const largeSizeGBP = madeToOrder && fl.x ? fl.x : undefined;
     const notes = madeToOrder ? session.metadata?.[`n${i}`] : undefined;
     orderLines.push({
       // Indexed: two sizes of one made-to-order variant are two lines.
@@ -155,6 +157,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       unitPriceGBP: doc.variant.priceGBP as number,
       ...(madeToOrder ? { madeToOrder: true, customSize: fl.s ?? '' } : {}),
       ...(engraving ? { engraving, engravingGBP: ENGRAVING_PRICE_PENCE } : {}),
+      ...(largeSizeGBP ? { largeSizeGBP } : {}),
       ...(notes ? { notes } : {}),
       imageUrl,
     });
@@ -235,9 +238,9 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     title: l.titleSnapshot,
     sku: l.sku,
     quantity: l.quantity,
-    unitPriceGBP: l.unitPriceGBP + (l.engravingGBP ?? 0),
+    unitPriceGBP: l.unitPriceGBP + (l.engravingGBP ?? 0) + (l.largeSizeGBP ?? 0),
     imageUrl: l.imageUrl,
-    note: l.madeToOrder ? madeToOrderNote(l.customSize, l.engraving) : undefined,
+    note: l.madeToOrder ? madeToOrderNote(l.customSize, l.engraving, l.largeSizeGBP) : undefined,
     notes: l.notes,
   }));
 

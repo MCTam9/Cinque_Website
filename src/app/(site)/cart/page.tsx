@@ -87,7 +87,7 @@ export default function CartPage() {
                 <P1>{l.title}</P1>
                 <P2 className="text-oslo">{l.sku}</P2>
                 {l.madeToOrder && (
-                  <P2 className="text-graphite">{madeToOrderNote(l.customSize, l.engraving)}</P2>
+                  <P2 className="text-graphite">{madeToOrderNote(l.customSize, l.engraving, l.largeSizeGBP)}</P2>
                 )}
                 {l.notes && <P2 className="line-clamp-2 text-oslo">Notes: {l.notes}</P2>}
 

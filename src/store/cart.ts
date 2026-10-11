@@ -23,9 +23,10 @@ export const cartLineId = (
   l: Pick<CartLine, 'productId' | 'variantKey' | 'customSize' | 'engraving' | 'notes'>
 ) => [l.productId, l.variantKey, l.customSize ?? '', l.engraving ?? '', l.notes ?? ''].join('|');
 
-/** A line's price per piece including any engraving (pence, display-only). */
-export const linePriceGBP = (l: Pick<CartLine, 'unitPriceGBP' | 'engravingGBP'>) =>
-  l.unitPriceGBP + (l.engravingGBP ?? 0);
+/** A line's price per piece including any engraving and larger size (pence, display-only). */
+export const linePriceGBP = (
+  l: Pick<CartLine, 'unitPriceGBP' | 'engravingGBP' | 'largeSizeGBP'>
+) => l.unitPriceGBP + (l.engravingGBP ?? 0) + (l.largeSizeGBP ?? 0);
 
 /**
  * Client-side cart. Persisted to localStorage so the basket survives reloads.

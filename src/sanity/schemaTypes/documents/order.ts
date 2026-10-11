@@ -115,6 +115,12 @@ export const order = defineType({
               readOnly: true,
             }),
             defineField({
+              name: 'largeSizeGBP',
+              title: 'Larger size surcharge (pence, per piece)',
+              type: 'number',
+              readOnly: true,
+            }),
+            defineField({
               name: 'notes',
               title: 'Customer notes (agreed changes)',
               type: 'text',
@@ -128,13 +134,15 @@ export const order = defineType({
               qty: 'quantity',
               size: 'customSize',
               engraving: 'engraving',
+              large: 'largeSizeGBP',
               notes: 'notes',
             },
-            prepare: ({ title, qty, size, engraving, notes }) => ({
+            prepare: ({ title, qty, size, engraving, large, notes }) => ({
               title,
               subtitle: [
                 `qty: ${qty}`,
                 size && `made to order, size ${size}`,
+                large && 'larger size',
                 engraving && `engraved “${engraving}”`,
                 notes && 'has notes',
               ]

@@ -7,6 +7,8 @@
  * The PDP, cart, checkout API, Stripe and both order emails all read from here.
  */
 
+import { formatPence } from './shipping';
+
 export const MADE_TO_ORDER_LEAD_TIME = '8–12 weeks';
 
 /** Longest custom size a customer can enter, e.g. "UK N (US 6¾)" or "17.5mm". */
@@ -33,13 +35,18 @@ export const NOTES_HINT =
   'Only for changes we’ve already agreed with you by email or Instagram. Anything new, please message us before ordering.';
 
 /**
- * "Made to order · Size UK N · Engraving “J&M” · ships in 8–12 weeks" — one
- * line, every surface.
+ * "Made to order · Size UK Y · Larger size +£75 · Engraving “J&M” · ships in
+ * 8–12 weeks" — one line, every surface.
  */
-export function madeToOrderNote(customSize?: string | null, engraving?: string | null): string {
+export function madeToOrderNote(
+  customSize?: string | null,
+  engraving?: string | null,
+  largeSizeGBP?: number | null
+): string {
   return [
     'Made to order',
     customSize ? `Size ${customSize}` : null,
+    largeSizeGBP ? `Larger size +${formatPence(largeSizeGBP)}` : null,
     engraving ? `Engraving “${engraving}”` : null,
     `ships in ${MADE_TO_ORDER_LEAD_TIME}`,
   ]

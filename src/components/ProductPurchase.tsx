@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
@@ -13,6 +14,8 @@ import { H3, P1 } from '@/components/typography';
 import { RING_SIZE_CHART_ID } from '@/components/RingSizeChart';
 import RingSizePicker from '@/components/RingSizePicker';
 import MadeToOrderExtras from '@/components/MadeToOrderExtras';
+import { LARGE_SIZE_LETTERS, ringSizeCharge, type LargeSizes } from '@/lib/shop/ringSizes';
+import { formatPence } from '@/lib/shop/shipping';
 
 export interface PurchaseVariant {
   key: string;
@@ -32,8 +35,8 @@ export interface PurchaseVariant {
  * A made-to-order option (swatch "Made to Order") adds the lead time and a required
  * size between the two: a UK/US/EU/JP wheel for rings, free text otherwise.
  * Made-to-order rings also take notes, and a paid engraving where the Admin
- * offers one. Add to cart waits
- * until a size is given.
+ * offers one. A ring with larger sizes (UK U and up) adds their surcharge
+ * when one is picked. Add to cart waits until a size is given.
  */
 export default function ProductPurchase({
   productId,
@@ -42,6 +45,7 @@ export default function ProductPurchase({
   imageUrl,
   ring = false,
   engraving: offerEngraving = false,
+  largeSizes = null,
 }: {
   productId: string;
   title: string;
@@ -51,6 +55,8 @@ export default function ProductPurchase({
   ring?: boolean;
   /** Ring with "Offer engraving" on in the Admin: made to order can add a £30 engraving. */
   engraving?: boolean;
+  /** Ring sizes above UK T offered in the Admin, and their surcharge. */
+  largeSizes?: LargeSizes | null;
 }) {
   const addLine = useCart((s) => s.addLine);
   const router = useRouter();
@@ -68,6 +74,9 @@ export default function ProductPurchase({
   const engravingText = extras && offerEngraving ? engraving.trim() : '';
   const notesText = extras ? notes.trim() : '';
   const engravingGBP = engravingText ? ENGRAVING_PRICE_PENCE : 0;
+  // What the checkout API will charge for this size (UK U and up).
+  const largeSizeGBP =
+    needsSize && ring && size ? ringSizeCharge(size, largeSizes).surchargeGBP : 0;
   const canAdd = Boolean(selected?.inStock) && (!needsSize || size.length > 0);
 
   const handleAdd = () => {
@@ -81,6 +90,7 @@ export default function ProductPurchase({
       quantity: 1,
       imageUrl,
       ...(needsSize ? { madeToOrder: true, customSize: size } : {}),
+      ...(largeSizeGBP ? { largeSizeGBP } : {}),
       ...(engravingText ? { engraving: engravingText, engravingGBP } : {}),
       ...(notesText ? { notes: notesText } : {}),
     });
@@ -114,16 +124,16 @@ export default function ProductPurchase({
             );
           })}
         </div>
-        <H3 as="p">{selected ? formatGBP(selected.priceGBP + engravingGBP) : '—'}</H3>
+        <H3 as="p">
+          {selected ? formatGBP(selected.priceGBP + engravingGBP + largeSizeGBP) : '—'}
+        </H3>
       </div>
 
       {needsSize && (
         <div className="flex flex-col gap-[10px]">
-          <P1 className="text-graphite">
-            Made to order · ships in {MADE_TO_ORDER_LEAD_TIME}
-          </P1>
+          <P1 className="text-graphite">Made to order · ships in {MADE_TO_ORDER_LEAD_TIME}</P1>
           {ring ? (
-            <RingSizePicker onChange={setCustomSize} />
+            <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
           ) : (
             <label className="flex flex-col gap-[6px]">
               <span className="type-p1 text-oslo">Your size</span>
@@ -139,6 +149,22 @@ export default function ProductPurchase({
                 }`}
               />
             </label>
+          )}
+          {ring && largeSizes && (
+            <p className="type-p2 text-oslo">
+              {`Sizes ${LARGE_SIZE_LETTERS[0]}–${largeSizes.upTo}${
+                largeSizes.surchargeGBP
+                  ? ` add ${formatPence(largeSizes.surchargeGBP)}`
+                  : ' are made to order too'
+              }. Need a different size? `}
+              <Link
+                href="/studio#contact"
+                className="underline underline-offset-4 hover:text-redcurrent"
+              >
+                Message us
+              </Link>
+              .
+            </p>
           )}
           {ring && (
             <a

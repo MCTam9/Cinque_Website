@@ -30,6 +30,7 @@ import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurch
 import ProductGallery from '@/components/ProductGallery';
 import Disclosure from '@/components/Disclosure';
 import RingSizeChart from '@/components/RingSizeChart';
+import { largeSizesOf } from '@/lib/shop/ringSizes';
 import type { PortableTextBlock } from '@portabletext/types';
 import type { CollectionRef, ProductCategory, RingOccasion, SanityImageRef, Variant } from '@/types';
 
@@ -48,6 +49,8 @@ interface PDPProduct {
   edition?: string;
   ringOccasions?: RingOccasion[];
   offerEngraving?: boolean;
+  largeSizesUpTo?: string;
+  largeSizeSurchargeGBP?: number;
   description?: PortableTextBlock[];
   careInstructions?: string;
   images?: SanityImageRef[];
@@ -332,6 +335,7 @@ export default async function ProductPage({
               imageUrl={thumbUrl}
               ring={product.category === 'rings'}
               engraving={product.category === 'rings' && Boolean(product.offerEngraving)}
+              largeSizes={largeSizesOf(product)}
             />
           )}
 
@@ -384,7 +388,7 @@ export default async function ProductPage({
       {/* Ring size chart — only relevant for rings */}
       {product.category === 'rings' && (
         <div className="mt-[40px] md:mt-[60px]">
-          <RingSizeChart />
+          <RingSizeChart largeSizes={largeSizesOf(product)} />
         </div>
       )}
     </ShopLayout>

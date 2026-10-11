@@ -1,9 +1,10 @@
 /**
  * Ring sizes — the single source for the size chart and the PDP size picker.
  *
- * We make UK full sizes G to T. Every other system is just another name for
- * one of those sizes, so the picker offers exactly the chart's rows and
- * switching system relabels the same row. The chart is computed from each
+ * We make UK full sizes G to T as standard. A product can also offer larger
+ * sizes, U up to Z, at a surcharge (both set per product in the Admin). Every
+ * other system is just another name for one of those sizes, so the picker
+ * offers exactly the chart's rows and switching system relabels the same row. The chart is computed from each
  * system's definition by inner circumference (mm) rather than typed in, and
  * agrees with Cartier's published chart to within its whole-millimetre
  * rounding.
@@ -23,9 +24,15 @@ function quarter(n: number): string {
   return `${whole}${{ 0: '', 0.25: '¼', 0.5: '½', 0.75: '¾' }[r - whole]}`;
 }
 
-const UK_LETTERS = 'GHIJKLMNOPQRST'.split('');
+const UK_LETTERS = 'GHIJKLMNOPQRSTUVWXYZ'.split('');
 
-/** UK ring sizes G–T with US / EU / JP equivalents, inner circumference and diameter (mm). */
+/** The largest size we make as standard; anything above is a larger size. */
+export const STANDARD_MAX = 'T';
+
+/** The larger sizes a product can offer, U–Z. */
+export const LARGE_SIZE_LETTERS = UK_LETTERS.slice(UK_LETTERS.indexOf(STANDARD_MAX) + 1);
+
+/** UK ring sizes G–Z with US / EU / JP equivalents, inner circumference and diameter (mm). */
 export const RING_SIZE_ROWS = UK_LETTERS.map((uk) => {
   const circ = ukCirc(uk);
   return {
@@ -59,4 +66,65 @@ export function ringSizeLabel(system: RingSizeSystem, row: number): string {
 export function formatRingSize(system: RingSizeSystem, row: number): string {
   const uk = `UK ${RING_SIZE_ROWS[row].uk}`;
   return system === 'UK' ? uk : `${uk} (${system} ${ringSizeLabel(system, row)})`;
+}
+
+/** A product's larger sizes: the largest it offers and the surcharge (pence). */
+export interface LargeSizes {
+  upTo: string;
+  surchargeGBP: number;
+}
+
+/** How many chart rows a product offers: G–T, or G up to its largest size. */
+export function ringRowCount(large?: LargeSizes | null): number {
+  const last = large && LARGE_SIZE_LETTERS.includes(large.upTo) ? large.upTo : STANDARD_MAX;
+  return UK_LETTERS.indexOf(last) + 1;
+}
+
+/** Whether chart row `row` is a larger size (above UK T). */
+export const isLargeRow = (row: number) => row > UK_LETTERS.indexOf(STANDARD_MAX);
+
+/** "UK Y (US 12¼)" → "Y"; null for a size the picker didn't write. */
+export function ukLetterOf(size: string): string | null {
+  return /^UK ([A-Z])(?![A-Za-z])/.exec(size.trim())?.[1] ?? null;
+}
+
+/**
+ * Check a made-to-order ring size against what the product offers, and what
+ * it adds to the price. The PDP shows this and the checkout API charges it,
+ * so a buyer can't pick (or post) a size the workshop hasn't priced.
+ *
+ * A size not in the picker's "UK X" form passes only where the product offers
+ * no larger sizes (a cart saved before the picker); otherwise its surcharge
+ * couldn't be worked out.
+ */
+export function ringSizeCharge(
+  size: string,
+  large?: LargeSizes | null
+): { ok: boolean; surchargeGBP: number } {
+  const letter = ukLetterOf(size);
+  if (!letter) return { ok: !large, surchargeGBP: 0 };
+  const row = UK_LETTERS.indexOf(letter);
+  if (row < 0 || row >= ringRowCount(large)) return { ok: false, surchargeGBP: 0 };
+  return { ok: true, surchargeGBP: isLargeRow(row) ? (large?.surchargeGBP ?? 0) : 0 };
+}
+
+/** A product made only in silver: larger sizes aren't offered on it. */
+export const silverOnly = (metals?: (string | null | undefined)[] | null) =>
+  Boolean(metals?.length) && metals!.every((m) => m === 'sterling_silver');
+
+/**
+ * The product's larger sizes from its Admin fields, or null when it offers
+ * none (or is silver only). Shared by the PDP and the checkout API so they
+ * always agree.
+ */
+export function largeSizesOf(doc: {
+  category?: string | null;
+  largeSizesUpTo?: string | null;
+  largeSizeSurchargeGBP?: number | null;
+  variants?: { metalType?: string | null }[] | null;
+}): LargeSizes | null {
+  if (doc.category !== 'rings' || !doc.largeSizesUpTo) return null;
+  if (silverOnly(doc.variants?.map((v) => v.metalType))) return null;
+  if (!LARGE_SIZE_LETTERS.includes(doc.largeSizesUpTo)) return null;
+  return { upTo: doc.largeSizesUpTo, surchargeGBP: Math.max(0, doc.largeSizeSurchargeGBP ?? 0) };
 }

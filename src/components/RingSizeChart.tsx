@@ -1,13 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RING_SIZE_ROWS } from '@/lib/shop/ringSizes';
+import {
+  RING_SIZE_ROWS,
+  STANDARD_MAX,
+  isLargeRow,
+  ringRowCount,
+  type LargeSizes,
+} from '@/lib/shop/ringSizes';
+import { formatPence } from '@/lib/shop/shipping';
 
 /** Anchor the PDP's "Ring size chart" link (made-to-order size field) jumps to. */
 export const RING_SIZE_CHART_ID = 'ring-size-chart';
 
-/** Collapsible ring-size chart for the PDP. Opens itself when linked to by id. */
-export default function RingSizeChart() {
+/**
+ * Collapsible ring-size chart for the PDP. Opens itself when linked to by id.
+ * Shows G–T, plus a product's larger sizes (and their surcharge) when it has them.
+ */
+export default function RingSizeChart({ largeSizes }: { largeSizes?: LargeSizes | null }) {
+  const rows = RING_SIZE_ROWS.slice(0, ringRowCount(largeSizes));
+  const firstLarge = rows.find((_, i) => isLargeRow(i))?.uk;
+  const surcharge = largeSizes?.surchargeGBP ?? 0;
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -45,8 +58,12 @@ export default function RingSizeChart() {
               </tr>
             </thead>
             <tbody>
-              {RING_SIZE_ROWS.map((r) => (
-                <tr key={r.uk} className="border-t border-oslo/30">
+              {rows.map((r) => (
+                <tr
+                  key={r.uk}
+                  // The first larger size starts under a full rule, like a new section.
+                  className={`border-t ${r.uk === firstLarge ? 'border-graphite' : 'border-oslo/30'}`}
+                >
                   <td className="py-[10px] pr-8 md:pr-6">{r.uk}</td>
                   <td className="py-[10px] pr-8 md:pr-6">{r.us}</td>
                   <td className="py-[10px] pr-8 md:pr-6">{r.eu}</td>
@@ -57,6 +74,13 @@ export default function RingSizeChart() {
               ))}
             </tbody>
           </table>
+          {firstLarge && largeSizes && (
+            <p className="type-p2 mt-[10px] text-oslo">
+              {`Sizes ${firstLarge}–${largeSizes.upTo} are larger than our standard G–${STANDARD_MAX}${
+                surcharge ? ` and add ${formatPence(surcharge)} for the extra metal` : ''
+              }.`}
+            </p>
+          )}
         </div>
       )}
     </div>
