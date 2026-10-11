@@ -216,9 +216,9 @@ export default function RingSizePicker({
   const system = RING_SIZE_SYSTEMS[draft.systemIndex];
   const rows = ringRowCount(largeSizes);
   const surcharge = largeSizes?.surchargeGBP ?? 0;
-  /** " · +£75" after a larger size, when it costs extra. */
+  /** " (+£75)" after a larger size, when it costs extra. */
   const extra = (row: number) =>
-    surcharge && isLargeRow(row) ? ` · +${formatPence(surcharge)}` : '';
+    surcharge && isLargeRow(row) ? ` (+${formatPence(surcharge)})` : '';
   const changeSystem = (i: number) => setDraft((d) => ({ ...d, systemIndex: i }));
   const changeSize = (i: number) => setDraft((d) => ({ ...d, row: i }));
 

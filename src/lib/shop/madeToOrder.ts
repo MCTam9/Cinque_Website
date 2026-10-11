@@ -11,6 +11,9 @@ import { formatPence } from './shipping';
 
 export const MADE_TO_ORDER_LEAD_TIME = '8–12 weeks';
 
+/** The PDP and cart line for a made-to-order piece. */
+export const MADE_TO_ORDER_LINE = `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}`;
+
 /** Longest custom size a customer can enter, e.g. "UK N (US 6¾)" or "17.5mm". */
 export const CUSTOM_SIZE_MAX = 20;
 
@@ -35,21 +38,21 @@ export const NOTES_HINT =
   'Only for changes we’ve already agreed with you by email or Instagram. Anything new, please message us before ordering.';
 
 /**
- * "Made to order · Size UK Y · Larger size +£75 · Engraving “J&M” · ships in
- * 8–12 weeks" — one line, every surface.
+ * "Made to order, size UK Y, larger size (+£75), engraving “J&M”, ships in
+ * 8–12 weeks" — one line for the emails.
  */
 export function madeToOrderNote(
   customSize?: string | null,
   engraving?: string | null,
-  largeSizeGBP?: number | null
+  largeSizeGBP?: number | null,
 ): string {
   return [
     'Made to order',
-    customSize ? `Size ${customSize}` : null,
-    largeSizeGBP ? `Larger size +${formatPence(largeSizeGBP)}` : null,
-    engraving ? `Engraving “${engraving}”` : null,
+    customSize ? `size ${customSize}` : null,
+    largeSizeGBP ? `larger size (+${formatPence(largeSizeGBP)})` : null,
+    engraving ? `engraving “${engraving}”` : null,
     `ships in ${MADE_TO_ORDER_LEAD_TIME}`,
   ]
     .filter(Boolean)
-    .join(' · ');
+    .join(', ');
 }
