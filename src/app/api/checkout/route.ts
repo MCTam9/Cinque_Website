@@ -15,6 +15,7 @@ import {
   MADE_TO_ORDER_LEAD_TIME,
   NOTES_MAX,
 } from '@/lib/shop/madeToOrder';
+import { largeSizesOf, ringSizeCharge } from '@/lib/shop/ringSizes';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature/crypto & SDK require the Node.js runtime (not Edge).
@@ -49,6 +50,8 @@ type VariantResult = {
   status: string;
   category?: string;
   offerEngraving?: boolean;
+  largeSizesUpTo?: string | null;
+  largeSizeSurchargeGBP?: number | null;
   variant: {
     _key: string;
     sku: string;
@@ -130,6 +133,19 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    // A ring's size must be one the product offers; UK U and up carry its
+    // larger-size surcharge, worked out here and never taken from the client.
+    let largeSizeGBP = 0;
+    if (ringExtras && customSize) {
+      const charge = ringSizeCharge(customSize, largeSizesOf(result));
+      if (!charge.ok) {
+        return NextResponse.json(
+          { error: `Please choose your size for ${result.title} again.` },
+          { status: 400 }
+        );
+      }
+      largeSizeGBP = charge.surchargeGBP;
+    }
 
     if (
       !variant.madeToOrder &&
@@ -166,6 +182,18 @@ export async function POST(req: Request) {
       lineItems.push({ quantity: line.quantity, price_data: priceData });
     }
 
+    // A larger size is its own Stripe line at the Admin's surcharge, per piece.
+    if (largeSizeGBP) {
+      lineItems.push({
+        quantity: line.quantity,
+        price_data: {
+          currency: 'gbp',
+          unit_amount: largeSizeGBP,
+          product_data: { name: `Larger size — ${result.title}` },
+        },
+      });
+    }
+
     // Engraving is its own Stripe line at the server's price, per piece.
     if (engraving) {
       lineItems.push({
@@ -185,13 +213,15 @@ export async function POST(req: Request) {
       q: line.quantity,
       ...(customSize ? { s: customSize } : {}),
       ...(engraving ? { e: engraving } : {}),
+      ...(largeSizeGBP ? { x: largeSizeGBP } : {}),
     });
     if (customSize) {
       madeToOrderItems.push(
         `${result.title} (size ${customSize}${engraving ? `, engraving “${engraving}”` : ''})`
       );
     }
-    subtotalPence += (variant.priceGBP + (engraving ? ENGRAVING_PRICE_PENCE : 0)) * line.quantity;
+    subtotalPence +=
+      (variant.priceGBP + (engraving ? ENGRAVING_PRICE_PENCE : 0) + largeSizeGBP) * line.quantity;
   }
 
   const { country } = parsed.data;

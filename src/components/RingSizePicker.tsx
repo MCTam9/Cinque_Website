@@ -5,8 +5,12 @@ import {
   RING_SIZE_ROWS,
   RING_SIZE_SYSTEMS,
   formatRingSize,
+  isLargeRow,
+  ringRowCount,
   ringSizeLabel,
+  type LargeSizes,
 } from '@/lib/shop/ringSizes';
+import { formatPence } from '@/lib/shop/shipping';
 
 const ITEM_H = 40; // px per row
 const VISIBLE = 5; // rows in view; the middle one is the selection
@@ -46,9 +50,12 @@ function Wheel({
     mounted.current = true;
   }, [index]);
 
-  useEffect(() => () => {
-    if (settle.current) clearTimeout(settle.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (settle.current) clearTimeout(settle.current);
+    },
+    [],
+  );
 
   // Scroll events fire continuously; act once the snap has come to rest.
   const onScroll = () => {
@@ -147,9 +154,16 @@ function fadeBackdrop(dialog: HTMLDialogElement, out: boolean) {
  * on a size. Nothing is recorded until Done — a made-to-order piece can't be
  * returned — and closing any other way discards the change. The sheet grows
  * out of the size row and shrinks back into it. Each wheel row is a row of the
- * size chart, so switching system just relabels the same size.
+ * size chart, so switching system just relabels the same size. A product with
+ * larger sizes lists them after T, each marked with its surcharge.
  */
-export default function RingSizePicker({ onChange }: { onChange: (size: string) => void }) {
+export default function RingSizePicker({
+  onChange,
+  largeSizes,
+}: {
+  onChange: (size: string) => void;
+  largeSizes?: LargeSizes | null;
+}) {
   const [picked, setPicked] = useState<Pick | null>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Pick>(INITIAL);
@@ -200,6 +214,11 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
   };
 
   const system = RING_SIZE_SYSTEMS[draft.systemIndex];
+  const rows = ringRowCount(largeSizes);
+  const surcharge = largeSizes?.surchargeGBP ?? 0;
+  /** " · +£75" after a larger size, when it costs extra. */
+  const extra = (row: number) =>
+    surcharge && isLargeRow(row) ? ` · +${formatPence(surcharge)}` : '';
   const changeSystem = (i: number) => setDraft((d) => ({ ...d, systemIndex: i }));
   const changeSize = (i: number) => setDraft((d) => ({ ...d, row: i }));
 
@@ -221,7 +240,7 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
     fadeBackdrop(dialog, true);
     const shrink = dialog.animate(
       [{ transform: 'none' }, { transform: overTarget(dialog, trigger) }],
-      { duration: MORPH_MS, easing: MORPH_EASE, fill: 'forwards' }
+      { duration: MORPH_MS, easing: MORPH_EASE, fill: 'forwards' },
     );
     shrink.onfinish = () => {
       // Close the element first so the sheet can't flash back at full size
@@ -290,7 +309,9 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
               <Wheel
                 key={system}
                 label={`${system} ring size`}
-                options={RING_SIZE_ROWS.map((_, row) => ringSizeLabel(system, row))}
+                options={RING_SIZE_ROWS.slice(0, rows).map(
+                  (_, row) => `${ringSizeLabel(system, row)}${extra(row)}`,
+                )}
                 index={draft.row}
                 onChange={changeSize}
                 className="flex-1"
@@ -302,6 +323,7 @@ export default function RingSizePicker({ onChange }: { onChange: (size: string) 
               className="type-h3 min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent"
             >
               Done · {formatRingSize(system, draft.row)}
+              {extra(draft.row)}
             </button>
           </div>
         )}
