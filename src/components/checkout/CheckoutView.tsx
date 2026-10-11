@@ -73,7 +73,7 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
           </label>
         ) : (
           <P1 className="text-oslo">
-            Shipping to <span className="text-graphite">{countryName(country)}</span>,{' '}
+            Shipping to <span className="text-graphite">{countryName(country)}</span> /{' '}
             <span className="text-graphite">
               {quote.amountPence === 0 ? 'free' : formatPence(quote.amountPence)}
             </span>

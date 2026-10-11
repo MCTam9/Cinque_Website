@@ -169,13 +169,13 @@ export default async function ProductPage({
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
   const material = materialLabel(product.variants?.[0]);
-  // Distinct sizes across the variants (e.g. "M, P", or "M, Made to Order" when a
+  // Distinct sizes across the variants (e.g. "M / P", or "M / Made to Order" when a
   // made-to-order variant is offered); empty for sizeless pieces.
   const sizes = Array.from(
     new Set(
       (product.variants ?? []).map((v) => (v.madeToOrder ? 'Made to Order' : v.size)).filter(Boolean)
     )
-  ).join(', ');
+  ).join(' / ');
   // Rings tagged in the Studio as engagement rings / wedding bands.
   const occasions = ringOccasionLabels(product).map((o) => o.toLowerCase());
   const occasionPhrase = occasions

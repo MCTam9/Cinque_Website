@@ -147,7 +147,7 @@ export const order = defineType({
                 notes && 'has notes',
               ]
                 .filter(Boolean)
-                .join(', '),
+                .join(' / '),
             }),
           },
         }),
@@ -210,7 +210,7 @@ export const order = defineType({
     select: { title: 'orderNumber', status: 'status', createdAt: 'createdAt' },
     prepare({ title, status, createdAt }) {
       const date = createdAt ? new Date(createdAt).toLocaleDateString('en-GB') : null;
-      return { title: title || 'Order', subtitle: [status, date].filter(Boolean).join(', ') };
+      return { title: title || 'Order', subtitle: [status, date].filter(Boolean).join(' / ') };
     },
   },
 });
