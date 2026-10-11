@@ -66,6 +66,7 @@ export const productBySlugQuery = groq`
     category,
     edition,
     ringOccasions,
+    offerEngraving,
     description,
     careInstructions,
     "images": images[]{ alt, asset, crop, hotspot },
@@ -89,6 +90,8 @@ export const variantForCheckoutQuery = groq`
     _id,
     title,
     status,
+    category,
+    offerEngraving,
     "variant": variants[_key == $variantKey][0]{
       _key, sku, priceGBP, stripeProductId, stripePriceId, stockQuantity, allowBackorder,
       madeToOrder

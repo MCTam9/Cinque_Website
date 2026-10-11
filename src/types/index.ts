@@ -179,6 +179,11 @@ export interface CartLine {
   /** Made-to-order lines only: the size the customer typed. */
   madeToOrder?: boolean;
   customSize?: string;
+  /** Made-to-order rings only: engraving text and its price per piece (pence, display-only). */
+  engraving?: string;
+  engravingGBP?: number;
+  /** Made-to-order rings only: changes already agreed with the studio. */
+  notes?: string;
 }
 
 /** Payload the client posts to POST /api/checkout. */
@@ -187,6 +192,8 @@ export interface CheckoutRequestLine {
   variantKey: string;
   quantity: number;
   customSize?: string;
+  engraving?: string;
+  notes?: string;
 }
 
 /** Compact per-line data stashed in Stripe session metadata for fulfillment. */
@@ -195,4 +202,5 @@ export interface FulfillmentLine {
   v: string; // variantKey
   q: number; // quantity
   s?: string; // custom size, made-to-order lines only
+  e?: string; // engraving, made-to-order rings only (notes travel in metadata `n<index>`)
 }

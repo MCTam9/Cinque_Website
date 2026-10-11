@@ -22,6 +22,11 @@ import { defineArrayMember, defineField, defineType } from 'sanity';
  *
  * If you add a field, ask first whether you would be happy posting its value
  * publicly. If not, it belongs in Stripe.
+ *
+ * One deliberate, owner-approved exception (October 2026): a made-to-order
+ * ring's engraving text and notes are kept on its order line, because the
+ * workshop works from them. They can contain names, so they lean on the
+ * dotted id above to stay token-only — another reason never to change it.
  */
 export const order = defineType({
   name: 'order',
@@ -97,12 +102,42 @@ export const order = defineType({
               title: 'Custom size (made to order)',
               type: 'string',
             }),
+            defineField({
+              name: 'engraving',
+              title: 'Engraving (made to order)',
+              type: 'string',
+              readOnly: true,
+            }),
+            defineField({
+              name: 'engravingGBP',
+              title: 'Engraving price (pence, per piece)',
+              type: 'number',
+              readOnly: true,
+            }),
+            defineField({
+              name: 'notes',
+              title: 'Customer notes (agreed changes)',
+              type: 'text',
+              rows: 3,
+              readOnly: true,
+            }),
           ],
           preview: {
-            select: { title: 'sku', qty: 'quantity', size: 'customSize' },
-            prepare: ({ title, qty, size }) => ({
+            select: {
+              title: 'sku',
+              qty: 'quantity',
+              size: 'customSize',
+              engraving: 'engraving',
+              notes: 'notes',
+            },
+            prepare: ({ title, qty, size, engraving, notes }) => ({
               title,
-              subtitle: [`qty: ${qty}`, size && `made to order, size ${size}`]
+              subtitle: [
+                `qty: ${qty}`,
+                size && `made to order, size ${size}`,
+                engraving && `engraved “${engraving}”`,
+                notes && 'has notes',
+              ]
                 .filter(Boolean)
                 .join(' · '),
             }),

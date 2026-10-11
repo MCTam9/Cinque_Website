@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { stripe } from '@/lib/stripe';
+import { chargeableStripeIds } from '@/lib/stripe/sync';
 import { sanityClient } from '@/lib/sanity/client';
 import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
 import { rateLimit, clientIp } from '@/lib/rateLimit';
 import { SHIP_COUNTRY_CODES, importChargesNotice, shippingQuote } from '@/lib/shop/shipping';
-import { CUSTOM_SIZE_MAX, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
+import {
+  CUSTOM_SIZE_MAX,
+  ENGRAVING_MAX,
+  ENGRAVING_PATTERN,
+  ENGRAVING_PRICE_PENCE,
+  MADE_TO_ORDER_LEAD_TIME,
+  NOTES_MAX,
+} from '@/lib/shop/madeToOrder';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature/crypto & SDK require the Node.js runtime (not Edge).
@@ -23,6 +31,9 @@ const bodySchema = z.object({
         quantity: z.number().int().min(1).max(20),
         // Made-to-order lines only: the size the customer typed on the PDP.
         customSize: z.string().trim().min(1).max(CUSTOM_SIZE_MAX).optional(),
+        // Made-to-order rings only: a paid engraving and agreed changes.
+        engraving: z.string().trim().max(ENGRAVING_MAX).regex(ENGRAVING_PATTERN).optional(),
+        notes: z.string().trim().max(NOTES_MAX).optional(),
       })
     )
     .min(1)
@@ -36,6 +47,8 @@ type VariantResult = {
   _id: string;
   title: string;
   status: string;
+  category?: string;
+  offerEngraving?: boolean;
   variant: {
     _key: string;
     sku: string;
@@ -81,6 +94,9 @@ export async function POST(req: Request) {
   let subtotalPence = 0;
   // "Twist Band (size N½)" for each made-to-order line, shown in Stripe's form.
   const madeToOrderItems: string[] = [];
+  // Notes ride in their own metadata keys (`n<line index>`), not in `cart`,
+  // so a long note can never push the fulfillment map over Stripe's limit.
+  const notesMeta: Record<string, string> = {};
 
   // Validate every line against Sanity — price & stock come from the server,
   // NEVER from the client. This is the price-integrity boundary.
@@ -101,6 +117,13 @@ export async function POST(req: Request) {
     // Made to order: a size is required, and stock is never the limit. Any size
     // sent for an ordinary variant is ignored rather than trusted.
     const customSize = variant.madeToOrder ? line.customSize : undefined;
+    // Notes exist only on made-to-order rings, engraving only where the Admin
+    // offers it; anything sent for another variant is dropped, never trusted
+    // (and never charged).
+    const ringExtras = variant.madeToOrder && result.category === 'rings';
+    const engraving =
+      ringExtras && result.offerEngraving ? line.engraving || undefined : undefined;
+    const notes = ringExtras ? line.notes || undefined : undefined;
     if (variant.madeToOrder && !customSize) {
       return NextResponse.json(
         { error: `Please enter your size for ${result.title}.` },
@@ -119,20 +142,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Prefer a synced Stripe Price for integrity; fall back to server price_data.
-    if (variant.stripePriceId) {
-      lineItems.push({ price: variant.stripePriceId, quantity: line.quantity });
+    // Charge the synced Stripe Price only when it matches the Sanity amount and
+    // belongs to this variant; otherwise build the price from the Sanity amount
+    // (attached to the variant's own Stripe Product when it has one). A sync
+    // still running after a price change or a Studio duplicate can't make a
+    // buyer pay a stale or borrowed price.
+    const synced = await chargeableStripeIds(result._id, variant);
+    if (synced.priceId) {
+      lineItems.push({ price: synced.priceId, quantity: line.quantity });
     } else {
-      // No synced Price yet (sync pending/failed). Build the price server-side
-      // from the trusted Sanity amount. If the variant already has a synced
-      // Stripe PRODUCT, attach to it so the mapping stays closed — otherwise
-      // create a named ad-hoc product as a last resort.
       const priceData: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem.PriceData =
-        variant.stripeProductId
+        synced.productId
           ? {
               currency: 'gbp',
               unit_amount: variant.priceGBP, // already in pence
-              product: variant.stripeProductId,
+              product: synced.productId,
             }
           : {
               currency: 'gbp',
@@ -142,14 +166,32 @@ export async function POST(req: Request) {
       lineItems.push({ quantity: line.quantity, price_data: priceData });
     }
 
+    // Engraving is its own Stripe line at the server's price, per piece.
+    if (engraving) {
+      lineItems.push({
+        quantity: line.quantity,
+        price_data: {
+          currency: 'gbp',
+          unit_amount: ENGRAVING_PRICE_PENCE,
+          product_data: { name: `Engraving — ${result.title}` },
+        },
+      });
+    }
+
+    if (notes) notesMeta[`n${fulfillmentLines.length}`] = notes;
     fulfillmentLines.push({
       p: line.productId,
       v: line.variantKey,
       q: line.quantity,
       ...(customSize ? { s: customSize } : {}),
+      ...(engraving ? { e: engraving } : {}),
     });
-    if (customSize) madeToOrderItems.push(`${result.title} (size ${customSize})`);
-    subtotalPence += variant.priceGBP * line.quantity;
+    if (customSize) {
+      madeToOrderItems.push(
+        `${result.title} (size ${customSize}${engraving ? `, engraving “${engraving}”` : ''})`
+      );
+    }
+    subtotalPence += (variant.priceGBP + (engraving ? ENGRAVING_PRICE_PENCE : 0)) * line.quantity;
   }
 
   const { country } = parsed.data;
@@ -160,9 +202,10 @@ export async function POST(req: Request) {
   const dutiesNotice = importChargesNotice(country);
 
   // Compact fulfillment map for the webhook. Stripe metadata values cap at 500
-  // chars; guard it. (Large carts → future: persist a draft order + reference.)
+  // chars and a session holds at most 50 keys (`cart` + one per noted line);
+  // guard both. (Large carts → future: persist a draft order + reference.)
   const cartMeta = JSON.stringify(fulfillmentLines);
-  if (cartMeta.length > 490) {
+  if (cartMeta.length > 490 || Object.keys(notesMeta).length > 49) {
     return NextResponse.json(
       { error: 'Cart too large. Please split your order.' },
       { status: 400 }
@@ -222,7 +265,7 @@ export async function POST(req: Request) {
             },
           }
         : {}),
-      metadata: { cart: cartMeta },
+      metadata: { cart: cartMeta, ...notesMeta },
     } as SessionCreateParamsWithBranding);
 
     return NextResponse.json({ clientSecret: session.client_secret });

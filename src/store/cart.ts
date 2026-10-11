@@ -15,11 +15,17 @@ interface CartState {
 }
 
 /**
- * A cart line's identity: the variant, plus the custom size for made-to-order
- * pieces — so the same ring in sizes N and P stays two separate lines.
+ * A cart line's identity: the variant, plus the size, engraving and notes for
+ * made-to-order pieces — so the same ring in sizes N and P, or with two
+ * different engravings, stays two separate lines.
  */
-export const cartLineId = (l: Pick<CartLine, 'productId' | 'variantKey' | 'customSize'>) =>
-  [l.productId, l.variantKey, l.customSize ?? ''].join('|');
+export const cartLineId = (
+  l: Pick<CartLine, 'productId' | 'variantKey' | 'customSize' | 'engraving' | 'notes'>
+) => [l.productId, l.variantKey, l.customSize ?? '', l.engraving ?? '', l.notes ?? ''].join('|');
+
+/** A line's price per piece including any engraving (pence, display-only). */
+export const linePriceGBP = (l: Pick<CartLine, 'unitPriceGBP' | 'engravingGBP'>) =>
+  l.unitPriceGBP + (l.engravingGBP ?? 0);
 
 /**
  * Client-side cart. Persisted to localStorage so the basket survives reloads.
@@ -62,7 +68,7 @@ export const useCart = create<CartState>()(
       itemCount: () => get().lines.reduce((n, l) => n + l.quantity, 0),
 
       subtotalGBP: () =>
-        get().lines.reduce((sum, l) => sum + l.unitPriceGBP * l.quantity, 0),
+        get().lines.reduce((sum, l) => sum + linePriceGBP(l) * l.quantity, 0),
     }),
     {
       name: 'cinque-cart',

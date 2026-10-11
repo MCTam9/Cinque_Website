@@ -4,10 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
-import { CUSTOM_SIZE_MAX, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
+import {
+  CUSTOM_SIZE_MAX,
+  ENGRAVING_PRICE_PENCE,
+  MADE_TO_ORDER_LEAD_TIME,
+} from '@/lib/shop/madeToOrder';
 import { H3, P1 } from '@/components/typography';
 import { RING_SIZE_CHART_ID } from '@/components/RingSizeChart';
 import RingSizePicker from '@/components/RingSizePicker';
+import MadeToOrderExtras from '@/components/MadeToOrderExtras';
 
 export interface PurchaseVariant {
   key: string;
@@ -26,7 +31,9 @@ export interface PurchaseVariant {
  *
  * A made-to-order option (swatch "Made to Order") adds the lead time and a required
  * size between the two: a UK/US/EU/JP wheel for rings, free text otherwise.
- * Add to cart waits until a size is given.
+ * Made-to-order rings also take notes, and a paid engraving where the Admin
+ * offers one. Add to cart waits
+ * until a size is given.
  */
 export default function ProductPurchase({
   productId,
@@ -34,6 +41,7 @@ export default function ProductPurchase({
   variants,
   imageUrl,
   ring = false,
+  engraving: offerEngraving = false,
 }: {
   productId: string;
   title: string;
@@ -41,16 +49,25 @@ export default function ProductPurchase({
   imageUrl?: string;
   /** Rings: pick the size on a UK/US/EU/JP wheel (not free text) and link the chart below. */
   ring?: boolean;
+  /** Ring with "Offer engraving" on in the Admin: made to order can add a £30 engraving. */
+  engraving?: boolean;
 }) {
   const addLine = useCart((s) => s.addLine);
   const router = useRouter();
   const firstAvailable = variants.find((v) => v.inStock) ?? variants[0];
   const [selectedKey, setSelectedKey] = useState(firstAvailable?.key);
   const [customSize, setCustomSize] = useState('');
+  const [engraving, setEngraving] = useState('');
+  const [notes, setNotes] = useState('');
 
   const selected = variants.find((v) => v.key === selectedKey) ?? firstAvailable;
   const size = customSize.trim();
   const needsSize = Boolean(selected?.madeToOrder);
+  // Notes exist on any made-to-order ring; engraving only where the Admin offers it.
+  const extras = needsSize && ring;
+  const engravingText = extras && offerEngraving ? engraving.trim() : '';
+  const notesText = extras ? notes.trim() : '';
+  const engravingGBP = engravingText ? ENGRAVING_PRICE_PENCE : 0;
   const canAdd = Boolean(selected?.inStock) && (!needsSize || size.length > 0);
 
   const handleAdd = () => {
@@ -64,6 +81,8 @@ export default function ProductPurchase({
       quantity: 1,
       imageUrl,
       ...(needsSize ? { madeToOrder: true, customSize: size } : {}),
+      ...(engravingText ? { engraving: engravingText, engravingGBP } : {}),
+      ...(notesText ? { notes: notesText } : {}),
     });
     // Jump to the cart, which shows the "added" confirmation.
     router.push(`/cart?added=${encodeURIComponent(title)}`);
@@ -95,7 +114,7 @@ export default function ProductPurchase({
             );
           })}
         </div>
-        <H3 as="p">{selected ? formatGBP(selected.priceGBP) : '—'}</H3>
+        <H3 as="p">{selected ? formatGBP(selected.priceGBP + engravingGBP) : '—'}</H3>
       </div>
 
       {needsSize && (
@@ -115,7 +134,9 @@ export default function ProductPurchase({
                 maxLength={CUSTOM_SIZE_MAX}
                 required
                 placeholder="e.g. 45cm"
-                className="type-p1 min-h-[40px] w-full border border-graphite bg-transparent px-[10px] text-graphite placeholder:text-oslo focus:border-redcurrent focus:outline-none"
+                className={`type-p1 min-h-[40px] w-full border bg-transparent px-[10px] placeholder:text-oslo focus:border-redcurrent focus:outline-none ${
+                  size ? 'border-redcurrent text-redcurrent' : 'border-graphite text-graphite'
+                }`}
               />
             </label>
           )}
@@ -127,6 +148,15 @@ export default function ProductPurchase({
               Ring size chart
             </a>
           )}
+          {extras && (
+            <MadeToOrderExtras
+              offerEngraving={offerEngraving}
+              engraving={engraving}
+              onEngravingChange={setEngraving}
+              notes={notes}
+              onNotesChange={setNotes}
+            />
+          )}
         </div>
       )}
 
@@ -134,7 +164,8 @@ export default function ProductPurchase({
         type="button"
         onClick={handleAdd}
         disabled={!canAdd}
-        className="type-h3 min-h-[40px] w-full border border-graphite text-graphite transition-colors hover:bg-graphite hover:text-cararra disabled:border-oslo disabled:text-oslo"
+        // Matches the size sheet's Done button: solid graphite, red on hover.
+        className="type-h3 min-h-[48px] w-full bg-graphite text-cararra transition-colors hover:bg-redcurrent disabled:bg-oslo disabled:hover:bg-oslo"
       >
         {!selected?.inStock
           ? 'Sold out'
