@@ -6,33 +6,13 @@ import { useEffect, useState } from 'react';
 import { cartLineId, linePriceGBP, useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
 import { INTERNATIONAL_DUTIES_NOTE, SHIPPING_RATES, formatPence } from '@/lib/shop/shipping';
-import { MADE_TO_ORDER_LINE } from '@/lib/shop/madeToOrder';
-import type { CartLine } from '@/types';
+import { MADE_TO_ORDER_LINE, priceRows } from '@/lib/shop/madeToOrder';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
 
 // Per-line quantity cap — mirrors the checkout API's limit so the cart can't
 // exceed what checkout will accept.
 const MAX_QTY = 20;
-
-/**
- * What a made-to-order ring's price is made of, one row each, for a line with
- * a paid extra: the ring, then its larger size and engraving. Amounts cover
- * the line's quantity, so the rows add up to the line total under them.
- * Null when there's nothing to break down.
- */
-function priceRows(l: CartLine): { label: string; amount: number }[] | null {
-  const extras = [
-    l.largeSizeGBP ? { label: 'Larger size', amount: l.largeSizeGBP } : null,
-    l.engraving ? { label: `Engraving “${l.engraving}”`, amount: l.engravingGBP ?? 0 } : null,
-  ].filter((r): r is { label: string; amount: number } => r !== null);
-  if (extras.length === 0) return null;
-  const times = l.quantity > 1 ? ` × ${l.quantity}` : '';
-  return [{ label: 'Ring', amount: l.unitPriceGBP }, ...extras].map((r) => ({
-    label: `${r.label}${times}`,
-    amount: r.amount * l.quantity,
-  }));
-}
 
 export default function CartPage() {
   const lines = useCart((s) => s.lines);
