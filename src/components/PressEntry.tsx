@@ -109,7 +109,7 @@ export function PressEntry({
         </div>
         {(ex.venue || ex.publication) && (
           <P1 className="text-oslo md:border-b md:border-oslo md:pb-[10px] md:text-right">
-            {[ex.venue, ex.publication].filter(Boolean).join(' · ')}
+            {[ex.venue, ex.publication].filter(Boolean).join(', ')}
           </P1>
         )}
       </div>

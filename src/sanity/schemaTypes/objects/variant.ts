@@ -153,7 +153,7 @@ export const variant = defineType({
         title: sku || 'Variant',
         subtitle: [metal === 'custom' ? customMaterial : metal, size, madeToOrder ? 'made to order' : `stock: ${stock ?? 0}`]
           .filter(Boolean)
-          .join(' · '),
+          .join(', '),
       };
     },
   },

@@ -322,7 +322,7 @@ export default function RingSizePicker({
               onClick={() => close(draft)}
               className="type-h3 min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent"
             >
-              Done · {formatRingSize(system, draft.row)}
+              Done, {formatRingSize(system, draft.row)}
               {extra(draft.row)}
             </button>
           </div>

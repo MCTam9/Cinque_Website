@@ -34,15 +34,15 @@ export default function ImportChargesNotice({
     <div className={`flex flex-col gap-[6px] border border-graphite p-[10px] ${className}`}>
       <P1 className="font-bold text-graphite">Import duties &amp; taxes</P1>
       <P1 className="text-graphite">{notice}</P1>
+      {/* One link per line. */}
+      {authority && (
+        <P1 className="text-oslo">
+          <a href={authority.url} target="_blank" rel="noopener noreferrer" className={linkClass}>
+            Guidance from {authority.name}
+          </a>
+        </P1>
+      )}
       <P1 className="text-oslo">
-        {authority && (
-          <>
-            <a href={authority.url} target="_blank" rel="noopener noreferrer" className={linkClass}>
-              Guidance from {authority.name}
-            </a>
-            {' · '}
-          </>
-        )}
         <a
           href={DUTIES_CALCULATOR.url}
           target="_blank"
@@ -51,7 +51,9 @@ export default function ImportChargesNotice({
         >
           Estimate with {DUTIES_CALCULATOR.name}
         </a>{' '}
-        (third party, a rough guide only) ·{' '}
+        (third party, a rough guide only)
+      </P1>
+      <P1 className="text-oslo">
         <Link href="/shipping#duties" className={linkClass}>
           Shipping &amp; returns
         </Link>

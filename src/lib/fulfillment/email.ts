@@ -185,7 +185,7 @@ export interface OrderConfirmationInput {
     quantity: number;
     unitPriceGBP: number;
     imageUrl?: string | null;
-    /** e.g. "Made to order · Size UK N · Engraving “J&M” · ships in 8–12 weeks". */
+    /** e.g. "Made to order, size UK N, engraving “J&M”, ships in 8–12 weeks". */
     note?: string;
     /** Made-to-order rings: changes already agreed with the studio. */
     notes?: string;
