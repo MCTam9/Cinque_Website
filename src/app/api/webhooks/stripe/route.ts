@@ -11,6 +11,7 @@ import {
   sendLowStockAlert,
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
+import { handleCheckoutExpired, markRecovered } from '@/lib/stripe/cartReminder';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import { ENGRAVING_PRICE_PENCE } from '@/lib/shop/madeToOrder';
 import { importChargesNoticeFor } from '@/lib/shop/shipping';
@@ -58,6 +59,10 @@ export async function POST(req: Request) {
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      // An unpaid checkout ran out: list it and maybe send its one reminder.
+      case 'checkout.session.expired':
+        await handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
         break;
       case 'charge.refunded':
         await handleChargeRefunded(event.data.object as Stripe.Charge);
@@ -278,6 +283,13 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     });
   } catch (err) {
     console.error('[webhook] new-order notification error', err);
+  }
+
+  // An unpaid checkout this buyer left earlier now counts as recovered.
+  try {
+    await markRecovered(session, orderNumber);
+  } catch (err) {
+    console.error('[webhook] could not mark recovered checkout', err);
   }
 }
 

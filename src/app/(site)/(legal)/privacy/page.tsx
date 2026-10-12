@@ -34,6 +34,12 @@ export default function PrivacyPage() {
         the performance of a contract, our legitimate interests in responding to you, and
         compliance with legal duties.
       </P1>
+      <P1>
+        If you enter your email at checkout and leave without paying, we may send you one email
+        reminding you of the pieces you chose, with a link back to checkout. It contains no offers.
+        You can opt out of our mailing list with the tickbox at checkout, or with the unsubscribe
+        link in any email we send you.
+      </P1>
 
       <H3 as="h2" className="font-bold">Sharing &amp; processors</H3>
       <P1>

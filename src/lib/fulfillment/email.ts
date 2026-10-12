@@ -67,7 +67,7 @@ const BRAND = {
 // in production; on localhost it only loads for a client on the same host.
 const LOGO_URL = `${publicEnv.NEXT_PUBLIC_SITE_URL}/figma/cinque-logo.png`;
 
-function shell(title: string, bodyHtml: string): string {
+function shell(title: string, bodyHtml: string, footerNote = ''): string {
   // Email-client-safe, table-based layout. All styles inline; no web fonts, no
   // rounded corners — an echo of the storefront's minimal monospace look.
   return `<!doctype html>
@@ -105,7 +105,7 @@ function shell(title: string, bodyHtml: string): string {
             <td style="padding:0 32px 32px 32px;">
               <div style="border-top:1px solid ${BRAND.cloud};padding-top:20px;font-family:${BRAND.font};font-size:11px;line-height:18px;color:${BRAND.oslo};">
                 <a href="https://www.instagram.com/cinque.made" style="color:${BRAND.graphite};text-decoration:none;">Follow us on Instagram / @cinque.made</a><br><br>
-                CINQUE / <a href="https://cinque.studio" style="color:${BRAND.oslo};text-decoration:none;">cinque.studio</a>
+                CINQUE / <a href="https://cinque.studio" style="color:${BRAND.oslo};text-decoration:none;">cinque.studio</a>${footerNote ? `<br><br>${footerNote}` : ''}
               </div>
             </td>
           </tr>
@@ -128,6 +128,7 @@ async function send(args: {
   subject: string;
   html: string;
   replyTo?: string;
+  headers?: { Name: string; Value: string }[];
 }): Promise<SendEmailResult> {
   const token = serverEnv.POSTMARK_SERVER_TOKEN;
   const from = serverEnv.EMAIL_FROM;
@@ -152,6 +153,7 @@ async function send(args: {
         Subject: args.subject,
         HtmlBody: args.html,
         ReplyTo: args.replyTo,
+        ...(args.headers ? { Headers: args.headers } : {}),
         MessageStream: 'outbound',
       }),
     });
@@ -209,21 +211,11 @@ function importNoticeHtml(notice: string | null | undefined): string {
   return notice ? `<p style="margin:20px 0 0 0;">${escapeHtml(notice)}</p>` : '';
 }
 
-/**
- * Line items (with thumbnails), shipping and the total, shared by both order
- * emails. Laid out like the cart: the piece's details one per line, then each
- * priced item (ring, larger size, engraving) on its own row with its amount in
- * the price column, and the line total under them.
- */
-function orderTable(
-  lines: OrderConfirmationInput['lines'],
-  shippingGBP: number | null | undefined,
-  totalGBP: number,
-  currency: string
-): string {
+/** Each line's rows: the piece and its details, any breakdown, the line total. */
+function lineRows(lines: OrderConfirmationInput['lines'], currency: string): string {
   const small = `font-size:12px;line-height:18px;`;
   const rule = `border-bottom:1px solid ${BRAND.cloud};`;
-  const rows = lines
+  return lines
     .map((l) => {
       // Left-aligned product thumbnail. Retina: request 2x, display 56px square.
       const thumb = l.imageUrl
@@ -271,6 +263,21 @@ function orderTable(
         </tr>`;
     })
     .join('');
+}
+
+/**
+ * Line items (with thumbnails), shipping and the total, shared by both order
+ * emails. Laid out like the cart: the piece's details one per line, then each
+ * priced item (ring, larger size, engraving) on its own row with its amount in
+ * the price column, and the line total under them.
+ */
+function orderTable(
+  lines: OrderConfirmationInput['lines'],
+  shippingGBP: number | null | undefined,
+  totalGBP: number,
+  currency: string
+): string {
+  const rows = lineRows(lines, currency);
   const shippingRow =
     shippingGBP == null
       ? ''
@@ -451,4 +458,43 @@ export async function sendLowStockAlert(
     `<table style="width:100%;border-collapse:collapse;">${rows}</table>`
   );
   return send({ to, subject: `Cinque: ${input.items.length} item(s) low on stock`, html });
+}
+
+// ── Unpaid checkout reminder ──────────────────────────────────
+export interface CartReminderInput {
+  to: string;
+  lines: OrderConfirmationInput['lines'];
+  /** Puts the same items back in their cart and opens checkout. */
+  restoreUrl: string;
+  unsubscribeUrl: string;
+  /** One-click unsubscribe for mail clients (RFC 8058). */
+  unsubscribeApiUrl: string;
+}
+
+/**
+ * The one reminder after a checkout expires unpaid. Deliberately plain: what
+ * they chose, a link back, and how to stop these. No discount, no other
+ * products, nothing that makes it a sales email.
+ */
+export async function sendCartReminder(input: CartReminderInput): Promise<SendEmailResult> {
+  const button = `<a href="${escapeHtml(input.restoreUrl)}" style="display:inline-block;padding:12px 20px;background:${BRAND.graphite};color:${BRAND.cararra};font-family:${BRAND.font};font-size:14px;text-decoration:none;">Return to checkout</a>`;
+  const html = shell(
+    'Your checkout',
+    `<p style="margin:0 0 20px 0;">You started checking out at Cinque but didn’t finish. Here is what you chose, in case you’d like to complete your order.</p>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+       ${lineRows(input.lines, 'gbp')}
+     </table>
+     <p style="margin:24px 0 0 0;">${button}</p>
+     <p style="margin:20px 0 0 0;color:${BRAND.oslo};font-size:12px;">Prices, availability and shipping are checked again at checkout. This is the only reminder we’ll send.</p>`,
+    `You’re receiving this because you entered this address at checkout on cinque.studio. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${BRAND.oslo};">Unsubscribe from our mailing list</a>`
+  );
+  return send({
+    to: input.to,
+    subject: 'Your Cinque checkout',
+    html,
+    headers: [
+      { Name: 'List-Unsubscribe', Value: `<${input.unsubscribeApiUrl}>` },
+      { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
+    ],
+  });
 }
