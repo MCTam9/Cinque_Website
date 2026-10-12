@@ -15,6 +15,7 @@ import {
   MADE_TO_ORDER_LEAD_TIME,
   NOTES_MAX,
 } from '@/lib/shop/madeToOrder';
+import { CHECKOUT_EXPIRES_MINUTES } from '@/lib/shop/checkoutEmail';
 import { largeSizesOf, ringSizeCharge } from '@/lib/shop/ringSizes';
 import type { FulfillmentLine } from '@/types';
 
@@ -42,6 +43,16 @@ const bodySchema = z.object({
   // Where the order ships. The session only accepts an address in this
   // country, which is what makes the UK / international rate enforceable.
   country: z.enum(SHIP_COUNTRY_CODES),
+  // Taken on our page before Stripe's form, so an unpaid checkout can get one
+  // reminder (src/lib/stripe/cartReminder.ts). `remind: false` is the opt-out
+  // tickbox. Optional only so a page loaded before this change still works.
+  email: z.string().trim().email().max(254).optional(),
+  remind: z.boolean().optional(),
+  // The expired checkout a reminder link restored, to count recoveries.
+  recoveredFrom: z
+    .string()
+    .regex(/^cs_(live|test)_[A-Za-z0-9]+$/)
+    .optional(),
 });
 
 type VariantResult = {
@@ -225,7 +236,7 @@ export async function POST(req: Request) {
       (variant.priceGBP + (engraving ? ENGRAVING_PRICE_PENCE : 0) + largeSizeGBP) * line.quantity;
   }
 
-  const { country } = parsed.data;
+  const { country, email, remind, recoveredFrom } = parsed.data;
   const shipping = shippingQuote(country, subtotalPence);
   // Outside the UK the buyer pays import charges on delivery (DAP). Said again
   // inside Stripe's form, right under the address, so it is in front of them
@@ -233,10 +244,10 @@ export async function POST(req: Request) {
   const dutiesNotice = importChargesNotice(country);
 
   // Compact fulfillment map for the webhook. Stripe metadata values cap at 500
-  // chars and a session holds at most 50 keys (`cart` + one per noted line);
-  // guard both. (Large carts → future: persist a draft order + reference.)
+  // chars and a session holds at most 50 keys (`cart`, `remind`, `rf` and one
+  // per noted line); guard both. (Large carts → future: persist a draft order + reference.)
   const cartMeta = JSON.stringify(fulfillmentLines);
-  if (cartMeta.length > 490 || Object.keys(notesMeta).length > 49) {
+  if (cartMeta.length > 490 || Object.keys(notesMeta).length > 47) {
     return NextResponse.json(
       { error: 'Cart too large. Please split your order.' },
       { status: 400 }
@@ -258,6 +269,12 @@ export async function POST(req: Request) {
       mode: 'payment',
       line_items: lineItems,
       return_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+      // The address from our email step: Stripe shows it filled in, and it's
+      // where a reminder goes if this checkout expires unpaid.
+      ...(email ? { customer_email: email } : {}),
+      // Unpaid checkouts expire (and can get their reminder) after two hours
+      // rather than Stripe's default 24, while the visit is still fresh.
+      expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_EXPIRES_MINUTES * 60,
       // Embedded Checkout renders in a Stripe-owned iframe — host CSS can't
       // reach it (same-origin policy), so the background is set server-side
       // to match the site's cararra background instead of Stripe's default white.
@@ -296,7 +313,12 @@ export async function POST(req: Request) {
             },
           }
         : {}),
-      metadata: { cart: cartMeta, ...notesMeta },
+      metadata: {
+        cart: cartMeta,
+        ...notesMeta,
+        remind: email && remind !== false ? '1' : '0',
+        ...(recoveredFrom ? { rf: recoveredFrom } : {}),
+      },
     } as SessionCreateParamsWithBranding);
 
     return NextResponse.json({ clientSecret: session.client_secret });

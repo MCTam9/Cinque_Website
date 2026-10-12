@@ -46,6 +46,14 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
         ),
       S.documentTypeListItem('order').title('All orders'),
+      S.listItem()
+        .title('Unpaid checkouts')
+        .child(
+          S.documentList()
+            .title('Unpaid checkouts')
+            .filter('_type == "abandonedCheckout"')
+            .defaultOrdering([{ field: 'lastCheckoutAt', direction: 'desc' }])
+        ),
 
       // ── Catalog ──
       S.divider().title('Catalog'),

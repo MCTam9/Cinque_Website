@@ -33,8 +33,13 @@ export default defineConfig({
     newDocumentOptions: (prev) =>
       prev.filter(
         (item) =>
-          item.templateId !== 'stripeEvent' &&
-          item.templateId !== 'order' &&
+          ![
+            'stripeEvent',
+            'order',
+            'abandonedCheckout',
+            'reminderOptOut',
+            'cartReminder',
+          ].includes(item.templateId) &&
           item.templateId !== 'homePage' &&
           item.templateId !== 'studioPage'
       ),
