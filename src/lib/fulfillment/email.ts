@@ -486,7 +486,7 @@ export async function sendCartReminder(input: CartReminderInput): Promise<SendEm
      </table>
      <p style="margin:24px 0 0 0;">${button}</p>
      <p style="margin:20px 0 0 0;color:${BRAND.oslo};font-size:12px;">Prices, availability and shipping are checked again at checkout. This is the only reminder we’ll send.</p>`,
-    `You’re receiving this because you entered this address at checkout on cinque.studio. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${BRAND.oslo};">Unsubscribe from reminders</a>`
+    `You’re receiving this because you entered this address at checkout on cinque.studio. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${BRAND.oslo};">Unsubscribe from our mailing list</a>`
   );
   return send({
     to: input.to,

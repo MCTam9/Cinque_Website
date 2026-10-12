@@ -26,8 +26,8 @@ export default function UnsubscribePage() {
       {state === 'done' ? (
         <>
           <P1 className="mb-[20px] text-graphite">
-            Done. We won’t send you checkout reminders again. Order confirmations and shipping
-            updates for anything you buy still arrive as usual.
+            Done. You’re off our mailing list. Order confirmations and shipping updates for anything
+            you buy still arrive as usual.
           </P1>
           <Link href="/shop" className="btn">
             Continue shopping
@@ -35,16 +35,14 @@ export default function UnsubscribePage() {
         </>
       ) : (
         <div className="flex max-w-[480px] flex-col gap-[20px]">
-          <P1 className="text-graphite">
-            Stop the reminder we send when a checkout is left unfinished?
-          </P1>
+          <P1 className="text-graphite">Unsubscribe from our mailing list?</P1>
           <button
             type="button"
             onClick={confirm}
             disabled={state === 'busy'}
             className="type-h3 min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent disabled:bg-oslo"
           >
-            Stop checkout reminders
+            Unsubscribe
           </button>
           {state === 'error' && (
             <P1 className="text-redcurrent">
