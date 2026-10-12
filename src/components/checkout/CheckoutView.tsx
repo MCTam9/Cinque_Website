@@ -33,6 +33,8 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
   const [confirmedEmail, setConfirmedEmail] = useState<string | null>(null);
   const [emailError, setEmailError] = useState(false);
   const [recoveredFrom, setRecoveredFrom] = useState<string | null>(null);
+  // The open Stripe session, so the opt-out can be saved onto it in place.
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const emailId = useId();
 
   // Arriving from a reminder link (or a reload): fill in what we know.
@@ -56,6 +58,17 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
     setEmailError(false);
     setConfirmedEmail(value);
     writePrefill({ email: value });
+  };
+
+  const toggleReminder = (optOut: boolean) => {
+    setNoReminder(optOut);
+    if (sessionId) {
+      void fetch('/api/checkout/remind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, remind: !optOut }),
+      }).catch(() => {});
+    }
   };
 
   const checkoutLines = lines.map((l) => ({
@@ -127,7 +140,7 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
 
       {confirmedEmail ? (
         <>
-          <P1 className="mb-[20px] text-oslo">
+          <P1 className="mb-[10px] text-oslo">
             Email <span className="text-graphite">{confirmedEmail}</span>
             <button
               type="button"
@@ -137,12 +150,23 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
               Change
             </button>
           </P1>
+          {/* The opt-out the reminder relies on, offered with the address. */}
+          <label className="type-p1 mb-[20px] flex cursor-pointer items-start gap-[10px] text-oslo">
+            <input
+              type="checkbox"
+              checked={noReminder}
+              onChange={(e) => toggleReminder(e.target.checked)}
+              className="mt-[3px] h-[16px] w-[16px] shrink-0 accent-graphite"
+            />
+            <span>{REMINDER_OPT_OUT_LABEL}</span>
+          </label>
           <EmbeddedCheckout
             lines={checkoutLines}
             country={country}
             email={confirmedEmail}
             remind={!noReminder}
             recoveredFrom={recoveredFrom}
+            onSession={setSessionId}
           />
         </>
       ) : (
@@ -177,16 +201,6 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
               Please enter a valid email address.
             </P1>
           )}
-          {/* The opt-out the reminder relies on: offered where the address is taken. */}
-          <label className="type-p1 flex cursor-pointer items-start gap-[10px] text-oslo">
-            <input
-              type="checkbox"
-              checked={noReminder}
-              onChange={(e) => setNoReminder(e.target.checked)}
-              className="mt-[3px] h-[16px] w-[16px] shrink-0 accent-graphite"
-            />
-            <span>{REMINDER_OPT_OUT_LABEL}</span>
-          </label>
           <button
             type="submit"
             className="type-h3 mt-[10px] min-h-[48px] bg-graphite text-cararra transition-colors hover:bg-redcurrent"

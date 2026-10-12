@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -30,15 +30,23 @@ export function EmbeddedCheckout({
   email,
   remind,
   recoveredFrom,
+  onSession,
 }: {
   lines: CheckoutRequestLine[];
   country: ShipCountry;
   /** From the email step; Stripe shows it filled in. */
   email: string;
-  /** False when the buyer ticked the reminder opt-out. */
+  /**
+   * False when the buyer ticked the opt-out. Read when a session is created;
+   * a later change is saved onto the open session instead (see onSession).
+   */
   remind: boolean;
   recoveredFrom?: string | null;
+  /** The open Checkout Session's id, for saving the opt-out onto it. */
+  onSession?: (sessionId: string | null) => void;
 }) {
+  const remindRef = useRef(remind);
+  remindRef.current = remind;
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const linesKey = JSON.stringify(lines);
@@ -56,7 +64,7 @@ export function EmbeddedCheckout({
             lines,
             country,
             email,
-            remind,
+            remind: remindRef.current,
             ...(recoveredFrom ? { recoveredFrom } : {}),
           }),
         });
@@ -65,7 +73,10 @@ export function EmbeddedCheckout({
           throw new Error(body.error ?? 'Checkout failed.');
         }
         const { clientSecret: secret } = await res.json();
-        if (!cancelled) setClientSecret(secret as string);
+        if (!cancelled) {
+          setClientSecret(secret as string);
+          onSession?.((secret as string).split('_secret_')[0]);
+        }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Checkout failed.');
       }
@@ -76,7 +87,7 @@ export function EmbeddedCheckout({
     // linesKey captures the cart contents; re-run only when they, the country
     // or the email step change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linesKey, country, email, remind]);
+  }, [linesKey, country, email]);
 
   if (error) {
     return (
