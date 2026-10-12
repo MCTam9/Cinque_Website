@@ -272,7 +272,7 @@ export async function POST(req: Request) {
       // The address from our email step: Stripe shows it filled in, and it's
       // where a reminder goes if this checkout expires unpaid.
       ...(email ? { customer_email: email } : {}),
-      // Unpaid checkouts expire (and can get their reminder) after two hours
+      // Unpaid checkouts expire (and can get their reminder) after four hours
       // rather than Stripe's default 24, while the visit is still fresh.
       expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_EXPIRES_MINUTES * 60,
       // Embedded Checkout renders in a Stripe-owned iframe — host CSS can't
