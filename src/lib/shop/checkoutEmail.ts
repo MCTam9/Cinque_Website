@@ -7,7 +7,7 @@
 export const CHECKOUT_EXPIRES_MINUTES = 240;
 
 /** The opt-out tickbox under the email field. */
-export const REMINDER_OPT_OUT_LABEL = 'Don’t email me a reminder if I don’t finish checking out';
+export const REMINDER_OPT_OUT_LABEL = 'Opt out of our mailing list';
 
 /** A light check before the server's own; Stripe validates it again. */
 export const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
