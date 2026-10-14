@@ -493,8 +493,7 @@ export async function sendCartReminder(input: CartReminderInput): Promise<SendEm
      </table>
      <p style="margin:24px 0 0 0;">${button}</p>
      <p style="margin:24px 0 0 0;">If anything’s holding you back, whether it’s the size, an engraving or just a question about how a piece is made, reply to this email. It comes straight to me, and I’m always happy to help. You can also find us on <a href="https://www.instagram.com/cinque.made" style="color:${BRAND.graphite};">Instagram</a>.</p>
-     <p style="margin:20px 0 0 0;">${escapeHtml(sender)}<br><span style="color:${BRAND.oslo};">Cinque</span></p>
-     <p style="margin:24px 0 0 0;color:${BRAND.oslo};font-size:12px;">Prices and availability are checked again when you return to checkout. This is the only reminder I’ll send.</p>`,
+     <p style="margin:20px 0 0 0;">${escapeHtml(sender)}<br><span style="color:${BRAND.oslo};">Cinque</span></p>`,
     `You’re receiving this because you entered this address at checkout on cinque.studio. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${BRAND.oslo};">Unsubscribe from our mailing list</a>`
   );
   return send({
