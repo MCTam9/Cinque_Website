@@ -461,6 +461,9 @@ export async function sendLowStockAlert(
 }
 
 // ── Unpaid checkout reminder ──────────────────────────────────
+/** Last moment for Christmas made-to-order orders: end of 20 October (UK time). */
+const CHRISTMAS_CUTOFF = new Date('2026-10-20T23:59:59+01:00');
+
 export interface CartReminderInput {
   to: string;
   lines: OrderConfirmationInput['lines'];
@@ -484,10 +487,16 @@ export async function sendCartReminder(input: CartReminderInput): Promise<SendEm
   const sender = /^\s*"?([^"<]+?)"?\s*</.exec(serverEnv.EMAIL_FROM ?? '')?.[1] ?? 'The Cinque studio';
   const titles = [...new Set(input.lines.map((l) => l.title))];
   const what = titles.length === 1 ? `Your ${titles[0]} is` : 'Your pieces are';
+  // Until the Christmas cut-off passes, the note opens with it; afterwards it
+  // falls back to the everyday opening rather than quoting a past deadline.
+  const opening =
+    Date.now() <= CHRISTMAS_CUTOFF.getTime()
+      ? 'I wanted to send a quick note as we approach the holiday season. Because our made-to-order pieces take 8 to 12 weeks to craft, our cut-off date for Christmas orders is 20 October. Here’s what you picked:'
+      : 'You started checking out but didn’t quite get to the end, so here’s what you picked, in case you’d like to come back to it.';
   const html = shell(
     'Still in your cart',
     `<p style="margin:0 0 16px 0;">Hi,</p>
-     <p style="margin:0 0 20px 0;">You started checking out but didn’t quite get to the end, so here’s what you picked, in case you’d like to come back to it.</p>
+     <p style="margin:0 0 20px 0;">${opening}</p>
      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
        ${lineRows(input.lines, 'gbp')}
      </table>
