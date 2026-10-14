@@ -472,25 +472,33 @@ export interface CartReminderInput {
 }
 
 /**
- * The one reminder after a checkout expires unpaid. Deliberately plain: what
- * they chose, a link back, and how to stop these. No discount, no other
- * products, nothing that makes it a sales email.
+ * The one reminder after a checkout expires unpaid, written as a short note
+ * from the studio: what they chose, a link back, an invitation to reply with
+ * questions, and how to stop these. No discount, no other products, nothing
+ * that makes it a sales email.
  */
 export async function sendCartReminder(input: CartReminderInput): Promise<SendEmailResult> {
   const button = `<a href="${escapeHtml(input.restoreUrl)}" style="display:inline-block;padding:12px 20px;background:${BRAND.graphite};color:${BRAND.cararra};font-family:${BRAND.font};font-size:14px;text-decoration:none;">Return to checkout</a>`;
+  // Signed by whoever the email comes from ("Cindy <…>"), so it reads as a
+  // note from a person; replies go straight to them.
+  const sender = /^\s*"?([^"<]+?)"?\s*</.exec(serverEnv.EMAIL_FROM ?? '')?.[1] ?? 'The Cinque studio';
+  const titles = [...new Set(input.lines.map((l) => l.title))];
+  const what = titles.length === 1 ? `Your ${titles[0]} is` : 'Your pieces are';
   const html = shell(
-    'Your checkout',
-    `<p style="margin:0 0 20px 0;">You started checking out at Cinque but didn’t finish. Here is what you chose, in case you’d like to complete your order.</p>
+    'Still in your cart',
+    `<p style="margin:0 0 16px 0;">Hi,</p>
+     <p style="margin:0 0 20px 0;">You started checking out but didn’t quite get to the end, so here’s what you picked, in case you’d like to come back to it.</p>
      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
        ${lineRows(input.lines, 'gbp')}
      </table>
      <p style="margin:24px 0 0 0;">${button}</p>
-     <p style="margin:20px 0 0 0;color:${BRAND.oslo};font-size:12px;">Prices, availability and shipping are checked again at checkout. This is the only reminder we’ll send.</p>`,
+     <p style="margin:24px 0 0 0;">If anything’s holding you back, whether it’s the size, an engraving or just a question about how a piece is made, reply to this email. It comes straight to me, and I’m always happy to help. You can also find us on <a href="https://www.instagram.com/cinque.made" style="color:${BRAND.graphite};">Instagram</a>.</p>
+     <p style="margin:20px 0 0 0;">${escapeHtml(sender)}<br><span style="color:${BRAND.oslo};">Cinque</span></p>`,
     `You’re receiving this because you entered this address at checkout on cinque.studio. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${BRAND.oslo};">Unsubscribe from our mailing list</a>`
   );
   return send({
     to: input.to,
-    subject: 'Your Cinque checkout',
+    subject: `${what} still in your cart`,
     html,
     headers: [
       { Name: 'List-Unsubscribe', Value: `<${input.unsubscribeApiUrl}>` },
