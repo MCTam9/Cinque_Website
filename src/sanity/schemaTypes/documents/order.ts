@@ -66,6 +66,15 @@ export const order = defineType({
         'Look this up in the Stripe dashboard for the buyer\u2019s email, name and shipping address.',
     }),
     defineField({
+      name: 'source',
+      title: 'Paid via',
+      type: 'string',
+      readOnly: true,
+      options: { list: [{ title: 'Stripe payment link (bespoke)', value: 'payment_link' }] },
+      description: 'Empty for orders placed on the website.',
+      hidden: ({ document }) => !document?.source,
+    }),
+    defineField({
       name: 'stripePaymentIntentId',
       title: 'Stripe PaymentIntent ID',
       type: 'string',
