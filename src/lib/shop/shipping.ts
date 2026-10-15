@@ -125,6 +125,94 @@ export function countryName(code: ShipCountry): string {
   return SHIP_COUNTRIES.find((c) => c.code === code)?.name ?? code;
 }
 
+/** Where an address in each destination is, for "Is this going to a UK address?". */
+export const ADDRESS_IN: Record<ShipCountry, string> = {
+  GB: 'a UK address',
+  US: 'a US address',
+  CA: 'a Canadian address',
+  AU: 'an Australian address',
+  JP: 'a Japanese address',
+};
+
+/** EU member states (ISO 3166-1 alpha-2), for the EU pause notice. */
+const EU_COUNTRY_CODES = new Set(
+  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE'.split(' ')
+);
+
+/** A visitor located (by IP) somewhere we don't ship to. */
+export interface VisitorOutside {
+  code: string;
+  /** "France" */
+  name: string;
+  inEU: boolean;
+}
+
+/**
+ * The visitor's country from Vercel's `x-vercel-ip-country`, when it's one we
+ * don't ship to; null when we do, or when it's unknown (local dev). The cart
+ * and checkout use it to warn before payment: a buyer in France once paid
+ * for UK delivery with a French address.
+ */
+export function visitorOutside(code: string | null | undefined): VisitorOutside | null {
+  if (!code || !/^[A-Z]{2}$/.test(code) || isShipCountry(code)) return null;
+  let name = code;
+  try {
+    name = new Intl.DisplayNames(['en-GB'], { type: 'region' }).of(code) ?? code;
+  } catch {
+    // An unknown code: the code itself will do.
+  }
+  return { code, name, inEU: EU_COUNTRY_CODES.has(code) };
+}
+
+/** "the United Kingdom", "Canada": a country name to use in a sentence. */
+export function countryInSentence(code: ShipCountry): string {
+  return code === 'GB' || code === 'US' ? `the ${countryName(code)}` : countryName(code);
+}
+
+/** "the United Kingdom, the United States, Canada, Australia and Japan". */
+export const SHIP_COUNTRIES_SENTENCE = SHIP_COUNTRY_CODES.map(countryInSentence)
+  .join(', ')
+  .replace(/, ([^,]+)$/, ' and $1');
+
+/**
+ * Postcode shapes for the countries we ship to (upper-cased, single-spaced).
+ * Stripe's address form takes any postcode under any country, and its
+ * embedded checkout no longer lets us reject an address before payment, so
+ * the webhook checks the shape after payment and flags a mismatch for the
+ * studio to sort out before posting. A buyer in France once paid for UK
+ * delivery with "94410" as the postcode.
+ */
+const POSTCODE_PATTERNS: Record<ShipCountry, RegExp> = {
+  GB: /^(GIR ?0AA|[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}|BFPO ?\d{1,4})$/,
+  US: /^\d{5}(-?\d{4})?$/,
+  CA: /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/,
+  AU: /^\d{4}$/,
+  JP: /^\d{3}-?\d{4}$/,
+};
+
+/**
+ * Why a shipping address needs checking before it's posted, or null if it
+ * looks right: a country we don't ship to, or a postcode that isn't shaped
+ * like one from the country chosen. Names no part of the address, so it can
+ * sit on the (public) order document.
+ */
+export function addressWarning(
+  country: string | null | undefined,
+  postcode: string | null | undefined
+): string | null {
+  if (!isShipCountry(country)) {
+    return `The shipping country (${country || 'none'}) isn’t one we ship to. Check the address in Stripe before posting.`;
+  }
+  const normalised = (postcode ?? '')
+    .normalize('NFKC') // full-width digits and hyphens, as typed in Japan
+    .replace(/^〒/, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+  if (POSTCODE_PATTERNS[country].test(normalised)) return null;
+  return `The postcode doesn’t look like one from ${countryInSentence(country)}, the country chosen at checkout. Check the address with the customer before posting.`;
+}
+
 export interface ShippingQuote {
   amountPence: number;
   /** Shown as the shipping line in Stripe's checkout and on the order. */

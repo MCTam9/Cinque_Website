@@ -75,6 +75,15 @@ export const order = defineType({
       hidden: ({ document }) => !document?.source,
     }),
     defineField({
+      name: 'addressWarning',
+      title: 'Check the address',
+      type: 'string',
+      readOnly: true,
+      description:
+        'Set when the postcode doesn\u2019t fit the country chosen at checkout. Confirm the address with the customer (in Stripe) before posting.',
+      hidden: ({ document }) => !document?.addressWarning,
+    }),
+    defineField({
       name: 'stripePaymentIntentId',
       title: 'Stripe PaymentIntent ID',
       type: 'string',
@@ -216,10 +225,20 @@ export const order = defineType({
     },
   ],
   preview: {
-    select: { title: 'orderNumber', status: 'status', createdAt: 'createdAt' },
-    prepare({ title, status, createdAt }) {
+    select: {
+      title: 'orderNumber',
+      status: 'status',
+      createdAt: 'createdAt',
+      addressWarning: 'addressWarning',
+    },
+    prepare({ title, status, createdAt, addressWarning }) {
       const date = createdAt ? new Date(createdAt).toLocaleDateString('en-GB') : null;
-      return { title: title || 'Order', subtitle: [status, date].filter(Boolean).join(' / ') };
+      return {
+        title: title || 'Order',
+        subtitle: [addressWarning ? 'check address' : null, status, date]
+          .filter(Boolean)
+          .join(' / '),
+      };
     },
   },
 });

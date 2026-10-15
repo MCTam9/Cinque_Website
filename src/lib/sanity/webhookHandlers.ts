@@ -47,6 +47,11 @@ export function slugOf(body: SanityWebhookBody): string | undefined {
 
 /** Refresh every route that renders this document type. */
 export function revalidateFor(type: string, slug?: string): string[] {
+  // Announcements show on many pages, product pages included: refresh them all.
+  if (type === 'announcement') {
+    revalidatePath('/', 'layout');
+    return ['/ (every page)'];
+  }
   const paths = pathsFor(type, slug);
   for (const path of paths) revalidatePath(path);
 

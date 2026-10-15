@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Announcements from '@/components/Announcements';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1 } from '@/components/typography';
 import { PressEntry, type PressEntryDoc } from '@/components/PressEntry';
@@ -26,7 +27,10 @@ export default async function PressPage() {
 
   return (
     <Container className={contentPadY}>
-      <H1 className="mb-[10px] border-b border-oslo pb-[10px]">PRESS</H1>
+      <div className="mb-[10px]">
+        <H1 className="border-b border-oslo pb-[10px]">PRESS</H1>
+        <Announcements page="press" />
+      </div>
 
       {items.length === 0 ? (
         <P1 className="text-oslo">No press listed yet. Please check back soon.</P1>

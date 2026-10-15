@@ -26,6 +26,7 @@ export const structure: StructureResolver = (S) =>
         .child(
           S.document().schemaType('studioPage').documentId('studioPage')
         ),
+      S.documentTypeListItem('announcement').title('Announcements'),
 
       // ── Orders: what needs action first ──
       S.divider().title('Orders'),

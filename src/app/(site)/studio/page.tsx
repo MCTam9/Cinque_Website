@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import Announcements from '@/components/Announcements';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -238,7 +239,10 @@ export default async function StudioPage() {
           }}
         />
       )}
-      <H1 className="mb-[10px] border-b border-oslo pb-[10px]">STUDIO</H1>
+      <div className="mb-[10px]">
+        <H1 className="border-b border-oslo pb-[10px]">STUDIO</H1>
+        <Announcements page="studio" />
+      </div>
 
       {/* About */}
       <H2 className="mb-[10px] border-b border-oslo pb-[10px]">About</H2>

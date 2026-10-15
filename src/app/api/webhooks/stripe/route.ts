@@ -15,7 +15,7 @@ import { handleCheckoutExpired, markRecovered } from '@/lib/stripe/cartReminder'
 import { markBespokePaid } from '@/lib/stripe/bespoke';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import { ENGRAVING_PRICE_PENCE } from '@/lib/shop/madeToOrder';
-import { importChargesNoticeFor } from '@/lib/shop/shipping';
+import { addressWarning, importChargesNoticeFor } from '@/lib/shop/shipping';
 import type { FulfillmentLine } from '@/types';
 
 // Stripe signature verification uses Node crypto — Edge would break it.
@@ -223,6 +223,11 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   // They are NOT written to the order document: the Sanity dataset is public,
   // and Stripe already holds this. See the order schema's no-PII note.
   const contact = contactFromSession(session);
+  // Stripe accepts any postcode under any country: flag one that doesn't fit
+  // the country chosen, so the studio checks before posting.
+  const checkAddress = contact.address
+    ? addressWarning(contact.address.country, contact.address.postalCode)
+    : null;
 
   const paymentIntentId =
     typeof session.payment_intent === 'string'
@@ -240,6 +245,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     stripeSessionId: session.id,
     stripePaymentIntentId: paymentIntentId,
     ...(fromShop ? {} : { source: 'payment_link' }),
+    ...(checkAddress ? { addressWarning: checkAddress } : {}),
     // imageUrl is derived (email-only) — keep it out of the persisted snapshot.
     lines: orderLines.map(({ imageUrl: _imageUrl, ...persisted }) => persisted),
     totalGBP: session.amount_total ?? 0,
@@ -327,6 +333,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',
       customer: contact,
+      addressWarning: checkAddress,
       dashboardUrl: paymentIntentId
         ? `https://dashboard.stripe.com/${session.livemode ? '' : 'test/'}payments/${paymentIntentId}`
         : null,

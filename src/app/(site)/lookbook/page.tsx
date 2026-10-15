@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Announcements from '@/components/Announcements';
 import Link from 'next/link';
 import Image from 'next/image';
 import { contentPadY, shellGrid } from '@/components/Container';
@@ -190,9 +191,10 @@ export default async function LookbookPage({
         </ul>
       </aside>
 
-      {/* Editorial content */}
-      <div className="pt-[10px] md:col-start-2 md:row-start-2">
-        <H2 className="mb-[10px] border-b border-oslo pb-[10px]">Drop {label}</H2>
+      {/* Editorial content, under any announcement hanging off the rule */}
+      <div className="md:col-start-2 md:row-start-2">
+        <Announcements page="lookbook" />
+        <H2 className="mb-[10px] mt-[10px] border-b border-oslo pb-[10px]">Drop {label}</H2>
 
         {/* Row 1: copy + up to two images | featured image. On mobile these
             stack, so they take the 20px text↔image spacing used elsewhere; from
