@@ -1,8 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PortableText, type PortableTextComponents } from '@portabletext/react';
 import { P1 } from '@/components/typography';
+import { components as richText } from '@/components/PortableText';
 import { isLiveAt, type Announcement } from '@/lib/announcements';
+
+// Paragraphs in the banner's grey; bold, italic, underline and links as usual.
+const components: PortableTextComponents = {
+  ...richText,
+  block: { normal: ({ children }) => <P1 className="text-oslo">{children}</P1> },
+};
 
 /**
  * Announcements from the Admin under a page heading: a white box hanging off
@@ -28,7 +36,11 @@ export default function AnnouncementBanner({
     <div className="flex flex-col">
       {live.map((a) => (
         <div key={a._id} className="border-x border-b border-oslo bg-white px-[10px] py-[8px]">
-          <P1 className="whitespace-pre-line text-oslo">{a.message}</P1>
+          {typeof a.message === 'string' ? (
+            <P1 className="whitespace-pre-line text-oslo">{a.message}</P1>
+          ) : (
+            <PortableText value={a.message} components={components} />
+          )}
         </div>
       ))}
     </div>

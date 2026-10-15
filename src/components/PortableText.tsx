@@ -12,7 +12,7 @@ import type { PortableTextBlock } from '@portabletext/types';
  * while still supporting formatted CMS content.
  */
 
-const components: PortableTextComponents = {
+export const components: PortableTextComponents = {
   marks: {
     // Renders standard link annotations. External links open in a new tab.
     link: ({ value, children }) => {
