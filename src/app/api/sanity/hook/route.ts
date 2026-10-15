@@ -8,6 +8,7 @@ import {
   syncProduct,
   type SanityWebhookBody,
 } from '@/lib/sanity/webhookHandlers';
+import { syncBespokeOrder } from '@/lib/stripe/bespoke';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,8 +85,8 @@ export async function POST(req: NextRequest) {
 
   const result: Record<string, unknown> = { type: body._type, operation };
 
-  // 1. Always refresh whatever renders this document.
-  result.paths = revalidateFor(body._type, slugOf(body));
+  // 1. Refresh whatever renders this document (nothing renders a bespoke link).
+  result.paths = body._type === 'bespokeOrder' ? [] : revalidateFor(body._type, slugOf(body));
 
   // 2. Products: keep Stripe in step with the catalog.
   if (body._type === 'product' && !isDelete) {
@@ -99,7 +100,17 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3. Orders: email tracking details the first time one is marked shipped.
+  // 3. Bespoke payment links: make (or cancel) the Stripe link.
+  if (body._type === 'bespokeOrder' && body._id && !isDelete) {
+    try {
+      result.bespoke = await syncBespokeOrder(body._id);
+    } catch (err) {
+      console.error('[sanity-hook] bespoke link failed', err);
+      return NextResponse.json({ error: 'Bespoke link failed.' }, { status: 500 });
+    }
+  }
+
+  // 4. Orders: email tracking details the first time one is marked shipped.
   if (body._type === 'order' && !isDelete) {
     try {
       result.emailed = await handleOrderUpdate(body);

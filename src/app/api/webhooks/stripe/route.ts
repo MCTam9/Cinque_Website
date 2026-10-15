@@ -12,6 +12,7 @@ import {
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { handleCheckoutExpired, markRecovered } from '@/lib/stripe/cartReminder';
+import { markBespokePaid } from '@/lib/stripe/bespoke';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import { ENGRAVING_PRICE_PENCE } from '@/lib/shop/madeToOrder';
 import { importChargesNoticeFor } from '@/lib/shop/shipping';
@@ -332,6 +333,17 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     });
   } catch (err) {
     console.error('[webhook] new-order notification error', err);
+  }
+
+  // A bespoke payment link from the Admin: mark its entry paid.
+  if (session.payment_link) {
+    try {
+      const link =
+        typeof session.payment_link === 'string' ? session.payment_link : session.payment_link.id;
+      await markBespokePaid(link, orderNumber);
+    } catch (err) {
+      console.error('[webhook] could not mark bespoke link paid', err);
+    }
   }
 
   // An unpaid checkout this buyer left earlier now counts as recovered.

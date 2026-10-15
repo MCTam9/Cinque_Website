@@ -70,7 +70,7 @@ export const order = defineType({
       title: 'Paid via',
       type: 'string',
       readOnly: true,
-      options: { list: [{ title: 'Stripe payment link (bespoke)', value: 'payment_link' }] },
+      options: { list: [{ title: 'Bespoke payment link', value: 'payment_link' }] },
       description: 'Empty for orders placed on the website.',
       hidden: ({ document }) => !document?.source,
     }),
