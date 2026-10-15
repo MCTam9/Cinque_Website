@@ -43,6 +43,8 @@ export function pathsFor(type: string, slug?: string): string[] {
     case 'page':
       return slug ? [`/pages/${slug}`] : [];
 
+    // Announcements show on many pages: revalidateFor refreshes the whole
+    // site for them instead of listing paths here.
     // order / stripeEvent and anything else is not rendered publicly.
     default:
       return [];

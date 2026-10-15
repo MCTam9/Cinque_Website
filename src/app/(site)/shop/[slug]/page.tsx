@@ -189,7 +189,13 @@ export default async function ProductPage({
     : 0;
 
   return (
-    <ShopLayout active={product.category ?? 'all'} filterable titleHref="/shop" titleAs="p">
+    <ShopLayout
+      active={product.category ?? 'all'}
+      filterable
+      titleHref="/shop"
+      titleAs="p"
+      announcementPage="product"
+    >
       <JsonLd
         data={{
           '@context': 'https://schema.org',

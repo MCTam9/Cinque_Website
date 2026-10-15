@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { contentPadY, shellGrid } from '@/components/Container';
 import { H1, P2 } from '@/components/typography';
 import CategoryDisclosure from '@/components/CategoryDisclosure';
-import AnnouncementBanner from '@/components/AnnouncementBanner';
+import Announcements from '@/components/Announcements';
 import { MATERIAL_GROUPS } from '@/lib/shop/materials';
 
 /**
@@ -51,6 +51,7 @@ export default function ShopLayout({
   filterable = false,
   titleHref,
   titleAs,
+  announcementPage = 'shop',
   children,
 }: {
   active?: string;
@@ -64,6 +65,8 @@ export default function ShopLayout({
    * Visual styling is unchanged either way.
    */
   titleAs?: ElementType;
+  /** Which Admin announcements show under the heading: the Shop's or product pages'. */
+  announcementPage?: 'shop' | 'product';
   children: React.ReactNode;
 }) {
   return (
@@ -101,7 +104,7 @@ export default function ShopLayout({
 
       {/* Centre column content, under the announcement hanging off the rule */}
       <div className="md:col-start-2 md:row-start-2">
-        <AnnouncementBanner />
+        <Announcements page={announcementPage} />
         <div className="pt-[10px]">{children}</div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/store/cart';
 import { EmbeddedCheckout } from '@/components/checkout/EmbeddedCheckout';
@@ -8,14 +8,17 @@ import Container, { contentPadY } from '@/components/Container';
 import ImportChargesNotice from '@/components/ImportChargesNotice';
 import { H1, P1 } from '@/components/typography';
 import {
+  ADDRESS_IN,
   EU_PAUSE_NOTICE,
   SHIP_COUNTRIES,
   SHIP_COUNTRIES_SENTENCE,
   countryName,
   formatPence,
   isShipCountry,
+  countryInSentence,
   shippingQuote,
   type ShipCountry,
+  type VisitorOutside,
 } from '@/lib/shop/shipping';
 import {
   REMINDER_OPT_OUT_LABEL,
@@ -25,14 +28,30 @@ import {
 } from '@/lib/shop/checkoutEmail';
 
 /**
- * `defaultCountry` is null for a visitor somewhere we don't ship to: they pick
- * a country themselves before paying, with the list of where we do ship.
+ * `defaultCountry` is null for a visitor somewhere we don't ship to (`visitor`,
+ * by IP): they pick a country themselves, with the list of where we do ship,
+ * then confirm the order is going to an address there before Stripe's form
+ * opens. Stripe's form takes any address under the country it shows, so this
+ * is the check before payment; the webhook flags a mismatch after it.
  */
-export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry | null }) {
+export function CheckoutView({
+  defaultCountry,
+  visitor,
+  announcements,
+}: {
+  defaultCountry: ShipCountry | null;
+  visitor: VisitorOutside | null;
+  /** The Admin's announcements for Checkout, rendered on the server. */
+  announcements: ReactNode;
+}) {
   const lines = useCart((s) => s.lines);
   const subtotal = useCart((s) => s.subtotalGBP());
   const [country, setCountry] = useState<ShipCountry | null>(defaultCountry);
   const [countryError, setCountryError] = useState(false);
+  // The country the visitor confirmed their address is in (outside visitors).
+  const [confirmedFor, setConfirmedFor] = useState<ShipCountry | null>(null);
+  const [confirmError, setConfirmError] = useState(false);
+  const addressConfirmed = !visitor || (country !== null && confirmedFor === country);
   const [editing, setEditing] = useState(false);
   // The email step: typed here, then handed to Stripe's form filled in.
   const [email, setEmail] = useState('');
@@ -67,6 +86,10 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry |
       setCountryError(true);
       return;
     }
+    if (!addressConfirmed) {
+      setConfirmError(true);
+      return;
+    }
     setConfirmedEmail(value);
     writePrefill({ email: value });
   };
@@ -94,7 +117,12 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry |
   if (checkoutLines.length === 0) {
     return (
       <Container className={contentPadY}>
-        <H1 className="mb-[20px]">CHECKOUT</H1>
+        <div className="mb-[20px]">
+          <div className="border-b border-oslo pb-[10px]">
+            <H1>CHECKOUT</H1>
+          </div>
+          {announcements}
+        </div>
         <P1 className="mb-[20px] text-oslo">Your cart is empty.</P1>
         <Link href="/shop" className="btn">
           Continue shopping
@@ -108,7 +136,12 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry |
 
   return (
     <Container className={contentPadY}>
-      <H1 className="mb-[30px]">CHECKOUT</H1>
+      <div className="mb-[30px]">
+        <div className="border-b border-oslo pb-[10px]">
+          <H1>CHECKOUT</H1>
+        </div>
+        {announcements}
+      </div>
 
       <div className="mb-[20px] flex flex-col gap-[10px]">
         {editing || !country || !quote ? (
@@ -157,6 +190,37 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry |
             </button>
           </P1>
         )}
+        {country && visitor && (
+          <div
+            className={`flex flex-col gap-[6px] border p-[10px] ${
+              confirmError && !addressConfirmed ? 'border-redcurrent' : 'border-graphite'
+            }`}
+          >
+            <P1 className="font-bold text-graphite">You seem to be in {visitor.name}</P1>
+            <P1 className="text-graphite">
+              We can only ship to an address in {countryInSentence(country)}. Is this order going
+              to {ADDRESS_IN[country]}?
+            </P1>
+            <label className="type-p1 flex cursor-pointer items-start gap-[10px] text-graphite">
+              <input
+                type="checkbox"
+                checked={addressConfirmed}
+                onChange={(e) => {
+                  setConfirmedFor(e.target.checked ? country : null);
+                  setConfirmError(false);
+                }}
+                className="mt-[3px] h-[16px] w-[16px] shrink-0 accent-graphite"
+              />
+              <span>Yes, it&rsquo;s going to {ADDRESS_IN[country]}</span>
+            </label>
+            {confirmError && !addressConfirmed && (
+              <P1 className="text-redcurrent">
+                Please confirm the address, or change the country above.
+              </P1>
+            )}
+            {visitor.inEU && <P1 className="text-oslo">{EU_PAUSE_NOTICE}</P1>}
+          </div>
+        )}
         {country ? (
           <ImportChargesNotice country={country} />
         ) : (
@@ -195,7 +259,7 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry |
             />
             <span>{REMINDER_OPT_OUT_LABEL}</span>
           </label>
-          {country && (
+          {country && addressConfirmed && (
             <EmbeddedCheckout
               lines={checkoutLines}
               country={country}

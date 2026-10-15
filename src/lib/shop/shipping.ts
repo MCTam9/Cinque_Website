@@ -125,6 +125,45 @@ export function countryName(code: ShipCountry): string {
   return SHIP_COUNTRIES.find((c) => c.code === code)?.name ?? code;
 }
 
+/** Where an address in each destination is, for "Is this going to a UK address?". */
+export const ADDRESS_IN: Record<ShipCountry, string> = {
+  GB: 'a UK address',
+  US: 'a US address',
+  CA: 'a Canadian address',
+  AU: 'an Australian address',
+  JP: 'a Japanese address',
+};
+
+/** EU member states (ISO 3166-1 alpha-2), for the EU pause notice. */
+const EU_COUNTRY_CODES = new Set(
+  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE'.split(' ')
+);
+
+/** A visitor located (by IP) somewhere we don't ship to. */
+export interface VisitorOutside {
+  code: string;
+  /** "France" */
+  name: string;
+  inEU: boolean;
+}
+
+/**
+ * The visitor's country from Vercel's `x-vercel-ip-country`, when it's one we
+ * don't ship to; null when we do, or when it's unknown (local dev). The cart
+ * and checkout use it to warn before payment: a buyer in France once paid
+ * for UK delivery with a French address.
+ */
+export function visitorOutside(code: string | null | undefined): VisitorOutside | null {
+  if (!code || !/^[A-Z]{2}$/.test(code) || isShipCountry(code)) return null;
+  let name = code;
+  try {
+    name = new Intl.DisplayNames(['en-GB'], { type: 'region' }).of(code) ?? code;
+  } catch {
+    // An unknown code: the code itself will do.
+  }
+  return { code, name, inEU: EU_COUNTRY_CODES.has(code) };
+}
+
 /** "the United Kingdom", "Canada": a country name to use in a sentence. */
 export function countryInSentence(code: ShipCountry): string {
   return code === 'GB' || code === 'US' ? `the ${countryName(code)}` : countryName(code);
