@@ -15,7 +15,6 @@ import {
   countryName,
   formatPence,
   isShipCountry,
-  countryInSentence,
   shippingQuote,
   type ShipCountry,
   type VisitorOutside,
@@ -197,10 +196,7 @@ export function CheckoutView({
             }`}
           >
             <P1 className="font-bold text-graphite">You seem to be in {visitor.name}</P1>
-            <P1 className="text-graphite">
-              We can only ship to an address in {countryInSentence(country)}. Is this order going
-              to {ADDRESS_IN[country]}?
-            </P1>
+            <P1 className="text-graphite">Is this order going to {ADDRESS_IN[country]}?</P1>
             <label className="type-p1 flex cursor-pointer items-start gap-[10px] text-graphite">
               <input
                 type="checkbox"
