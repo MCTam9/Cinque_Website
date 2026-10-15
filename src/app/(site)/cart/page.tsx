@@ -9,6 +9,22 @@ import { INTERNATIONAL_DUTIES_NOTE, SHIPPING_RATES, formatPence } from '@/lib/sh
 import { MADE_TO_ORDER_LINE, priceRows } from '@/lib/shop/madeToOrder';
 import Container, { contentPadY } from '@/components/Container';
 import { H1, P1, P2 } from '@/components/typography';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
+
+/**
+ * CART with a rule beneath and the announcement hanging off it, matching the
+ * SHOP heading. Same in every state, so nothing shifts once the cart loads.
+ */
+function CartHeading({ className = 'mb-[30px]' }: { className?: string }) {
+  return (
+    <div className={className}>
+      <div className="border-b border-oslo pb-[10px]">
+        <H1>CART</H1>
+      </div>
+      <AnnouncementBanner />
+    </div>
+  );
+}
 
 // Per-line quantity cap — mirrors the checkout API's limit so the cart can't
 // exceed what checkout will accept.
@@ -33,7 +49,7 @@ export default function CartPage() {
   if (!mounted) {
     return (
       <Container className={contentPadY}>
-        <H1>CART</H1>
+        <CartHeading />
       </Container>
     );
   }
@@ -41,7 +57,7 @@ export default function CartPage() {
   if (lines.length === 0) {
     return (
       <Container className={contentPadY}>
-        <H1 className="mb-[20px]">CART</H1>
+        <CartHeading className="mb-[20px]" />
         <P1 className="mb-[20px] text-oslo">Your cart is empty.</P1>
         <Link href="/shop" className="btn">
           Continue shopping
@@ -52,7 +68,7 @@ export default function CartPage() {
 
   return (
     <Container className={contentPadY}>
-      <H1 className={addedName ? 'mb-[10px]' : 'mb-[30px]'}>CART</H1>
+      <CartHeading className={addedName ? 'mb-[20px]' : 'mb-[30px]'} />
 
       {addedName && (
         <div className="mb-[30px] flex flex-col gap-[10px]">

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { contentPadY, shellGrid } from '@/components/Container';
 import { H1, P2 } from '@/components/typography';
 import CategoryDisclosure from '@/components/CategoryDisclosure';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { MATERIAL_GROUPS } from '@/lib/shop/materials';
 
 /**
@@ -98,8 +99,11 @@ export default function ShopLayout({
         <MaterialList active={active} />
       </aside>
 
-      {/* Centre column content */}
-      <div className="pt-[10px] md:col-start-2 md:row-start-2">{children}</div>
+      {/* Centre column content, under the announcement hanging off the rule */}
+      <div className="md:col-start-2 md:row-start-2">
+        <AnnouncementBanner />
+        <div className="pt-[10px]">{children}</div>
+      </div>
     </div>
   );
 }

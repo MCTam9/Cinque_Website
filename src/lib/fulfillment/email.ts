@@ -2,7 +2,12 @@ import 'server-only';
 import { serverEnv } from '@/lib/serverEnv';
 import { publicEnv } from '@/lib/env';
 import type { OrderContact } from '@/lib/stripe/customer';
-import { MADE_TO_ORDER_LINE, lineTotalGBP, priceRows } from '@/lib/shop/madeToOrder';
+import {
+  CHRISTMAS_CUTOFF,
+  MADE_TO_ORDER_LINE,
+  lineTotalGBP,
+  priceRows,
+} from '@/lib/shop/madeToOrder';
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -474,9 +479,6 @@ export async function sendLowStockAlert(
 }
 
 // ── Unpaid checkout reminder ──────────────────────────────────
-/** Last moment for Christmas made-to-order orders: end of 20 October (UK time). */
-const CHRISTMAS_CUTOFF = new Date('2026-10-20T23:59:59+01:00');
-
 export interface CartReminderInput {
   to: string;
   lines: OrderConfirmationInput['lines'];
