@@ -1,5 +1,5 @@
-import { defineField, defineType } from 'sanity';
-import { ANNOUNCEMENT_PAGES } from '@/lib/announcements';
+import { defineArrayMember, defineField, defineType } from 'sanity';
+import { ANNOUNCEMENT_PAGES, messageText } from '@/lib/announcements';
 
 /**
  * A short notice shown under the heading of the pages ticked here (e.g. the
@@ -14,10 +14,44 @@ export const announcement = defineType({
     defineField({
       name: 'message',
       title: 'Message',
-      type: 'text',
-      rows: 3,
-      description: 'One or two short sentences.',
-      validation: (rule) => rule.required().max(300),
+      type: 'array',
+      description:
+        'One or two short sentences. Select text for bold, italic, underline or a link.',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          styles: [{ title: 'Normal', value: 'normal' }],
+          lists: [],
+          marks: {
+            decorators: [
+              { title: 'Bold', value: 'strong' },
+              { title: 'Italic', value: 'em' },
+              { title: 'Underline', value: 'underline' },
+            ],
+            annotations: [
+              {
+                name: 'link',
+                title: 'Link',
+                type: 'object',
+                fields: [
+                  defineField({
+                    name: 'href',
+                    title: 'Link to',
+                    type: 'url',
+                    description: 'A page on the site (/shop/rings) or a full web address.',
+                    validation: (rule) =>
+                      rule.required().uri({ allowRelative: true, scheme: ['http', 'https', 'mailto'] }),
+                  }),
+                ],
+              },
+            ],
+          },
+        }),
+      ],
+      validation: (rule) =>
+        rule.required().custom((value) =>
+          messageText(value as never).length > 300 ? 'Keep it under 300 characters.' : true
+        ),
     }),
     defineField({
       name: 'pages',
@@ -63,7 +97,7 @@ export const announcement = defineType({
       const ended = until && Date.parse(until) <= Date.now();
       const state = show === false ? 'Hidden' : ended ? 'Ended' : null;
       return {
-        title: message || 'Announcement',
+        title: messageText(message) || 'Announcement',
         subtitle: [state, titles].filter(Boolean).join(' / '),
       };
     },
