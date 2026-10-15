@@ -20,6 +20,8 @@ export default function ContactForm() {
       name: String(data.get('name') ?? ''),
       email: String(data.get('email') ?? ''),
       phone: String(data.get('phone') ?? ''),
+      country: String(data.get('country') ?? ''),
+      ringSize: String(data.get('ringSize') ?? ''),
       message: String(data.get('message') ?? ''),
       company: String(data.get('company') ?? ''), // honeypot
     };
@@ -72,6 +74,46 @@ export default function ContactForm() {
         <span className="type-p1 text-graphite">Phone</span>
         <input type="tel" name="phone" maxLength={40} className={field} />
       </label>
+
+      {/* Asked up front so a bespoke or sizing enquiry doesn't need a second email. */}
+      <label className="flex flex-col gap-1">
+        <span className="type-p1 text-graphite">Country*</span>
+        <input
+          type="text"
+          name="country"
+          required
+          maxLength={60}
+          autoComplete="country-name"
+          className={field}
+        />
+      </label>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="contact-ring-size" className="type-p1 text-graphite">
+          Ring size(s)
+        </label>
+        <input
+          id="contact-ring-size"
+          type="text"
+          name="ringSize"
+          maxLength={120}
+          placeholder="e.g. UK N, or US 7 and US 10"
+          aria-describedby="contact-ring-size-hint"
+          className={`${field} placeholder:text-oslo`}
+        />
+        <p id="contact-ring-size-hint" className="type-p2 text-oslo">
+          For rings. Not sure?{' '}
+          <a
+            href="/shop/rings#ring-size-chart"
+            target="_blank"
+            rel="noopener"
+            className="underline underline-offset-4 hover:text-redcurrent"
+          >
+            Ring size chart
+          </a>
+          , or just say so and we&rsquo;ll help you measure.
+        </p>
+      </div>
 
       <label className="flex flex-col gap-1">
         <span className="type-p1 text-graphite">Message*</span>

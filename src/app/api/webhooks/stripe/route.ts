@@ -12,6 +12,7 @@ import {
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { handleCheckoutExpired, markRecovered } from '@/lib/stripe/cartReminder';
+import { markBespokePaid } from '@/lib/stripe/bespoke';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import { ENGRAVING_PRICE_PENCE } from '@/lib/shop/madeToOrder';
 import { importChargesNoticeFor } from '@/lib/shop/shipping';
@@ -90,6 +91,26 @@ export async function POST(req: Request) {
   }
 }
 
+/** One order line as stored on the order; `imageUrl` is for the emails only. */
+interface OrderLineSnapshot {
+  _key: string;
+  _type: 'orderLine';
+  /** Absent for a bespoke line paid through a Stripe payment link. */
+  product?: { _type: 'reference'; _ref: string; _weak: true };
+  variantKey?: string;
+  sku: string;
+  titleSnapshot: string;
+  quantity: number;
+  unitPriceGBP: number;
+  madeToOrder?: boolean;
+  customSize?: string;
+  engraving?: string;
+  engravingGBP?: number;
+  largeSizeGBP?: number;
+  notes?: string;
+  imageUrl: string | null;
+}
+
 async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   // Retrieve a fresh, complete session (shipping/customer details reliably present).
   const session = await stripe.checkout.sessions.retrieve(sessionStub.id);
@@ -127,7 +148,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   }
 
   // Resolve SKUs/titles/prices from Sanity for the order snapshot.
-  const orderLines = [];
+  const orderLines: OrderLineSnapshot[] = [];
   for (const [i, fl] of fulfillmentLines.entries()) {
     const doc = await sanityWriteClient.fetch(
       `*[_type == "product" && _id == $pid][0]{
@@ -168,6 +189,33 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     });
   }
 
+  // Not a shop checkout: a Stripe Payment Link (or any checkout made outside
+  // the website, e.g. for a bespoke piece) carries no `cart` map. Take the
+  // lines from what Stripe charged instead, so the order and the emails still
+  // list what was bought rather than coming out empty.
+  const fromShop = Boolean(session.metadata?.cart);
+  if (!fromShop) {
+    const charged = await stripe.checkout.sessions.listLineItems(session.id, {
+      limit: 100,
+      expand: ['data.price.product'],
+    });
+    for (const [i, li] of charged.data.entries()) {
+      const product = li.price?.product;
+      const image =
+        product && typeof product === 'object' && !product.deleted ? product.images?.[0] : undefined;
+      const quantity = li.quantity ?? 1;
+      orderLines.push({
+        _key: `stripe-${i}`,
+        _type: 'orderLine',
+        sku: 'Bespoke',
+        titleSnapshot: li.description ?? 'Bespoke piece',
+        quantity,
+        unitPriceGBP: li.price?.unit_amount ?? Math.round(li.amount_subtotal / quantity),
+        imageUrl: image ?? null,
+      });
+    }
+  }
+
   const now = new Date();
   const orderNumber = `CQ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${session.id.slice(-8).toUpperCase()}`;
 
@@ -191,6 +239,7 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     status: 'paid',
     stripeSessionId: session.id,
     stripePaymentIntentId: paymentIntentId,
+    ...(fromShop ? {} : { source: 'payment_link' }),
     // imageUrl is derived (email-only) — keep it out of the persisted snapshot.
     lines: orderLines.map(({ imageUrl: _imageUrl, ...persisted }) => persisted),
     totalGBP: session.amount_total ?? 0,
@@ -205,7 +254,8 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   // future upgrade — see the plan's documented v1 tradeoff.)
   // Made-to-order pieces are never stock-tracked, so they are skipped.
   for (const l of orderLines) {
-    if (l.madeToOrder) continue;
+    // Made to order, or bespoke (no shop product): nothing to deduct.
+    if (!l.product || l.madeToOrder) continue;
     tx.patch(l.product._ref, (p) =>
       p.dec({ [`variants[_key=="${l.variantKey}"].stockQuantity`]: l.quantity })
     );
@@ -283,6 +333,17 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     });
   } catch (err) {
     console.error('[webhook] new-order notification error', err);
+  }
+
+  // A bespoke payment link from the Admin: mark its entry paid.
+  if (session.payment_link) {
+    try {
+      const link =
+        typeof session.payment_link === 'string' ? session.payment_link : session.payment_link.id;
+      await markBespokePaid(link, orderNumber);
+    } catch (err) {
+      console.error('[webhook] could not mark bespoke link paid', err);
+    }
   }
 
   // An unpaid checkout this buyer left earlier now counts as recovered.

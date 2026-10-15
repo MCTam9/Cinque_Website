@@ -46,6 +46,7 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
         ),
       S.documentTypeListItem('order').title('All orders'),
+      S.documentTypeListItem('bespokeOrder').title('Bespoke payment links'),
       S.listItem()
         .title('Unpaid checkouts')
         .child(
