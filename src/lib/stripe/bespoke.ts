@@ -3,15 +3,25 @@ import { stripe } from '@/lib/stripe';
 import { serverEnv } from '@/lib/serverEnv';
 import { sanityWriteClient } from '@/lib/sanity/writeClient';
 import { urlFor } from '@/lib/sanity/image';
-import { importChargesNotice, isShipCountry, shippingQuote } from '@/lib/shop/shipping';
+import {
+  INTERNATIONAL_DUTIES_NOTE,
+  SHIPPING_RATES,
+  SHIP_COUNTRY_CODES,
+  importChargesNotice,
+  isShipCountry,
+  shippingQuote,
+  type ShipCountry,
+} from '@/lib/shop/shipping';
+import { ANY_COUNTRY } from '@/lib/shop/bespoke';
 
 /**
  * ─────────────────────────────────────────────────────────────
  * BESPOKE PAYMENT LINKS
  * ─────────────────────────────────────────────────────────────
  * A "Bespoke payment link" published in the Admin becomes a Stripe Payment
- * Link: the piece at its price, the usual shipping rate for its country,
- * shipping address and phone collected, one payment only. The link's URL is
+ * Link: the piece at its price, shipping to any country we ship to (or one,
+ * if the owner picks it) at the usual rates, shipping address and phone
+ * collected, one payment only. The link's URL is
  * written back for the owner to copy. When it's paid, the Stripe webhook
  * records the order (lines from what Stripe charged) and marks the Admin
  * entry paid. Cancelling switches the link off.
@@ -59,12 +69,13 @@ export async function syncBespokeOrder(id: string): Promise<string> {
   if (doc.cancelled) return 'cancelled before a link was made';
 
   const price = doc.priceGBP;
-  const country = doc.shipTo;
+  const country = doc.shipTo ?? ANY_COUNTRY;
+  const anyCountry = country === ANY_COUNTRY;
   if (
     !doc.title ||
     !Number.isInteger(price) ||
     (price as number) < 100 ||
-    !isShipCountry(country)
+    !(anyCountry || isShipCountry(country))
   ) {
     return 'incomplete';
   }
@@ -88,18 +99,43 @@ export async function syncBespokeOrder(id: string): Promise<string> {
     unit_amount: price as number,
     currency: 'gbp',
   });
-  const quote = shippingQuote(country, price as number);
-  const shippingRate = await stripe.shippingRates.create({
-    display_name: quote.label,
-    type: 'fixed_amount',
-    fixed_amount: { amount: quote.amountPence, currency: 'gbp' },
-  });
-  const duties = importChargesNotice(country);
+
+  // A payment link can't price shipping from the address typed, so with any
+  // country allowed: one free option from £300, otherwise UK or international
+  // for the customer to choose (each labelled with where it's for).
+  const rates: { label: string; amount: number }[] = !anyCountry
+    ? [shippingQuote(country, price as number)].map((q) => ({
+        label: q.label,
+        amount: q.amountPence,
+      }))
+    : (price as number) >= SHIPPING_RATES.freeFromPence
+      ? [{ label: 'Free tracked delivery', amount: 0 }]
+      : [
+          { label: 'UK tracked delivery (UK addresses)', amount: SHIPPING_RATES.domesticPence },
+          {
+            label: 'International tracked delivery (US, Canada, Australia, Japan)',
+            amount: SHIPPING_RATES.internationalPence,
+          },
+        ];
+  const shippingRates = await Promise.all(
+    rates.map((r) =>
+      stripe.shippingRates.create({
+        display_name: r.label,
+        type: 'fixed_amount',
+        fixed_amount: { amount: r.amount, currency: 'gbp' },
+      }),
+    ),
+  );
+  const duties = anyCountry
+    ? INTERNATIONAL_DUTIES_NOTE
+    : importChargesNotice(country as ShipCountry);
 
   const link = await stripe.paymentLinks.create({
     line_items: [{ price: stripePrice.id, quantity: 1 }],
-    shipping_address_collection: { allowed_countries: [country] },
-    shipping_options: [{ shipping_rate: shippingRate.id }],
+    shipping_address_collection: {
+      allowed_countries: anyCountry ? SHIP_COUNTRY_CODES : [country as ShipCountry],
+    },
+    shipping_options: shippingRates.map((r) => ({ shipping_rate: r.id })),
     phone_number_collection: { enabled: true },
     // One payment, then the link switches itself off.
     restrictions: { completed_sessions: { limit: 1 } },

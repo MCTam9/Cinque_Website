@@ -1,5 +1,6 @@
 import { defineField, defineType } from 'sanity';
 import { SHIP_COUNTRIES } from '@/lib/shop/shipping';
+import { ANY_COUNTRY } from '@/lib/shop/bespoke';
 
 /**
  * A bespoke or customised piece sold through a Stripe Payment Link, made here
@@ -95,9 +96,14 @@ export const bespokeOrder = defineType({
       title: 'Ships to',
       type: 'string',
       description:
-        'The customer can only enter an address in this country. Shipping is charged at the usual rate (free from £300).',
-      options: { list: SHIP_COUNTRIES.map((c) => ({ title: c.name, value: c.code })) },
-      initialValue: 'GB',
+        'Any country: the customer enters any address in a country we ship to (UK, US, Canada, Australia, Japan), e.g. to send it to a friend. Shipping is free from £300; under that they choose UK (£4.99) or international (£9.99) delivery. Pick one country to allow only addresses there.',
+      options: {
+        list: [
+          { title: 'Any country we ship to', value: ANY_COUNTRY },
+          ...SHIP_COUNTRIES.map((c) => ({ title: c.name, value: c.code })),
+        ],
+      },
+      initialValue: ANY_COUNTRY,
       validation: (rule) => rule.required(),
       readOnly: locked,
     }),
