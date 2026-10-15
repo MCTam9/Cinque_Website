@@ -39,9 +39,14 @@ export default defineConfig({
             'abandonedCheckout',
             'reminderOptOut',
             'cartReminder',
+            // Created from its own list only, which gives it a private id.
+            'bespokeOrder',
           ].includes(item.templateId) &&
           item.templateId !== 'homePage' &&
           item.templateId !== 'studioPage'
       ),
+    // Duplicate would make a bespoke entry with a plain (public) id.
+    actions: (prev, { schemaType }) =>
+      schemaType === 'bespokeOrder' ? prev.filter((a) => a.action !== 'duplicate') : prev,
   },
 });
