@@ -8,7 +8,9 @@ import Container, { contentPadY } from '@/components/Container';
 import ImportChargesNotice from '@/components/ImportChargesNotice';
 import { H1, P1 } from '@/components/typography';
 import {
+  EU_PAUSE_NOTICE,
   SHIP_COUNTRIES,
+  SHIP_COUNTRIES_SENTENCE,
   countryName,
   formatPence,
   isShipCountry,
@@ -22,10 +24,15 @@ import {
   writePrefill,
 } from '@/lib/shop/checkoutEmail';
 
-export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }) {
+/**
+ * `defaultCountry` is null for a visitor somewhere we don't ship to: they pick
+ * a country themselves before paying, with the list of where we do ship.
+ */
+export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry | null }) {
   const lines = useCart((s) => s.lines);
   const subtotal = useCart((s) => s.subtotalGBP());
-  const [country, setCountry] = useState<ShipCountry>(defaultCountry);
+  const [country, setCountry] = useState<ShipCountry | null>(defaultCountry);
+  const [countryError, setCountryError] = useState(false);
   const [editing, setEditing] = useState(false);
   // The email step: typed here, then handed to Stripe's form filled in.
   const [email, setEmail] = useState('');
@@ -56,6 +63,10 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
       return;
     }
     setEmailError(false);
+    if (!country) {
+      setCountryError(true);
+      return;
+    }
     setConfirmedEmail(value);
     writePrefill({ email: value });
   };
@@ -93,26 +104,37 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
   }
 
   // Display only: the checkout API recomputes this from trusted prices.
-  const quote = shippingQuote(country, subtotal);
+  const quote = country ? shippingQuote(country, subtotal) : null;
 
   return (
     <Container className={contentPadY}>
       <H1 className="mb-[30px]">CHECKOUT</H1>
 
       <div className="mb-[20px] flex flex-col gap-[10px]">
-        {editing ? (
+        {editing || !country || !quote ? (
           <label className="type-p1 flex flex-wrap items-center gap-[10px]">
             <span className="text-oslo">Shipping to</span>
             <select
-              value={country}
-              autoFocus
+              value={country ?? ''}
+              autoFocus={editing}
               onChange={(e) => {
-                if (isShipCountry(e.target.value)) setCountry(e.target.value);
+                if (isShipCountry(e.target.value)) {
+                  setCountry(e.target.value);
+                  setCountryError(false);
+                }
                 setEditing(false);
               }}
               onBlur={() => setEditing(false)}
-              className="type-p1 border border-oslo bg-transparent px-[10px] py-[6px] text-graphite"
+              aria-invalid={countryError}
+              className={`type-p1 border bg-transparent px-[10px] py-[6px] text-graphite ${
+                countryError ? 'border-redcurrent' : 'border-oslo'
+              }`}
             >
+              {!country && (
+                <option value="" disabled>
+                  Choose a country
+                </option>
+              )}
               {SHIP_COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
@@ -135,7 +157,20 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
             </button>
           </P1>
         )}
-        <ImportChargesNotice country={country} />
+        {country ? (
+          <ImportChargesNotice country={country} />
+        ) : (
+          <>
+            {countryError && (
+              <P1 className="text-redcurrent">
+                Please choose the country we&rsquo;re shipping to.
+              </P1>
+            )}
+            <P1 className="text-oslo">
+              We ship to {SHIP_COUNTRIES_SENTENCE}. {EU_PAUSE_NOTICE}
+            </P1>
+          </>
+        )}
       </div>
 
       {confirmedEmail ? (
@@ -160,14 +195,16 @@ export function CheckoutView({ defaultCountry }: { defaultCountry: ShipCountry }
             />
             <span>{REMINDER_OPT_OUT_LABEL}</span>
           </label>
-          <EmbeddedCheckout
-            lines={checkoutLines}
-            country={country}
-            email={confirmedEmail}
-            remind={!noReminder}
-            recoveredFrom={recoveredFrom}
-            onSession={setSessionId}
-          />
+          {country && (
+            <EmbeddedCheckout
+              lines={checkoutLines}
+              country={country}
+              email={confirmedEmail}
+              remind={!noReminder}
+              recoveredFrom={recoveredFrom}
+              onSession={setSessionId}
+            />
+          )}
         </>
       ) : (
         <form

@@ -321,6 +321,8 @@ export interface NewOrderNotificationInput extends Omit<OrderConfirmationInput, 
   customer: OrderContact;
   /** Stripe dashboard link to the payment, for refunds and full details. */
   dashboardUrl?: string | null;
+  /** Why the shipping address needs checking before posting, if it does. */
+  addressWarning?: string | null;
 }
 
 /**
@@ -348,6 +350,11 @@ export async function sendNewOrderNotification(
   const html = shell(
     'New order',
     `<p style="margin:0 0 20px 0;color:${BRAND.oslo};font-size:12px;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(input.orderNumber)}</p>
+     ${
+       input.addressWarning
+         ? `<p style="margin:0 0 20px 0;padding:10px 12px;border:1px solid ${BRAND.redcurrent};color:${BRAND.redcurrent};"><strong>Check the address.</strong> ${escapeHtml(input.addressWarning)}</p>`
+         : ''
+     }
      ${orderTable(input.lines, input.shippingGBP, input.totalGBP, input.currency)}
      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0 0;border-collapse:collapse;">
        ${detail('Name', escapeHtml(c.name ?? ''))}
@@ -363,7 +370,9 @@ export async function sendNewOrderNotification(
   );
   return send({
     to: STUDIO_INBOX,
-    subject: `New order ${input.orderNumber}${c.name ? ` from ${c.name}` : ''}`,
+    subject: `New order ${input.orderNumber}${c.name ? ` from ${c.name}` : ''}${
+      input.addressWarning ? ' (check address)' : ''
+    }`,
     html,
     // Reply goes straight to the buyer.
     replyTo: c.email ?? undefined,

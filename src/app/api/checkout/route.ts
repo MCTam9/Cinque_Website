@@ -6,7 +6,12 @@ import { sanityClient } from '@/lib/sanity/client';
 import { variantForCheckoutQuery } from '@/lib/sanity/queries';
 import { publicEnv } from '@/lib/env';
 import { rateLimit, clientIp } from '@/lib/rateLimit';
-import { SHIP_COUNTRY_CODES, importChargesNotice, shippingQuote } from '@/lib/shop/shipping';
+import {
+  SHIP_COUNTRY_CODES,
+  countryInSentence,
+  importChargesNotice,
+  shippingQuote,
+} from '@/lib/shop/shipping';
 import {
   CUSTOM_SIZE_MAX,
   ENGRAVING_MAX,
@@ -242,6 +247,16 @@ export async function POST(req: Request) {
   // inside Stripe's form, right under the address, so it is in front of them
   // at the moment they commit — not only on the page around the iframe.
   const dutiesNotice = importChargesNotice(country);
+  // Stripe's form takes any address under the country it shows and can't be
+  // told to reject one before payment, so say plainly, right at the address,
+  // that it must be in this country (a buyer in France once paid for UK
+  // delivery with a French address). The webhook flags a mismatch afterwards.
+  const addressNotice = [
+    `We’ll ship to an address in ${countryInSentence(country)}. Shipping somewhere else? Change the country at the top of this page.`,
+    dutiesNotice,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   // Compact fulfillment map for the webhook. Stripe metadata values cap at 500
   // chars and a session holds at most 50 keys (`cart`, `remind`, `rf` and one
@@ -292,27 +307,21 @@ export async function POST(req: Request) {
       ],
       phone_number_collection: { enabled: true },
       // Stripe caps each message at 1200 chars.
-      ...(madeToOrderItems.length || dutiesNotice
-        ? {
-            custom_text: {
-              ...(dutiesNotice
-                ? { shipping_address: { message: dutiesNotice.slice(0, 1200) } }
-                : {}),
-              // Said once more right above the Pay button, so the lead time is
-              // agreed to, not just seen on the product page.
-              ...(madeToOrderItems.length
-                ? {
-                    submit: {
-                      message: `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}: ${madeToOrderItems.join(', ')}`.slice(
-                        0,
-                        1200
-                      ),
-                    },
-                  }
-                : {}),
-            },
-          }
-        : {}),
+      custom_text: {
+        shipping_address: { message: addressNotice.slice(0, 1200) },
+        // Said once more right above the Pay button, so the lead time is
+        // agreed to, not just seen on the product page.
+        ...(madeToOrderItems.length
+          ? {
+              submit: {
+                message: `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}: ${madeToOrderItems.join(', ')}`.slice(
+                  0,
+                  1200
+                ),
+              },
+            }
+          : {}),
+      },
       metadata: {
         cart: cartMeta,
         ...notesMeta,
