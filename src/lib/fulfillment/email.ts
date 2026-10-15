@@ -407,24 +407,28 @@ export interface ContactMessageInput {
   email: string;
   message: string;
   phone?: string;
+  country?: string;
+  /** Rings: the size(s) as the visitor wrote them, e.g. "UK N and UK T". */
+  ringSize?: string;
 }
 
 export async function sendContactMessage(
   input: ContactMessageInput
 ): Promise<SendEmailResult> {
-  const phoneLine = input.phone
-    ? `<p><strong>Phone:</strong> ${escapeHtml(input.phone)}</p>`
-    : '';
+  const line = (label: string, value?: string) =>
+    value ? `<p><strong>${label}:</strong> ${escapeHtml(value)}</p>` : '';
   const html = shell(
     'New enquiry via cinque.studio',
     `<p><strong>From:</strong> ${escapeHtml(input.name)} &lt;${escapeHtml(input.email)}&gt;</p>
-     ${phoneLine}
+     ${line('Phone', input.phone)}
+     ${line('Country', input.country)}
+     ${line('Ring size', input.ringSize)}
      <p style="white-space:pre-wrap;">${escapeHtml(input.message)}</p>`
   );
   // reply-to the visitor so Cindy can respond directly from her inbox.
   return send({
     to: CONTACT_RECIPIENT,
-    subject: `Cinque enquiry from ${input.name}`,
+    subject: `Cinque enquiry from ${input.name}${input.country ? ` (${input.country})` : ''}`,
     html,
     replyTo: input.email,
   });

@@ -10,6 +10,8 @@ const contactSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(120),
   email: z.string().trim().email('A valid email is required').max(200),
   phone: z.string().trim().max(40).optional(),
+  country: z.string({ required_error: 'Country is required' }).trim().min(1, 'Country is required').max(60),
+  ringSize: z.string().trim().max(120).optional(),
   message: z.string().trim().min(1, 'Message is required').max(5000),
   // Honeypot — must stay empty. Bots fill it; humans never see it.
   company: z.string().optional(),
@@ -50,6 +52,8 @@ export async function POST(req: Request) {
     name: parsed.data.name,
     email: parsed.data.email,
     phone: parsed.data.phone,
+    country: parsed.data.country,
+    ringSize: parsed.data.ringSize,
     message: parsed.data.message,
   });
 
