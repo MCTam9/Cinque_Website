@@ -1,4 +1,5 @@
 import type { StructureResolver } from 'sanity/structure';
+import { BESPOKE_ID_PREFIX } from '@/lib/shop/bespoke';
 
 /**
  * Custom desk structure — action-oriented so a non-technical owner opens the
@@ -47,7 +48,23 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
         ),
       S.documentTypeListItem('order').title('All orders'),
-      S.documentTypeListItem('bespokeOrder').title('Bespoke payment links'),
+      // Bespoke entries describe a customer's piece and hold a live payment
+      // link, and the dataset is public: new ones get a dotted id
+      // (`bespokeOrder.<id>`), which Sanity serves only with a token, like
+      // orders. Studio hands the list a fresh plain id for "Create"; existing
+      // entries arrive already dotted.
+      S.listItem()
+        .title('Bespoke payment links')
+        .schemaType('bespokeOrder')
+        .child(
+          S.documentTypeList('bespokeOrder')
+            .title('Bespoke payment links')
+            .child((id) =>
+              S.document()
+                .schemaType('bespokeOrder')
+                .documentId(id.includes('.') ? id : `${BESPOKE_ID_PREFIX}${id}`)
+            )
+        ),
       S.listItem()
         .title('Unpaid checkouts')
         .child(

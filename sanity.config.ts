@@ -30,7 +30,7 @@ export default defineConfig({
   // along with the singletons (Home / Studio) — those are edited in place from
   // the desk, and a second copy would never be read.
   document: {
-    newDocumentOptions: (prev) =>
+    newDocumentOptions: (prev, { creationContext }) =>
       prev.filter(
         (item) =>
           ![
@@ -41,7 +41,13 @@ export default defineConfig({
             'cartReminder',
           ].includes(item.templateId) &&
           item.templateId !== 'homePage' &&
-          item.templateId !== 'studioPage'
+          item.templateId !== 'studioPage' &&
+          // Bespoke entries: only from their own list (its + button), which
+          // gives them a private id; not from the global create menu.
+          !(item.templateId === 'bespokeOrder' && creationContext.type === 'global')
       ),
+    // Duplicate would make a bespoke entry with a plain (public) id.
+    actions: (prev, { schemaType }) =>
+      schemaType === 'bespokeOrder' ? prev.filter((a) => a.action !== 'duplicate') : prev,
   },
 });
