@@ -7,6 +7,7 @@ import { visionTool } from '@sanity/vision';
 import { schemaTypes } from './src/sanity/schemaTypes';
 import { structure } from './src/sanity/structure';
 import { CompactObjectInput } from './src/sanity/components/CompactObjectInput';
+import { ordersTool } from './src/sanity/tools/orders';
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!;
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET!;
@@ -19,6 +20,10 @@ export default defineConfig({
   basePath: '/admin',
   projectId,
   dataset,
+  // Token login (kept in this browser) rather than Sanity's cookie, so the
+  // Orders table can prove who is signed in when it asks the site for
+  // customer details from Stripe (/api/admin/customers).
+  auth: { loginMethod: 'token' },
   schema: { types: schemaTypes },
   form: { components: { input: CompactObjectInput } },
   plugins: [
@@ -26,6 +31,8 @@ export default defineConfig({
     // Vision lets staff/devs run GROQ queries. Safe to keep; remove for prod-lockdown.
     visionTool({ defaultApiVersion: '2024-10-01' }),
   ],
+  // Orders table: its own tab beside Structure and Vision.
+  tools: (prev) => [...prev, ordersTool],
   // Hide internal, programmatically-managed docs from the global create menu,
   // along with the singletons (Home / Studio) — those are edited in place from
   // the desk, and a second copy would never be read.
