@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
+import { CARRIERS } from '@/lib/fulfillment/tracking';
 
 /**
  * Orders are created/finalized by the Stripe webhook, NOT by hand.
@@ -189,7 +190,13 @@ export const order = defineType({
       title: 'Fulfillment',
       type: 'object',
       fields: [
-        defineField({ name: 'carrier', title: 'Carrier', type: 'string' }),
+        defineField({
+          name: 'carrier',
+          title: 'Carrier',
+          type: 'string',
+          // A known courier means the shipping email can link to its tracking page.
+          options: { list: CARRIERS },
+        }),
         defineField({ name: 'trackingNumber', title: 'Tracking Number', type: 'string' }),
         defineField({ name: 'shipStationOrderId', title: 'ShipStation Order ID', type: 'string' }),
         defineField({ name: 'shippedAt', title: 'Shipped At', type: 'datetime' }),

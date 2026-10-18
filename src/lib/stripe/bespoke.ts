@@ -33,7 +33,12 @@ import { ANY_COUNTRY } from '@/lib/shop/bespoke';
 interface BespokeDoc {
   _id: string;
   title?: string;
+  /** "UK N": a ring's size, from the Admin's dropdown. */
+  size?: string;
+  engraving?: string;
   description?: string;
+  /** Internal workshop notes: never sent to Stripe. */
+  notes?: string;
   image?: { asset?: unknown };
   priceGBP?: number;
   shipTo?: string;
@@ -42,6 +47,22 @@ interface BespokeDoc {
   status?: 'ready' | 'paid' | 'cancelled';
   linkFor?: string;
   stripePaymentLinkId?: string;
+}
+
+/**
+ * The Stripe Product description the customer reads on the payment page and
+ * receipt: "Size UK N · Engraving “…” · <details>", leaving out what's empty.
+ * Size and engraving are short and Details is capped at 500 in the Admin, so
+ * this stays well inside Stripe's limits. Notes never go to Stripe.
+ */
+function productDescription(doc: BespokeDoc): string {
+  return [
+    doc.size?.trim() && `Size ${doc.size.trim()}`,
+    doc.engraving?.trim() && `Engraving “${doc.engraving.trim()}”`,
+    doc.description?.trim(),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /** Who the confirmation message is from: the sender name on our emails. */
@@ -80,9 +101,16 @@ export async function syncBespokeOrder(id: string): Promise<string> {
     return 'incomplete';
   }
 
+  const description = productDescription(doc);
+  // Size and engraving ride along in metadata too (values ≤ 500 characters).
+  const metadata = {
+    bespokeOrderId: id,
+    ...(doc.size?.trim() ? { size: doc.size.trim().slice(0, 500) } : {}),
+    ...(doc.engraving?.trim() ? { engraving: doc.engraving.trim().slice(0, 500) } : {}),
+  };
   const product = await stripe.products.create({
     name: doc.title,
-    ...(doc.description ? { description: doc.description } : {}),
+    ...(description ? { description } : {}),
     ...(doc.image?.asset
       ? {
           images: [
@@ -92,7 +120,7 @@ export async function syncBespokeOrder(id: string): Promise<string> {
           ],
         }
       : {}),
-    metadata: { bespokeOrderId: id },
+    metadata,
   });
   const stripePrice = await stripe.prices.create({
     product: product.id,
@@ -147,7 +175,7 @@ export async function syncBespokeOrder(id: string): Promise<string> {
         custom_message: `Thank you! Your order confirmation is on its way by email, and I’ll be in touch about the next steps. ${sender()}`,
       },
     },
-    metadata: { bespokeOrderId: id },
+    metadata,
   });
 
   await sanityWriteClient
@@ -164,13 +192,29 @@ export async function syncBespokeOrder(id: string): Promise<string> {
   return 'link created';
 }
 
-/** A bespoke link was paid: mark its Admin entry paid, with the order number. */
-export async function markBespokePaid(paymentLinkId: string, orderNumber: string): Promise<void> {
-  const id: string | null = await sanityWriteClient.fetch(
-    `*[_type == "bespokeOrder" && stripePaymentLinkId == $link && linkFor == _id][0]._id`,
+/** What the webhook copies from a paid link's Admin entry onto the order line. */
+export interface PaidBespoke {
+  _id: string;
+  size?: string | null;
+  engraving?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * The Admin entry that made this payment link (not a Duplicate carrying its
+ * id), or null. Its dotted id needs the token, so this uses the write client.
+ */
+export async function findBespokeForLink(paymentLinkId: string): Promise<PaidBespoke | null> {
+  return sanityWriteClient.fetch(
+    `*[_type == "bespokeOrder" && stripePaymentLinkId == $link && linkFor == _id][0]{
+      _id, size, engraving, notes
+    }`,
     { link: paymentLinkId },
   );
-  if (!id) return;
+}
+
+/** A bespoke link was paid: mark its Admin entry paid, with the order number. */
+export async function markBespokePaid(id: string, orderNumber: string): Promise<void> {
   await sanityWriteClient
     .patch(id)
     .set({ status: 'paid', orderNumber, paidAt: new Date().toISOString() })

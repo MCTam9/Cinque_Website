@@ -14,12 +14,21 @@ import { formatPence } from '@/lib/shop/shipping';
 export const RING_SIZE_CHART_ID = 'ring-size-chart';
 
 /**
- * Collapsible ring-size chart for the PDP. Opens itself when linked to by id.
- * Shows G–T, plus a product's larger sizes (and their surcharge) when it has them.
+ * Collapsible ring-size chart. Opens itself when linked to by id.
+ * On the PDP: G–T, plus a product's larger sizes (and their surcharge) when it
+ * has them. `showAll` (shop and rings pages): every size G–Z, with a note that
+ * the larger ones are on selected gold rings, priced on the product page.
  */
-export default function RingSizeChart({ largeSizes }: { largeSizes?: LargeSizes | null }) {
-  const rows = RING_SIZE_ROWS.slice(0, ringRowCount(largeSizes));
+export default function RingSizeChart({
+  largeSizes,
+  showAll = false,
+}: {
+  largeSizes?: LargeSizes | null;
+  showAll?: boolean;
+}) {
+  const rows = showAll ? RING_SIZE_ROWS : RING_SIZE_ROWS.slice(0, ringRowCount(largeSizes));
   const firstLarge = rows.find((_, i) => isLargeRow(i))?.uk;
+  const lastSize = rows[rows.length - 1].uk;
   const surcharge = largeSizes?.surchargeGBP ?? 0;
   const [open, setOpen] = useState(false);
 
@@ -74,11 +83,13 @@ export default function RingSizeChart({ largeSizes }: { largeSizes?: LargeSizes 
               ))}
             </tbody>
           </table>
-          {firstLarge && largeSizes && (
+          {firstLarge && (showAll || largeSizes) && (
             <p className="type-p2 mt-[10px] text-oslo">
-              {`Sizes ${firstLarge}–${largeSizes.upTo} are larger than our standard G–${STANDARD_MAX}${
-                surcharge ? ` and add ${formatPence(surcharge)} for the extra metal` : ''
-              }.`}
+              {showAll
+                ? `Sizes ${firstLarge}–${lastSize} are available on selected gold rings; any surcharge is shown on the product page.`
+                : `Sizes ${firstLarge}–${lastSize} are larger than our standard G–${STANDARD_MAX}${
+                    surcharge ? ` and add ${formatPence(surcharge)} for the extra metal` : ''
+                  }.`}
             </p>
           )}
         </div>

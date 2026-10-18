@@ -5,6 +5,9 @@
  *
  * Nothing here holds customer details; those come from Stripe at view time
  * (/api/admin/customers) and are joined in by checkout session id.
+ *
+ * Bespoke links carry the same line fields as shop orders (size, engraving,
+ * internal notes), so both render, search and export the same way.
  */
 
 export const ORDER_STATUSES = [
@@ -23,12 +26,17 @@ const LIMIT = 150;
 
 export const TABLE_QUERY = `{
   "orders": *[_type == "order"] | order(createdAt desc)[0...${LIMIT}]{
-    _id, orderNumber, status, source, addressWarning, stripeSessionId, totalGBP, createdAt,
+    _id, orderNumber, status, source, addressWarning, stripeSessionId, totalGBP, createdAt, notes,
     "carrier": fulfillment.carrier,
     "tracking": fulfillment.trackingNumber,
     "shippedAt": fulfillment.shippedAt,
     "emailedAt": fulfillment.shippedEmailSentAt,
-    lines[]{ _key, titleSnapshot, sku, quantity, customSize, engraving, largeSizeGBP, notes }
+    lines[]{ _key, titleSnapshot, sku, quantity, madeToOrder, customSize, engraving, largeSizeGBP, notes },
+    // Paid bespoke orders from before their lines carried size etc.: read the link instead.
+    "bespoke": select(
+      source == "payment_link" && defined(orderNumber) =>
+        *[_type == "bespokeOrder" && orderNumber == ^.orderNumber][0]{ size, engraving, notes, description }
+    )
   },
   "unpaid": *[_type == "abandonedCheckout"] | order(lastCheckoutAt desc)[0...${LIMIT}]{
     _id, lastCheckoutAt, stripeSessionId, country, valueGBP, reminderSentAt, optedOut,
@@ -37,7 +45,7 @@ export const TABLE_QUERY = `{
   },
   "links": *[_type == "bespokeOrder" && status == "ready" && cancelled != true]
     | order(_createdAt desc)[0...${LIMIT}]{
-      _id, _createdAt, title, priceGBP, shipTo, paymentLinkUrl
+      _id, _createdAt, title, priceGBP, shipTo, paymentLinkUrl, size, engraving, notes, description
     }
 }`;
 
@@ -57,16 +65,28 @@ interface OrderDoc {
   tracking?: string;
   shippedAt?: string;
   emailedAt?: string;
+  notes?: string;
   lines?: {
     _key: string;
     titleSnapshot?: string;
     sku?: string;
     quantity?: number;
+    madeToOrder?: boolean;
     customSize?: string;
     engraving?: string;
     largeSizeGBP?: number;
     notes?: string;
   }[];
+  bespoke?: BespokeFields | null;
+}
+
+/** What a bespoke link records about the piece (`notes` are staff-only). */
+interface BespokeFields {
+  size?: string;
+  engraving?: string;
+  notes?: string;
+  /** "Details", shown to the customer on the payment page. */
+  description?: string;
 }
 
 interface UnpaidDoc {
@@ -82,7 +102,7 @@ interface UnpaidDoc {
   items?: { _key: string; title?: string; sku?: string; quantity?: number; size?: string }[];
 }
 
-interface LinkDoc {
+interface LinkDoc extends BespokeFields {
   _id: string;
   _createdAt: string;
   title?: string;
@@ -102,6 +122,7 @@ export interface RowLine {
   title: string;
   sku?: string;
   quantity: number;
+  madeToOrder?: boolean;
   size?: string;
   largerSize?: boolean;
   engraving?: string;
@@ -122,7 +143,11 @@ export interface Row {
   /** Pence. Orders: what was charged (incl. shipping); unpaid: before shipping. */
   totalGBP?: number;
   country?: string;
+  /** Bespoke "Details" (customer-facing description). */
+  details?: string;
   // Orders
+  /** The order's internal notes (staff-only). */
+  internalNotes?: string;
   status?: OrderStatus;
   carrier?: string;
   tracking?: string;
@@ -138,31 +163,39 @@ export interface Row {
 }
 
 export function toRows(data: TableData): Row[] {
-  const orders: Row[] = data.orders.map((o) => ({
-    id: o._id,
-    docType: 'order',
-    kind: o.source === 'payment_link' ? 'bespokeOrder' : 'order',
-    date: o.createdAt,
-    orderNumber: o.orderNumber,
-    sessionId: o.stripeSessionId,
-    totalGBP: o.totalGBP,
-    status: o.status,
-    carrier: o.carrier,
-    tracking: o.tracking,
-    shippedAt: o.shippedAt,
-    emailedAt: o.emailedAt,
-    addressWarning: o.addressWarning,
-    lines: (o.lines ?? []).map((l) => ({
-      key: l._key,
-      title: l.titleSnapshot || l.sku || 'Item',
-      sku: l.sku,
-      quantity: l.quantity ?? 1,
-      size: l.customSize || undefined,
-      largerSize: Boolean(l.largeSizeGBP),
-      engraving: l.engraving || undefined,
-      notes: l.notes || undefined,
-    })),
-  }));
+  const orders: Row[] = data.orders.map((o) => {
+    const bespoke = o.source === 'payment_link';
+    const b = o.bespoke ?? undefined;
+    return {
+      id: o._id,
+      docType: 'order',
+      kind: bespoke ? 'bespokeOrder' : 'order',
+      date: o.createdAt,
+      orderNumber: o.orderNumber,
+      sessionId: o.stripeSessionId,
+      totalGBP: o.totalGBP,
+      status: o.status,
+      carrier: o.carrier,
+      tracking: o.tracking,
+      shippedAt: o.shippedAt,
+      emailedAt: o.emailedAt,
+      addressWarning: o.addressWarning,
+      internalNotes: o.notes || undefined,
+      details: b?.description || undefined,
+      lines: (o.lines ?? []).map((l) => ({
+        key: l._key,
+        title: l.titleSnapshot || l.sku || 'Item',
+        sku: l.sku,
+        quantity: l.quantity ?? 1,
+        // Bespoke pieces are always made to order, whatever older lines say.
+        madeToOrder: Boolean(l.madeToOrder || bespoke),
+        size: l.customSize || b?.size || undefined,
+        largerSize: Boolean(l.largeSizeGBP),
+        engraving: l.engraving || b?.engraving || undefined,
+        notes: l.notes || b?.notes || undefined,
+      })),
+    };
+  });
 
   const unpaid: Row[] = data.unpaid.map((u) => ({
     id: u._id,
@@ -193,12 +226,84 @@ export function toRows(data: TableData): Row[] {
     totalGBP: b.priceGBP,
     country: b.shipTo && b.shipTo.length === 2 ? b.shipTo : undefined,
     paymentLinkUrl: b.paymentLinkUrl,
-    lines: [{ key: 'piece', title: b.title || 'Bespoke piece', quantity: 1 }],
+    details: b.description || undefined,
+    lines: [
+      {
+        key: 'piece',
+        title: b.title || 'Bespoke piece',
+        quantity: 1,
+        madeToOrder: true,
+        size: b.size || undefined,
+        engraving: b.engraving || undefined,
+        notes: b.notes || undefined,
+      },
+    ],
   }));
 
   return [...orders, ...unpaid, ...links].sort((a, b) =>
     (b.date ?? '').localeCompare(a.date ?? '')
   );
+}
+
+/**
+ * What /api/admin/customers returns per checkout session (read from Stripe at
+ * view time, never stored).
+ */
+export interface Customer {
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+  address: {
+    line1: string | null;
+    line2: string | null;
+    city: string | null;
+    postalCode: string | null;
+    country: string | null;
+  } | null;
+  /** The delivery option paid for at checkout, e.g. "Express". */
+  shippingService?: string | null;
+  lines?: { engraving?: string; notes?: string }[];
+}
+
+/** Each line's engraving and notes: from the order itself, or from Stripe for unpaid checkouts. */
+export function lineExtras(row: Row, customer?: Customer) {
+  return row.lines.map((l, i) => ({
+    engraving: l.engraving ?? customer?.lines?.[i]?.engraving,
+    notes: l.notes ?? customer?.lines?.[i]?.notes,
+  }));
+}
+
+export const KIND_TITLE: Record<RowKind, string> = {
+  order: 'Order',
+  bespokeOrder: 'Bespoke order',
+  unpaid: 'Unpaid',
+  link: 'Bespoke link',
+};
+
+type Tone = 'default' | 'primary' | 'caution' | 'positive';
+
+/** Where an unpaid checkout or bespoke link stands (orders have an editable status). */
+export function pendingStatus(row: Row): { title: string; tone: Tone } {
+  if (row.kind === 'link') return { title: 'Waiting for payment', tone: 'caution' };
+  if (row.recoveredAt) {
+    return {
+      title: `Paid later${row.orderNumber ? ` (${row.orderNumber})` : ''}`,
+      tone: 'positive',
+    };
+  }
+  if (row.optedOut) return { title: 'Opted out of reminders', tone: 'default' };
+  if (row.reminderSentAt) {
+    return { title: `Reminder sent ${when(row.reminderSentAt)}`, tone: 'primary' };
+  }
+  return { title: 'No reminder', tone: 'caution' };
+}
+
+/** The status column as text, for export. */
+export function statusText(row: Row): string {
+  if (row.kind === 'order' || row.kind === 'bespokeOrder') {
+    return ORDER_STATUSES.find((s) => s.value === (row.status ?? 'paid'))?.title ?? '';
+  }
+  return pendingStatus(row).title;
 }
 
 export const TABS = [
