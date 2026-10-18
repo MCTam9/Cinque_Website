@@ -1,5 +1,6 @@
 import type { StructureResolver } from 'sanity/structure';
 import { BESPOKE_ID_PREFIX } from '@/lib/shop/bespoke';
+import { OrdersTablePane } from './tools/orders';
 
 /**
  * Custom desk structure — action-oriented so a non-technical owner opens the
@@ -31,6 +32,11 @@ export const structure: StructureResolver = (S) =>
 
       // ── Orders: what needs action first ──
       S.divider().title('Orders'),
+      // Everything below in one live table (its own tab: /admin/orders).
+      S.listItem()
+        .title('▦ Orders table')
+        .id('ordersTable')
+        .child(S.component(OrdersTablePane).title('Orders table')),
       S.listItem()
         .title('⚑ To fulfil')
         .child(
