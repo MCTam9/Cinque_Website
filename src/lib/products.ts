@@ -145,7 +145,9 @@ export function toCardData(product: Product): ProductCardData {
     size: defaultVariant?.size,
     variantKey: defaultVariant?._key,
     sku: defaultVariant?.sku,
-    inStock: defaultVariant ? variantIsAvailable(defaultVariant) : false,
+    // Status "Sold Out" wins over stock, as at checkout (which sells Active only).
+    inStock:
+      product.status === 'active' && !!defaultVariant && variantIsAvailable(defaultVariant),
     materialGroup: productMaterialGroup(product),
     cardSize,
     ...(wide

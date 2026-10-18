@@ -159,7 +159,8 @@ export default async function ProductPage({
         .filter(Boolean)
         .join(', ') || v.sku,
     priceGBP: v.priceGBP,
-    inStock: variantIsAvailable(v),
+    // Status "Sold Out" wins over stock, as at checkout (which sells Active only).
+    inStock: product.status === 'active' && variantIsAvailable(v),
     madeToOrder: Boolean(v.madeToOrder),
   }));
 
