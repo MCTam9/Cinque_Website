@@ -8,6 +8,10 @@ import {
   lineTotalGBP,
   priceRows,
 } from '@/lib/shop/madeToOrder';
+import { carrierLabel, trackingUrl } from '@/lib/fulfillment/tracking';
+
+/** The sku the Stripe webhook gives a line paid through a bespoke payment link. */
+const BESPOKE_SKU = 'Bespoke';
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -230,15 +234,23 @@ function lineRows(lines: OrderConfirmationInput['lines'], currency: string): str
         : '';
       // Breakdown rows line up under the text, past the thumbnail.
       const indent = l.imageUrl ? 'padding-left:70px;' : '';
+      // A bespoke piece (paid through its own link) has its price agreed up
+      // front and its own lead time: no shop lead time and no breakdown.
+      const bespoke = l.sku === BESPOKE_SKU;
       const details = [
         `<span style="color:${BRAND.oslo};${small}">${escapeHtml(l.sku)} &times; ${l.quantity}</span>`,
-        l.madeToOrder ? `<span style="${small}">${escapeHtml(MADE_TO_ORDER_LINE)}</span>` : '',
+        l.madeToOrder
+          ? `<span style="${small}">${escapeHtml(bespoke ? 'Made to order' : MADE_TO_ORDER_LINE)}</span>`
+          : '',
         l.customSize ? `<span style="${small}">Size ${escapeHtml(l.customSize)}</span>` : '',
+        bespoke && l.engraving
+          ? `<span style="${small}">Engraving “${escapeHtml(l.engraving)}”</span>`
+          : '',
       ]
         .filter(Boolean)
         .map((d) => `<br>${d}`)
         .join('');
-      const breakdown = priceRows(l) ?? [];
+      const breakdown = (bespoke ? null : priceRows(l)) ?? [];
       const notes = l.notes
         ? `<tr><td colspan="2" style="padding:4px 0 0 0;${indent}${small}color:${BRAND.oslo};">Notes: ${escapeHtml(l.notes)}</td></tr>`
         : '';
@@ -401,9 +413,16 @@ export async function sendShippingConfirmation(
     console.warn('[email] no recipient for shipping notice', input.orderNumber);
     return { ok: false, error: 'no recipient' };
   }
+  // "Tracking (Other)" tells the customer nothing, so that one goes unnamed.
+  const carrier = input.carrier === 'other' ? '' : carrierLabel(input.carrier);
+  const trackUrl = trackingUrl(input.carrier, input.trackingNumber);
   const tracking = input.trackingNumber
-    ? `<p>Tracking${input.carrier ? ` (${escapeHtml(input.carrier)})` : ''}:
-        <strong>${escapeHtml(input.trackingNumber)}</strong></p>`
+    ? `<p>Tracking${carrier ? ` (${escapeHtml(carrier)})` : ''}:
+        <strong>${escapeHtml(input.trackingNumber)}</strong></p>${
+          trackUrl
+            ? `<p style="margin:20px 0 0 0;"><a href="${escapeHtml(trackUrl)}" style="color:${BRAND.redcurrent};">Track your parcel</a></p>`
+            : ''
+        }`
     : '';
   const html = shell(
     'Your order is on its way',

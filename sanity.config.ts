@@ -2,7 +2,6 @@
 
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
-import { visionTool } from '@sanity/vision';
 
 import { schemaTypes } from './src/sanity/schemaTypes';
 import { structure } from './src/sanity/structure';
@@ -27,11 +26,11 @@ export default defineConfig({
   schema: { types: schemaTypes },
   form: { components: { input: CompactObjectInput } },
   plugins: [
-    structureTool({ structure }),
-    // Vision lets staff/devs run GROQ queries. Safe to keep; remove for prod-lockdown.
-    visionTool({ defaultApiVersion: '2024-10-01' }),
+    // Tab reads "Manage"; the tool keeps its name `structure`, so
+    // /admin/structure/... links still work.
+    structureTool({ structure, title: 'Manage' }),
   ],
-  // Orders table: its own tab beside Structure and Vision.
+  // Orders table: its own tab beside Manage.
   tools: (prev) => [...prev, ordersTool],
   // Hide internal, programmatically-managed docs from the global create menu,
   // along with the singletons (Home / Studio) — those are edited in place from

@@ -16,8 +16,9 @@ export const dynamic = 'force-dynamic';
  * Orders and unpaid checkouts in Sanity hold no customer details (the dataset
  * is public); Stripe is the system of record. The table sends the checkout
  * session ids it is showing, and this reads name, email, phone and shipping
- * address from each session, plus, for unpaid checkouts, the engraving and
- * notes the customer had entered (orders keep those on their lines already).
+ * address from each session, the delivery option paid for (for choosing the
+ * courier service), plus, for unpaid checkouts, the engraving and notes the
+ * customer had entered (orders keep those on their lines already).
  * Nothing here is stored or logged.
  *
  * Only for people signed in to the Studio: the request carries the user's
@@ -37,6 +38,8 @@ const bodySchema = z.object({
 });
 
 export interface AdminCustomer extends OrderContact {
+  /** The shipping rate chosen at checkout, e.g. "Express"; null if none. */
+  shippingService: string | null;
   /** Unpaid checkouts only: what the customer had entered per cart line. */
   lines?: { engraving?: string; notes?: string }[];
 }
@@ -88,12 +91,16 @@ async function customerFor(id: string): Promise<AdminCustomer | null> {
   const hit = sessionCache.get(id);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.data;
   try {
-    const session = await stripe.checkout.sessions.retrieve(id);
+    const session = await stripe.checkout.sessions.retrieve(id, {
+      expand: ['shipping_cost.shipping_rate'],
+    });
     const contact = contactFromSession(session);
+    const rate = session.shipping_cost?.shipping_rate;
     const data: AdminCustomer = {
       ...contact,
       // Unpaid checkouts carry the address from the site's email step.
       email: contact.email ?? session.customer_email ?? null,
+      shippingService: (rate && typeof rate === 'object' ? rate.display_name : null) ?? null,
       ...(session.status !== 'complete' ? { lines: unpaidLines(session) } : {}),
     };
     sessionCache.set(id, { at: Date.now(), data });

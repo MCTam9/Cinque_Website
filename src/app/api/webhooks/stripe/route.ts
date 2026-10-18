@@ -12,7 +12,7 @@ import {
 } from '@/lib/fulfillment/email';
 import { contactFromSession } from '@/lib/stripe/customer';
 import { handleCheckoutExpired, markRecovered } from '@/lib/stripe/cartReminder';
-import { markBespokePaid } from '@/lib/stripe/bespoke';
+import { findBespokeForLink, markBespokePaid, type PaidBespoke } from '@/lib/stripe/bespoke';
 import { reconcileProductStatus, collectLowStock } from '@/lib/inventory';
 import { ENGRAVING_PRICE_PENCE } from '@/lib/shop/madeToOrder';
 import { addressWarning, importChargesNoticeFor } from '@/lib/shop/shipping';
@@ -194,7 +194,16 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   // lines from what Stripe charged instead, so the order and the emails still
   // list what was bought rather than coming out empty.
   const fromShop = Boolean(session.metadata?.cart);
+  const paymentLinkId = !session.payment_link
+    ? null
+    : typeof session.payment_link === 'string'
+      ? session.payment_link
+      : session.payment_link.id;
+  // A bespoke link from the Admin: read its entry once, for the line's size,
+  // engraving and notes here and to mark it paid below.
+  let bespoke: PaidBespoke | null = null;
   if (!fromShop) {
+    if (paymentLinkId) bespoke = await findBespokeForLink(paymentLinkId);
     const charged = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
       expand: ['data.price.product'],
@@ -211,6 +220,16 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
         titleSnapshot: li.description ?? 'Bespoke piece',
         quantity,
         unitPriceGBP: li.price?.unit_amount ?? Math.round(li.amount_subtotal / quantity),
+        // The same line fields as a made-to-order shop line, so the Admin and
+        // emails treat both alike. A bespoke link sells one piece: its first line.
+        ...(bespoke && i === 0
+          ? {
+              madeToOrder: true,
+              ...(bespoke.size ? { customSize: bespoke.size } : {}),
+              ...(bespoke.engraving ? { engraving: bespoke.engraving } : {}),
+              ...(bespoke.notes ? { notes: bespoke.notes } : {}),
+            }
+          : {}),
         imageUrl: image ?? null,
       });
     }
@@ -313,7 +332,8 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
     await sendOrderConfirmation({
       to: contact.email,
       orderNumber,
-      lines: emailLines,
+      // A bespoke line's notes are the workshop's own: the studio's email only.
+      lines: bespoke ? emailLines.map((l) => ({ ...l, notes: undefined })) : emailLines,
       shippingGBP: session.shipping_cost?.amount_total ?? null,
       totalGBP: session.amount_total ?? 0,
       currency: session.currency ?? 'gbp',
@@ -343,11 +363,9 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
   }
 
   // A bespoke payment link from the Admin: mark its entry paid.
-  if (session.payment_link) {
+  if (bespoke) {
     try {
-      const link =
-        typeof session.payment_link === 'string' ? session.payment_link : session.payment_link.id;
-      await markBespokePaid(link, orderNumber);
+      await markBespokePaid(bespoke._id, orderNumber);
     } catch (err) {
       console.error('[webhook] could not mark bespoke link paid', err);
     }

@@ -73,7 +73,7 @@ export default async function ShopCategoryPage({ category }: { category: Product
 
       {category === 'rings' && (
         <div className="mt-[40px] md:mt-[60px]">
-          <RingSizeChart />
+          <RingSizeChart showAll />
         </div>
       )}
     </ShopLayout>

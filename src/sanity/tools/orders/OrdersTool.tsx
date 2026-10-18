@@ -18,50 +18,43 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CopyIcon,
+  DocumentPdfIcon,
+  DocumentSheetIcon,
   LaunchIcon,
   SearchIcon,
   WarningOutlineIcon,
 } from '@sanity/icons';
+import { CARRIERS, carrierLabel, trackingUrl } from '@/lib/fulfillment/tracking';
 import {
+  KIND_TITLE,
   LISTEN_QUERY,
   ORDER_STATUSES,
   TABLE_QUERY,
   TABS,
   inTab,
+  lineExtras,
   money,
+  pendingStatus,
   toRows,
   when,
+  type Customer,
   type OrderStatus,
   type Row,
   type TabId,
   type TableData,
 } from './data';
+import { downloadCsv, printOrders } from './export';
 
 const API_VERSION = '2024-10-01';
 /** The route caps one request at this many sessions. */
 const CUSTOMER_BATCH = 150;
 const COLUMNS = 11;
 
-/** What /api/admin/customers returns per checkout session (read from Stripe). */
-interface Customer {
-  email: string | null;
-  name: string | null;
-  phone: string | null;
-  address: {
-    line1: string | null;
-    line2: string | null;
-    city: string | null;
-    postalCode: string | null;
-    country: string | null;
-  } | null;
-  lines?: { engraving?: string; notes?: string }[];
-}
-
-const KIND_LABEL: Record<Row['kind'], { title: string; tone: 'default' | 'primary' | 'caution' | 'positive' }> = {
-  order: { title: 'Order', tone: 'primary' },
-  bespokeOrder: { title: 'Bespoke order', tone: 'primary' },
-  unpaid: { title: 'Unpaid', tone: 'caution' },
-  link: { title: 'Bespoke link', tone: 'default' },
+const KIND_TONE: Record<Row['kind'], 'default' | 'primary' | 'caution' | 'positive'> = {
+  order: 'primary',
+  bespokeOrder: 'primary',
+  unpaid: 'caution',
+  link: 'default',
 };
 
 const cell: React.CSSProperties = {
@@ -73,14 +66,6 @@ const cell: React.CSSProperties = {
 function stripeUrl(sessionId: string): string {
   const test = sessionId.startsWith('cs_test_') ? 'test/' : '';
   return `https://dashboard.stripe.com/${test}search?query=${encodeURIComponent(sessionId)}`;
-}
-
-/** Each line's engraving and notes: from the order itself, or from Stripe for unpaid checkouts. */
-function lineExtras(row: Row, customer?: Customer) {
-  return row.lines.map((l, i) => ({
-    engraving: l.engraving ?? customer?.lines?.[i]?.engraving,
-    notes: l.notes ?? customer?.lines?.[i]?.notes,
-  }));
 }
 
 /**
@@ -102,6 +87,8 @@ export function OrdersTool() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [customerNote, setCustomerNote] = useState<string | null>(null);
+  // Sessions Stripe has answered for, found or not: export waits on these.
+  const [settled, setSettled] = useState<Record<string, true>>({});
   const requested = useRef(new Set<string>());
 
   const load = useCallback(async () => {
@@ -162,6 +149,7 @@ export function OrdersTool() {
         })
         .then(({ customers: found }) => {
           setCustomers((prev) => ({ ...prev, ...found }));
+          setSettled((prev) => ({ ...prev, ...Object.fromEntries(batch.map((id) => [id, true])) }));
           setCustomerNote(null);
         })
         .catch((err: Error) => {
@@ -187,6 +175,8 @@ export function OrdersTool() {
         row.orderNumber,
         c?.name,
         c?.email,
+        row.details,
+        row.internalNotes,
         ...row.lines.flatMap((l) => [l.title, l.sku, l.size]),
         ...extras.flatMap((e) => [e.engraving, e.notes]),
       ]
@@ -196,6 +186,16 @@ export function OrdersTool() {
       return haystack.includes(q);
     });
   }, [rows, tab, search, customers]);
+
+  // Exports always carry contact details, so they wait until every visible
+  // row's customer has come back from Stripe.
+  const exportReady =
+    visible.length > 0 && visible.every((r) => !r.sessionId || settled[r.sessionId]);
+  const exportTitle = !visible.length
+    ? 'Nothing to export'
+    : exportReady
+      ? `Export the ${visible.length} rows shown`
+      : 'Waiting for customer details from Stripe…';
 
   return (
     <Card height="fill" overflow="auto" padding={4}>
@@ -214,6 +214,26 @@ export function OrdersTool() {
               fontSize={1}
             />
           </Box>
+          <Button
+            mode="ghost"
+            fontSize={1}
+            padding={2}
+            icon={DocumentSheetIcon}
+            text="Excel"
+            title={exportTitle}
+            disabled={!exportReady}
+            onClick={() => downloadCsv(visible, customers, tab)}
+          />
+          <Button
+            mode="ghost"
+            fontSize={1}
+            padding={2}
+            icon={DocumentPdfIcon}
+            text="Print / PDF"
+            title={exportTitle}
+            disabled={!exportReady}
+            onClick={() => printOrders(visible, customers, tab)}
+          />
         </Flex>
 
         <Flex gap={2} wrap="wrap">
@@ -309,7 +329,7 @@ function TableRow({
   onToggle: () => void;
   client: SanityClient;
 }) {
-  const kind = KIND_LABEL[row.kind];
+  const kind = { title: KIND_TITLE[row.kind], tone: KIND_TONE[row.kind] };
   const extras = lineExtras(row, customer);
   const country = customer?.address?.country ?? row.country;
   const isOrder = row.kind === 'order' || row.kind === 'bespokeOrder';
@@ -358,7 +378,7 @@ function TableRow({
                   {customer.name ?? '—'}
                 </Text>
                 <Text size={1} muted>
-                  {[customer.email, country].filter(Boolean).join(' / ')}
+                  {[customer.email, country, customer.shippingService].filter(Boolean).join(' / ')}
                 </Text>
               </>
             ) : customersLoading ? (
@@ -389,6 +409,13 @@ function TableRow({
                       {detail.join(' / ')}
                     </Text>
                   )}
+                  {l.madeToOrder && (
+                    <Box>
+                      <Badge tone="caution" fontSize={0}>
+                        Made to order
+                      </Badge>
+                    </Box>
+                  )}
                 </Stack>
               );
             })}
@@ -404,7 +431,12 @@ function TableRow({
                 </Text>
               ) : null
             )}
-            {!extras.some((e) => e.notes) && (
+            {row.internalNotes && (
+              <Text size={1} muted style={{ whiteSpace: 'pre-line' }}>
+                Internal: {row.internalNotes}
+              </Text>
+            )}
+            {!extras.some((e) => e.notes) && !row.internalNotes && (
               <Text size={1} muted>
                 —
               </Text>
@@ -486,6 +518,11 @@ function Details({ row, customer }: { row: Row; customer?: Customer }) {
           </Text>
         </>
       )}
+      {row.details && (
+        <Text size={1} style={{ whiteSpace: 'pre-line' }}>
+          <strong>Details:</strong> {row.details}
+        </Text>
+      )}
       {row.addressWarning && (
         <Text size={1}>
           <strong>Check the address:</strong> {row.addressWarning}
@@ -511,37 +548,10 @@ function Details({ row, customer }: { row: Row; customer?: Customer }) {
 }
 
 function UnpaidOrLinkStatus({ row }: { row: Row }) {
-  if (row.kind === 'link') {
-    return (
-      <Badge tone="caution" fontSize={0}>
-        Waiting for payment
-      </Badge>
-    );
-  }
-  if (row.recoveredAt) {
-    return (
-      <Badge tone="positive" fontSize={0}>
-        Paid later{row.orderNumber ? ` (${row.orderNumber})` : ''}
-      </Badge>
-    );
-  }
-  if (row.optedOut) {
-    return (
-      <Badge tone="default" fontSize={0}>
-        Opted out of reminders
-      </Badge>
-    );
-  }
-  if (row.reminderSentAt) {
-    return (
-      <Badge tone="primary" fontSize={0}>
-        Reminder sent {when(row.reminderSentAt)}
-      </Badge>
-    );
-  }
+  const { title, tone } = pendingStatus(row);
   return (
-    <Badge tone="caution" fontSize={0}>
-      No reminder
+    <Badge tone={tone} fontSize={0}>
+      {title}
     </Badge>
   );
 }
@@ -577,6 +587,10 @@ function OrderEditor({ row, client }: { row: Row; client: SanityClient }) {
   const [carrier, setCarrier] = useState(initial.carrier);
   const [tracking, setTracking] = useState(initial.tracking);
   const [saving, setSaving] = useState(false);
+  const savedTrackingUrl = trackingUrl(row.carrier, row.tracking);
+  // A carrier typed before the dropdown existed stays selectable as-is.
+  const legacyCarrier =
+    initial.carrier && !CARRIERS.some((c) => c.value === initial.carrier) ? initial.carrier : null;
 
   // Pick up changes made elsewhere (another tab, the order form).
   useEffect(() => {
@@ -648,13 +662,22 @@ function OrderEditor({ row, client }: { row: Row; client: SanityClient }) {
       </td>
       <td style={{ ...cell, minWidth: 190 }}>
         <Stack space={2}>
-          <TextInput
+          <Select
             fontSize={1}
             padding={2}
-            placeholder="Carrier"
             value={carrier}
             onChange={(e) => setCarrier(e.currentTarget.value)}
-          />
+          >
+            <option value="">Carrier…</option>
+            {CARRIERS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.title}
+              </option>
+            ))}
+            {legacyCarrier && (
+              <option value={legacyCarrier}>{carrierLabel(legacyCarrier)} (as typed)</option>
+            )}
+          </Select>
           <TextInput
             fontSize={1}
             padding={2}
@@ -662,6 +685,18 @@ function OrderEditor({ row, client }: { row: Row; client: SanityClient }) {
             value={tracking}
             onChange={(e) => setTracking(e.currentTarget.value)}
           />
+          {row.tracking && savedTrackingUrl && (
+            <Text size={1}>
+              <a href={savedTrackingUrl} target="_blank" rel="noopener noreferrer">
+                Track {row.tracking}
+              </a>
+            </Text>
+          )}
+          {row.shippedAt && (
+            <Text size={0} muted>
+              Shipped {when(row.shippedAt)}
+            </Text>
+          )}
           {dirty && (
             <Button
               tone="primary"

@@ -64,7 +64,7 @@ export default async function ShopPage() {
       <ProductGrid products={products} />
 
       <div className="mt-[40px] md:mt-[60px]">
-        <RingSizeChart />
+        <RingSizeChart showAll />
       </div>
     </ShopLayout>
   );

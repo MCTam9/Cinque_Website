@@ -7,29 +7,15 @@ import { OrdersTablePane } from './tools/orders';
  * Studio and immediately sees what needs doing (orders to ship, low stock)
  * without writing filters or knowing the data model.
  *
- * Single flat column: the former Orders / Catalog / Editorial folders are now
- * titled dividers (rendered as section headers) with their items stacked
- * directly beneath — no second column to drill through.
+ * Single flat column of titled dividers (rendered as section headers) with
+ * their items stacked directly beneath — no second column to drill through.
+ * Internal sections come first, as they're used daily: Orders, then Catalog,
+ * then Website (the customer-facing pages and content).
  */
 export const structure: StructureResolver = (S) =>
   S.list()
     .title('Cinque')
     .items([
-      // ── Pages that exist exactly once: singletons, edited in place ──
-      S.listItem()
-        .title('Home Page')
-        .id('homePage')
-        .child(
-          S.document().schemaType('homePage').documentId('homePage')
-        ),
-      S.listItem()
-        .title('Studio Page')
-        .id('studioPage')
-        .child(
-          S.document().schemaType('studioPage').documentId('studioPage')
-        ),
-      S.documentTypeListItem('announcement').title('Announcements'),
-
       // ── Orders: what needs action first ──
       S.divider().title('Orders'),
       // Everything below in one live table (its own tab: /admin/orders).
@@ -93,10 +79,24 @@ export const structure: StructureResolver = (S) =>
             )
         ),
 
-      // ── Editorial ──
+      // ── Website: what customers see ──
+      S.divider().title('Website'),
+      // Pages that exist exactly once: singletons, edited in place.
+      S.listItem()
+        .title('Home Page')
+        .id('homePage')
+        .child(
+          S.document().schemaType('homePage').documentId('homePage')
+        ),
+      S.listItem()
+        .title('Studio Page')
+        .id('studioPage')
+        .child(
+          S.document().schemaType('studioPage').documentId('studioPage')
+        ),
+      S.documentTypeListItem('announcement').title('Announcements'),
       // A Drop is entered once here and used by both the Shop catalog
       // (Products link to it) and the Lookbook page.
-      S.divider().title('Editorial'),
       S.documentTypeListItem('drop').title('Drops'),
       S.documentTypeListItem('press').title('Press'),
       S.documentTypeListItem('page').title('Pages'),
