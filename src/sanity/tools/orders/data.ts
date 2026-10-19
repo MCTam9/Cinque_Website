@@ -10,6 +10,8 @@
  * internal notes), so both render, search and export the same way.
  */
 
+import { MAKING_TARGET_WEEKS } from '@/lib/shop/madeToOrder';
+
 export const ORDER_STATUSES = [
   { value: 'paid', title: 'Paid' },
   { value: 'fulfilling', title: 'Fulfilling' },
@@ -31,6 +33,7 @@ export const TABLE_QUERY = `{
     "tracking": fulfillment.trackingNumber,
     "shippedAt": fulfillment.shippedAt,
     "emailedAt": fulfillment.shippedEmailSentAt,
+    "targetShipDate": fulfillment.targetShipDate,
     lines[]{ _key, titleSnapshot, sku, quantity, madeToOrder, customSize, engraving, largeSizeGBP, notes },
     // Paid bespoke orders from before their lines carried size etc.: read the link instead.
     "bespoke": select(
@@ -65,6 +68,8 @@ interface OrderDoc {
   tracking?: string;
   shippedAt?: string;
   emailedAt?: string;
+  /** A ship-by date set by hand ("YYYY-MM-DD"), overriding the making target. */
+  targetShipDate?: string;
   notes?: string;
   lines?: {
     _key: string;
@@ -153,6 +158,8 @@ export interface Row {
   tracking?: string;
   shippedAt?: string;
   emailedAt?: string;
+  /** "YYYY-MM-DD": the order's own target date, else payment + the making target (made to order only). */
+  shipBy?: string;
   addressWarning?: string;
   // Unpaid checkouts
   reminderSentAt?: string;
@@ -166,6 +173,7 @@ export function toRows(data: TableData): Row[] {
   const orders: Row[] = data.orders.map((o) => {
     const bespoke = o.source === 'payment_link';
     const b = o.bespoke ?? undefined;
+    const making = bespoke || (o.lines ?? []).some((l) => l.madeToOrder);
     return {
       id: o._id,
       docType: 'order',
@@ -179,6 +187,7 @@ export function toRows(data: TableData): Row[] {
       tracking: o.tracking,
       shippedAt: o.shippedAt,
       emailedAt: o.emailedAt,
+      shipBy: o.targetShipDate || (making && o.createdAt ? makingTarget(o.createdAt) : undefined),
       addressWarning: o.addressWarning,
       internalNotes: o.notes || undefined,
       details: b?.description || undefined,
@@ -304,6 +313,59 @@ export function statusText(row: Row): string {
     return ORDER_STATUSES.find((s) => s.value === (row.status ?? 'paid'))?.title ?? '';
   }
   return pendingStatus(row).title;
+}
+
+// ── Making target ──
+
+const DAY = 86_400_000;
+
+/** The UK calendar date of an instant, as "YYYY-MM-DD". */
+function ukDate(at: Date | string): string {
+  return new Date(at).toLocaleDateString('sv-SE', { timeZone: 'Europe/London' });
+}
+
+/** Payment (UK date) plus the studio's making target, as "YYYY-MM-DD". */
+export function makingTarget(paidAt: string): string {
+  const day = Date.parse(`${ukDate(paidAt)}T00:00:00Z`) + MAKING_TARGET_WEEKS * 7 * DAY;
+  return new Date(day).toISOString().slice(0, 10);
+}
+
+/** "15 Nov" from "YYYY-MM-DD". */
+export function shortDate(ymd: string): string {
+  return new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+}
+
+/**
+ * How an order stands against its ship-by date, while it's still to ship:
+ * "in 12 days", "today" or "3 days late". Null once shipped (or with no date).
+ */
+export function shipByStatus(
+  row: Row,
+  now: Date = new Date()
+): { date: string; note: string; tone: 'default' | 'caution' | 'critical' } | null {
+  if (!row.shipBy || !inTab(row, 'toFulfil')) return null;
+  const days = Math.round(
+    (Date.parse(`${row.shipBy}T00:00:00Z`) - Date.parse(`${ukDate(now)}T00:00:00Z`)) / DAY
+  );
+  const plural = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
+  return {
+    date: shortDate(row.shipBy),
+    note: days > 0 ? `in ${plural(days)}` : days === 0 ? 'today' : `${plural(-days)} late`,
+    tone: days < 0 ? 'critical' : days <= 7 ? 'caution' : 'default',
+  };
+}
+
+/**
+ * "To fulfil" runs by urgency: earliest ship-by date first. An in-stock order
+ * has no making time, so its payment date stands in and it sorts ahead.
+ */
+export function byUrgency(a: Row, b: Row): number {
+  const due = (r: Row) => r.shipBy ?? (r.date ? ukDate(r.date) : '');
+  return due(a).localeCompare(due(b)) || (a.date ?? '').localeCompare(b.date ?? '');
 }
 
 export const TABS = [

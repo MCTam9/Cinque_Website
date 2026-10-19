@@ -14,6 +14,7 @@ import {
   TABS,
   lineExtras,
   money,
+  shipByStatus,
   statusText,
   when,
   type Customer,
@@ -28,6 +29,7 @@ const CSV_HEADERS = [
   'Type',
   'Order',
   'Status',
+  'Ship by',
   'Name',
   'Email',
   'Phone',
@@ -100,6 +102,7 @@ export function ordersCsv(rows: Row[], customers: Customers): string {
       KIND_TITLE[row.kind],
       row.orderNumber ?? '',
       statusText(row),
+      row.shipBy ?? '',
       c?.name ?? '',
       c?.email ?? '',
       c?.phone ?? '',
@@ -170,6 +173,12 @@ function cellHtml(...parts: (string | false | null | undefined)[]): string {
     .join('<br>');
 }
 
+/** "Ship by 15 Nov (in 12 days)" while an order is still to ship. */
+function shipByLine(row: Row): string | undefined {
+  const due = shipByStatus(row);
+  return due ? `Ship by ${due.date} (${due.note})` : undefined;
+}
+
 /** The print view: one row per order, every value HTML-escaped. */
 export function ordersPrintHtml(rows: Row[], customers: Customers, tab: TabId): string {
   const tabTitle = TABS.find((t) => t.id === tab)?.title ?? '';
@@ -210,7 +219,7 @@ export function ordersPrintHtml(rows: Row[], customers: Customers, tab: TabId): 
 <td>${items}</td>
 <td>${notes.join('<br>')}</td>
 <td class="nowrap">${cellHtml(money(row.totalGBP))}</td>
-<td>${cellHtml(statusText(row))}</td>
+<td>${cellHtml(statusText(row), shipByLine(row))}</td>
 <td>${cellHtml(
         carrierLabel(row.carrier),
         row.tracking,
