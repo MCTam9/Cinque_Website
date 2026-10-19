@@ -10,6 +10,13 @@
 export const MADE_TO_ORDER_LEAD_TIME = '8–12 weeks';
 
 /**
+ * The studio's own target for a made-to-order piece: shipped this many weeks
+ * after payment. Internal only (the Admin's Orders table counts down to it),
+ * kept inside the lead time customers are quoted.
+ */
+export const MAKING_TARGET_WEEKS = 6;
+
+/**
  * Last moment for Christmas made-to-order orders: end of 20 October (UK
  * time). The checkout reminder email quotes it until it passes, then drops
  * it. (The site's banner is an Admin announcement with its own end time.)

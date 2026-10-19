@@ -31,10 +31,12 @@ import {
   ORDER_STATUSES,
   TABLE_QUERY,
   TABS,
+  byUrgency,
   inTab,
   lineExtras,
   money,
   pendingStatus,
+  shipByStatus,
   toRows,
   when,
   type Customer,
@@ -166,7 +168,7 @@ export function OrdersTool() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((row) => {
+    const shown = rows.filter((row) => {
       if (!inTab(row, tab)) return false;
       if (!q) return true;
       const c = row.sessionId ? customers[row.sessionId] : undefined;
@@ -185,6 +187,8 @@ export function OrdersTool() {
         .toLowerCase();
       return haystack.includes(q);
     });
+    // To fulfil: most urgent first. Elsewhere: newest first, as read.
+    return tab === 'toFulfil' ? [...shown].sort(byUrgency) : shown;
   }, [rows, tab, search, customers]);
 
   // Exports always carry contact details, so they wait until every visible
@@ -348,6 +352,7 @@ function TableRow({
         </td>
         <td style={{ ...cell, whiteSpace: 'nowrap' }}>
           <Text size={1}>{when(row.date)}</Text>
+          <ShipBy row={row} />
         </td>
         <td style={cell}>
           <Badge tone={kind.tone} fontSize={0}>
@@ -498,6 +503,24 @@ function TableRow({
         </tr>
       )}
     </Fragment>
+  );
+}
+
+/** Under the order date: the ship-by date and how long is left, until it ships. */
+function ShipBy({ row }: { row: Row }) {
+  const due = shipByStatus(row);
+  if (!due) return null;
+  return (
+    <Stack space={1} marginTop={2}>
+      <Text size={0} muted>
+        Ship by {due.date}
+      </Text>
+      <Box>
+        <Badge tone={due.tone} fontSize={0}>
+          {due.note}
+        </Badge>
+      </Box>
+    </Stack>
   );
 }
 
