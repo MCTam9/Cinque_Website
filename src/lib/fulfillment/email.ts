@@ -4,6 +4,7 @@ import { publicEnv } from '@/lib/env';
 import type { OrderContact } from '@/lib/stripe/customer';
 import {
   CHRISTMAS_CUTOFF,
+  CHRISTMAS_CUTOFF_LABEL,
   MADE_TO_ORDER_LINE,
   lineTotalGBP,
   priceRows,
@@ -525,7 +526,7 @@ export async function sendCartReminder(input: CartReminderInput): Promise<SendEm
   // falls back to the everyday opening rather than quoting a past deadline.
   const opening =
     Date.now() <= CHRISTMAS_CUTOFF.getTime()
-      ? 'I wanted to send a quick note as we approach the holiday season. Because our made-to-order pieces take 8 to 12 weeks to craft, our cut-off date for Christmas orders is 20 October. Here’s what you picked:'
+      ? `I wanted to send a quick note as we approach the holiday season. Because our made-to-order pieces take 8 weeks to craft, our cut-off date for Christmas orders is ${CHRISTMAS_CUTOFF_LABEL}. Here’s what you picked:`
       : 'You started checking out but didn’t quite get to the end, so here’s what you picked, in case you’d like to come back to it.';
   const html = shell(
     'Still in your cart',
