@@ -17,11 +17,19 @@ export const MADE_TO_ORDER_LEAD_TIME = '8–12 weeks';
 export const MAKING_TARGET_WEEKS = 6;
 
 /**
- * Last moment for Christmas made-to-order orders: end of 20 October (UK
- * time). The checkout reminder email quotes it until it passes, then drops
- * it. (The site's banner is an Admin announcement with its own end time.)
+ * Last moment for Christmas made-to-order orders: end of 6 November (UK
+ * time, GMT by then). The checkout reminder email quotes it until it passes,
+ * then drops it. (The site's banner is an Admin announcement with its own
+ * wording and end time: keep the two dates in step.)
  */
-export const CHRISTMAS_CUTOFF = new Date('2026-10-20T23:59:59+01:00');
+export const CHRISTMAS_CUTOFF = new Date('2026-11-06T23:59:59Z');
+
+/** The cut-off as written to customers: "6 November". */
+export const CHRISTMAS_CUTOFF_LABEL = CHRISTMAS_CUTOFF.toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/London',
+});
 
 /** The PDP and cart line for a made-to-order piece. */
 export const MADE_TO_ORDER_LINE = `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}`;
