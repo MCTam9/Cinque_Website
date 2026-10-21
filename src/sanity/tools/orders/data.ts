@@ -104,7 +104,13 @@ interface UnpaidDoc {
   optedOut?: boolean;
   recoveredAt?: string;
   orderNumber?: string;
-  items?: { _key: string; title?: string; sku?: string; quantity?: number; size?: string }[];
+  items?: {
+    _key: string;
+    title?: string;
+    sku?: string;
+    quantity?: number;
+    size?: string;
+  }[];
 }
 
 interface LinkDoc extends BespokeFields {
@@ -302,7 +308,10 @@ export function pendingStatus(row: Row): { title: string; tone: Tone } {
   }
   if (row.optedOut) return { title: 'Opted out of reminders', tone: 'default' };
   if (row.reminderSentAt) {
-    return { title: `Reminder sent ${when(row.reminderSentAt)}`, tone: 'primary' };
+    return {
+      title: `Reminder sent ${when(row.reminderSentAt)}`,
+      tone: 'primary',
+    };
   }
   return { title: 'No reminder', tone: 'caution' };
 }
@@ -321,7 +330,9 @@ const DAY = 86_400_000;
 
 /** The UK calendar date of an instant, as "YYYY-MM-DD". */
 function ukDate(at: Date | string): string {
-  return new Date(at).toLocaleDateString('sv-SE', { timeZone: 'Europe/London' });
+  return new Date(at).toLocaleDateString('sv-SE', {
+    timeZone: 'Europe/London',
+  });
 }
 
 /** Payment (UK date) plus the studio's making target, as "YYYY-MM-DD". */
@@ -346,7 +357,11 @@ export function shortDate(ymd: string): string {
 export function shipByStatus(
   row: Row,
   now: Date = new Date()
-): { date: string; note: string; tone: 'default' | 'caution' | 'critical' } | null {
+): {
+  date: string;
+  note: string;
+  tone: 'default' | 'caution' | 'critical';
+} | null {
   if (!row.shipBy || !inTab(row, 'toFulfil')) return null;
   const days = Math.round(
     (Date.parse(`${row.shipBy}T00:00:00Z`) - Date.parse(`${ukDate(now)}T00:00:00Z`)) / DAY
@@ -366,6 +381,70 @@ export function shipByStatus(
 export function byUrgency(a: Row, b: Row): number {
   const due = (r: Row) => r.shipBy ?? (r.date ? ukDate(r.date) : '');
   return due(a).localeCompare(due(b)) || (a.date ?? '').localeCompare(b.date ?? '');
+}
+
+// ── Sorting by column ──
+
+export type SortKey =
+  'date' | 'type' | 'order' | 'customer' | 'items' | 'total' | 'status' | 'tracking';
+export interface Sort {
+  key: SortKey;
+  dir: 'asc' | 'desc';
+}
+
+const KIND_ORDER: RowKind[] = ['order', 'bespokeOrder', 'unpaid', 'link'];
+
+/** Where a row sits in its Status column: order statuses in workflow order, then the rest. */
+function statusRank(row: Row): string {
+  if (row.kind === 'order' || row.kind === 'bespokeOrder') {
+    const i = ORDER_STATUSES.findIndex((s) => s.value === (row.status ?? 'paid'));
+    return `a${i}`;
+  }
+  return `b${pendingStatus(row).title}`;
+}
+
+/**
+ * The column a click on its header sorts by. Empty cells always go last, in
+ * either direction; ties fall back to newest first.
+ */
+export function sortRows(
+  rows: Row[],
+  sort: Sort,
+  customerName: (row: Row) => string | undefined
+): Row[] {
+  const value = (row: Row): string | number | undefined => {
+    switch (sort.key) {
+      case 'date':
+        return row.date;
+      case 'type':
+        return KIND_ORDER.indexOf(row.kind);
+      case 'order':
+        return row.orderNumber;
+      case 'customer':
+        return customerName(row)?.trim().toLowerCase() || undefined;
+      case 'items':
+        return row.lines[0]?.title.toLowerCase();
+      case 'total':
+        return row.totalGBP;
+      case 'status':
+        return statusRank(row);
+      case 'tracking':
+        // Still to ship: by ship-by date. Shipped: by tracking number.
+        return row.shipBy ?? row.tracking;
+    }
+  };
+  const sign = sort.dir === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const va = value(a);
+    const vb = value(b);
+    if (va === undefined || va === '') return vb === undefined || vb === '' ? 0 : 1;
+    if (vb === undefined || vb === '') return -1;
+    const c =
+      typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb), 'en-GB', { numeric: true });
+    return c * sign || (b.date ?? '').localeCompare(a.date ?? '');
+  });
 }
 
 export const TABS = [
