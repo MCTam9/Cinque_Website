@@ -15,6 +15,8 @@ import {
   useToast,
 } from '@sanity/ui';
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CopyIcon,
@@ -37,11 +39,14 @@ import {
   money,
   pendingStatus,
   shipByStatus,
+  sortRows,
   toRows,
   when,
   type Customer,
   type OrderStatus,
   type Row,
+  type Sort,
+  type SortKey,
   type TabId,
   type TableData,
 } from './data';
@@ -86,6 +91,8 @@ export function OrdersTool() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabId>('toFulfil');
   const [search, setSearch] = useState('');
+  // Null: each tab's own order (To fulfil by urgency, the rest newest first).
+  const [sort, setSort] = useState<Sort | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [customerNote, setCustomerNote] = useState<string | null>(null);
@@ -187,9 +194,26 @@ export function OrdersTool() {
         .toLowerCase();
       return haystack.includes(q);
     });
+    if (sort) {
+      return sortRows(
+        shown,
+        sort,
+        (r) => (r.sessionId ? customers[r.sessionId]?.name : undefined) ?? undefined
+      );
+    }
     // To fulfil: most urgent first. Elsewhere: newest first, as read.
     return tab === 'toFulfil' ? [...shown].sort(byUrgency) : shown;
-  }, [rows, tab, search, customers]);
+  }, [rows, tab, search, customers, sort]);
+
+  // A header click sorts by that column; again flips it; a third time goes
+  // back to the tab's own order. Dates and totals start biggest/newest first.
+  const toggleSort = (key: SortKey) =>
+    setSort((cur) => {
+      const first: Sort['dir'] = key === 'date' || key === 'total' ? 'desc' : 'asc';
+      if (cur?.key !== key) return { key, dir: first };
+      if (cur.dir === first) return { key, dir: first === 'asc' ? 'desc' : 'asc' };
+      return null;
+    });
 
   // Exports always carry contact details, so they wait until every visible
   // row's customer has come back from Stripe.
@@ -280,15 +304,32 @@ export function OrdersTool() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
               <thead>
                 <tr>
-                  {['', 'Date', 'Type', 'Order', 'Customer', 'Items', 'Notes', 'Total', 'Status', 'Tracking', ''].map(
-                    (h, i) => (
-                      <th key={i} style={{ ...cell, textAlign: 'left' }}>
+                  {HEADERS.map((h, i) => (
+                    <th
+                      key={i}
+                      style={{ ...cell, textAlign: 'left' }}
+                      aria-sort={
+                        h.key && sort?.key === h.key
+                          ? sort.dir === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : undefined
+                      }
+                    >
+                      {h.key ? (
+                        <SortHeader
+                          title={h.title}
+                          hint={h.hint}
+                          dir={sort?.key === h.key ? sort.dir : null}
+                          onClick={() => toggleSort(h.key!)}
+                        />
+                      ) : (
                         <Text size={1} weight="semibold" muted>
-                          {h}
+                          {h.title}
                         </Text>
-                      </th>
-                    )
-                  )}
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -310,8 +351,8 @@ export function OrdersTool() {
           </Card>
         )}
         <Text size={0} muted>
-          Shows the latest 150 of each kind. Customer details come from Stripe and are not stored
-          in the Admin.
+          Shows the latest 150 of each kind. Customer details come from Stripe and are not stored in
+          the Admin.
         </Text>
       </Stack>
     </Card>
@@ -366,7 +407,11 @@ function TableRow({
             </Text>
             {row.addressWarning && (
               <Text size={1} title={row.addressWarning}>
-                <WarningOutlineIcon style={{ color: 'var(--card-badge-caution-icon-color, #c98a00)' }} />
+                <WarningOutlineIcon
+                  style={{
+                    color: 'var(--card-badge-caution-icon-color, #c98a00)',
+                  }}
+                />
               </Text>
             )}
           </Flex>
@@ -506,6 +551,57 @@ function TableRow({
   );
 }
 
+/** Table columns; those with a key sort when their header is clicked. */
+const HEADERS: { title: string; key?: SortKey; hint?: string }[] = [
+  { title: '' },
+  { title: 'Date', key: 'date' },
+  { title: 'Type', key: 'type' },
+  { title: 'Order', key: 'order' },
+  { title: 'Customer', key: 'customer', hint: 'Sort by customer name' },
+  { title: 'Items', key: 'items' },
+  { title: 'Notes' },
+  { title: 'Total', key: 'total' },
+  { title: 'Status', key: 'status' },
+  {
+    title: 'Tracking',
+    key: 'tracking',
+    hint: 'Sort by ship-by date, then tracking number',
+  },
+  { title: '' },
+];
+
+function SortHeader({
+  title,
+  hint,
+  dir,
+  onClick,
+}: {
+  title: string;
+  hint?: string;
+  dir: Sort['dir'] | null;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={hint ?? `Sort by ${title.toLowerCase()}`}
+      style={{
+        all: 'unset',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+      }}
+    >
+      <Text size={1} weight="semibold" muted={!dir}>
+        {title}
+      </Text>
+      {dir && <Text size={1}>{dir === 'asc' ? <ArrowUpIcon /> : <ArrowDownIcon />}</Text>}
+    </button>
+  );
+}
+
 /** Under the order date: the ship-by date and how long is left, until it ships. */
 function ShipBy({ row }: { row: Row }) {
   const due = shipByStatus(row);
@@ -639,7 +735,9 @@ function OrderEditor({ row, client }: { row: Row; client: SanityClient }) {
         ? patch.set({ 'fulfillment.trackingNumber': t })
         : patch.unset(['fulfillment.trackingNumber']);
       if (status === 'shipped' && !row.shippedAt) {
-        patch = patch.set({ 'fulfillment.shippedAt': new Date().toISOString() });
+        patch = patch.set({
+          'fulfillment.shippedAt': new Date().toISOString(),
+        });
       }
       await patch.commit();
       const emailNote =
