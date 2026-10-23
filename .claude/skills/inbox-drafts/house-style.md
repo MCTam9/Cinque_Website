@@ -135,7 +135,10 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
     fingers can be slightly swollen in the morning.
   - Wider rings, like the Gimmel's two bands, fit more snugly: between sizes, suggest the
     larger.
-- **Shipping:** UK, US, Canada, Australia and Japan. Import duties and taxes outside the UK
+- **Shipping:** UK, US, Canada, Australia and Japan. Every delivery is **fully tracked and
+  insured**, and free on orders over the free-shipping threshold in
+  `src/lib/shop/shipping.ts` (e.g. "with fully tracked and insured delivery to Australia
+  included"). Import duties and taxes outside the UK
   are paid by the customer: link the shipping page.
 - **EU:** deliveries are paused. Explanation to give: since Brexit, shipping from the UK to
   the EU involves customs requirements and EU product safety rules that are difficult for a
