@@ -157,9 +157,10 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
 
 ## Bespoke enquiries
 
-- Cinque's language: pieces **cast from real objects**, such as botanical specimens and
-  antique lace, not carved or figurative designs. Interpret a brief through that language
-  and show how Cinque would approach it, rather than promising the literal idea.
+- Cinque's language is the studio's existing work (botanical and lace castings, and
+  sculpted pieces like the Hand & Hand Gimmel Ring). Judge a brief by how close it is to
+  that work. **Never describe Cinque's method to a customer** (e.g. "my pieces are cast from
+  real objects rather than sculpted"): it's inaccurate, and a decline needs no reason.
 - To take a commission forward: say yes warmly if it's in Cinque's language, ask where
   they're based (EU check, above), point them to the Bespoke section of the Studio page for
   how a commission works (https://cinque.studio/studio), and offer a **free design
@@ -167,13 +168,19 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
   side profile of an engagement ring the band must sit against), ring size, the date
   they're working towards, budget, gold colour and carat, stone preferences (e.g. natural
   or lab-grown). Offer to send references of past work.
-- If the brief is outside Cinque's language, or too vague to be a real commission (no
-  material, size, budget or timeline), decline gently: it would be a new direction that
-  would take considerable time to explore, so it isn't something Cindy can take on at the
-  moment; invite them to explore more of the work at https://cinque.studio and on
-  Instagram at @cinque.made, and leave the door open to developing something from there.
-  This is Cindy's decision: draft it only when the email clearly calls for it, and flag it
-  in the review line.
+- If the brief is far from Cinque's work, or too vague to be a real commission (no
+  material, size, budget or timeline), decline gently in exactly this shape, naming their
+  idea in the first sentence and giving no other reason:
+  > <Their idea, e.g. "A tiger biting an emerald"> would be a new direction for me, and it
+  > would take considerable time to explore properly. Unfortunately, it isn't something I'm
+  > able to take on at the moment.
+  >
+  > In the meantime, I'd encourage you to explore more of my work at https://cinque.studio
+  > and on Instagram at @cinque.made. If anything there resonates with you, I'd be very
+  > happy to talk about how we might develop it into something personal for you.
+
+  Open with "Dear <name>," and a thank-you. This is Cindy's decision: draft a decline only
+  when the email clearly calls for it, and flag it in the review line.
 - If a commission may later become a shop design, tell the customer up front ("I'd also
   like to add it to the Cinque collection in the future, with yours being the first one
   made. I hope that sits well with you.").
