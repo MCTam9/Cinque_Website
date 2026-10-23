@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import type Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
-import { publicEnv } from '@/lib/env';
+import { isStudioEditor } from '@/lib/adminAuth';
 import { rateLimit, clientIp } from '@/lib/rateLimit';
 import { contactFromSession, type OrderContact } from '@/lib/stripe/customer';
 import type { FulfillmentLine } from '@/types';
@@ -29,7 +29,6 @@ export const dynamic = 'force-dynamic';
 const MAX_SESSIONS = 150;
 const STRIPE_CONCURRENCY = 5;
 const CACHE_MS = 5 * 60_000;
-const ALLOWED_ROLES = new Set(['administrator', 'editor']);
 
 const bodySchema = z.object({
   sessionIds: z
@@ -46,31 +45,7 @@ export interface AdminCustomer extends OrderContact {
 
 // Per-instance caches: a few minutes is enough to make the table's live
 // refreshes cheap without serving details that are long out of date.
-const userCache = new Map<string, number>(); // token → allowed until
 const sessionCache = new Map<string, { at: number; data: AdminCustomer }>();
-
-/** True when `token` belongs to a person on this project who may edit orders. */
-async function isStudioEditor(token: string): Promise<boolean> {
-  const until = userCache.get(token);
-  if (until && until > Date.now()) return true;
-  const res = await fetch(
-    `https://${publicEnv.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/v2021-06-07/users/me`,
-    { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }
-  ).catch(() => null);
-  if (!res?.ok) return false;
-  const me = (await res.json().catch(() => null)) as {
-    id?: string;
-    provider?: string;
-    roles?: { name?: string }[];
-  } | null;
-  const allowed =
-    Boolean(me?.id) &&
-    // API (robot) tokens report this provider; only real logins get in.
-    me?.provider !== 'sanity-token' &&
-    (me?.roles ?? []).some((r) => ALLOWED_ROLES.has(r.name ?? ''));
-  if (allowed) userCache.set(token, Date.now() + CACHE_MS);
-  return allowed;
-}
 
 /** The engraving and notes an unpaid checkout carried, per cart line. */
 function unpaidLines(session: Stripe.Checkout.Session): AdminCustomer['lines'] {

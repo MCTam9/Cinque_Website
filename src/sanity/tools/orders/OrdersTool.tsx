@@ -51,6 +51,7 @@ import {
   type TableData,
 } from './data';
 import { downloadCsv, printOrders } from './export';
+import { EnquiriesPanel } from './EnquiriesPanel';
 
 const API_VERSION = '2024-10-01';
 /** The route caps one request at this many sessions. */
@@ -90,6 +91,8 @@ export function OrdersTool() {
   const [data, setData] = useState<TableData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabId>('toFulfil');
+  // The Enquiries tab is its own panel (conversations, not orders).
+  const [enquiries, setEnquiries] = useState(false);
   const [search, setSearch] = useState('');
   // Null: each tab's own order (To fulfil by urgency, the rest newest first).
   const [sort, setSort] = useState<Sort | null>(null);
@@ -268,92 +271,111 @@ export function OrdersTool() {
           {TABS.map((t) => (
             <Button
               key={t.id}
-              mode={tab === t.id ? 'default' : 'ghost'}
-              tone={tab === t.id ? 'primary' : 'default'}
+              mode={!enquiries && tab === t.id ? 'default' : 'ghost'}
+              tone={!enquiries && tab === t.id ? 'primary' : 'default'}
               fontSize={1}
               padding={2}
               text={`${t.title} (${counts[t.id] ?? 0})`}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id);
+                setEnquiries(false);
+              }}
             />
           ))}
+          <Box style={{ width: 1, background: 'var(--card-border-color)' }} />
+          <Button
+            mode={enquiries ? 'default' : 'ghost'}
+            tone={enquiries ? 'primary' : 'default'}
+            fontSize={1}
+            padding={2}
+            text="Enquiries"
+            onClick={() => setEnquiries(true)}
+          />
         </Flex>
 
-        {customerNote && (
-          <Card padding={3} radius={2} tone="caution" border>
-            <Text size={1}>{customerNote}</Text>
-          </Card>
-        )}
-        {loadError && (
-          <Card padding={3} radius={2} tone="critical" border>
-            <Text size={1}>{loadError}</Text>
-          </Card>
-        )}
-
-        {!data && !loadError ? (
-          <Flex justify="center" padding={5}>
-            <Spinner muted />
-          </Flex>
-        ) : visible.length === 0 ? (
-          <Card padding={4} radius={2} border>
-            <Text size={1} muted>
-              Nothing here{search ? ' matching your search' : ''}.
-            </Text>
-          </Card>
+        {enquiries ? (
+          <EnquiriesPanel client={client} />
         ) : (
-          <Card radius={2} border overflow="auto">
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
-              <thead>
-                <tr>
-                  {HEADERS.map((h, i) => (
-                    <th
-                      key={i}
-                      style={{ ...cell, textAlign: 'left' }}
-                      aria-sort={
-                        h.key && sort?.key === h.key
-                          ? sort.dir === 'asc'
-                            ? 'ascending'
-                            : 'descending'
-                          : undefined
-                      }
-                    >
-                      {h.key ? (
-                        <SortHeader
-                          title={h.title}
-                          hint={h.hint}
-                          dir={sort?.key === h.key ? sort.dir : null}
-                          onClick={() => toggleSort(h.key!)}
-                        />
-                      ) : (
-                        <Text size={1} weight="semibold" muted>
-                          {h.title}
-                        </Text>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    row={row}
-                    customer={row.sessionId ? customers[row.sessionId] : undefined}
-                    customersLoading={Boolean(
-                      row.sessionId && !customers[row.sessionId] && !customerNote
-                    )}
-                    expanded={expanded === row.id}
-                    onToggle={() => setExpanded((cur) => (cur === row.id ? null : row.id))}
-                    client={client}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </Card>
+          <>
+
+            {customerNote && (
+              <Card padding={3} radius={2} tone="caution" border>
+                <Text size={1}>{customerNote}</Text>
+              </Card>
+            )}
+            {loadError && (
+              <Card padding={3} radius={2} tone="critical" border>
+                <Text size={1}>{loadError}</Text>
+              </Card>
+            )}
+
+            {!data && !loadError ? (
+              <Flex justify="center" padding={5}>
+                <Spinner muted />
+              </Flex>
+            ) : visible.length === 0 ? (
+              <Card padding={4} radius={2} border>
+                <Text size={1} muted>
+                  Nothing here{search ? ' matching your search' : ''}.
+                </Text>
+              </Card>
+            ) : (
+              <Card radius={2} border overflow="auto">
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
+                  <thead>
+                    <tr>
+                      {HEADERS.map((h, i) => (
+                        <th
+                          key={i}
+                          style={{ ...cell, textAlign: 'left' }}
+                          aria-sort={
+                            h.key && sort?.key === h.key
+                              ? sort.dir === 'asc'
+                                ? 'ascending'
+                                : 'descending'
+                              : undefined
+                          }
+                        >
+                          {h.key ? (
+                            <SortHeader
+                              title={h.title}
+                              hint={h.hint}
+                              dir={sort?.key === h.key ? sort.dir : null}
+                              onClick={() => toggleSort(h.key!)}
+                            />
+                          ) : (
+                            <Text size={1} weight="semibold" muted>
+                              {h.title}
+                            </Text>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        row={row}
+                        customer={row.sessionId ? customers[row.sessionId] : undefined}
+                        customersLoading={Boolean(
+                          row.sessionId && !customers[row.sessionId] && !customerNote
+                        )}
+                        expanded={expanded === row.id}
+                        onToggle={() => setExpanded((cur) => (cur === row.id ? null : row.id))}
+                        client={client}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            )}
+            <Text size={0} muted>
+              Shows the latest 150 of each kind. Customer details come from Stripe and are not stored in
+              the Admin.
+            </Text>
+          </>
         )}
-        <Text size={0} muted>
-          Shows the latest 150 of each kind. Customer details come from Stripe and are not stored in
-          the Admin.
-        </Text>
       </Stack>
     </Card>
   );

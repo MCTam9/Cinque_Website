@@ -45,6 +45,7 @@ export default defineConfig({
             'abandonedCheckout',
             'reminderOptOut',
             'cartReminder',
+            'enquiry',
           ].includes(item.templateId) &&
           item.templateId !== 'homePage' &&
           item.templateId !== 'studioPage' &&
