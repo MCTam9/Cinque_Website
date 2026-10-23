@@ -50,12 +50,14 @@ do not look for a token. No other website is reachable, and none is needed.
    - `curl -sS https://cinque.studio/api/agent/item/<id>`
    - `curl -sS https://cinque.studio/api/agent/style`
    A 404 means it was handled already: reply `skipped`.
-2. Read what you need from the repo for policy:
+2. Read `.claude/skills/inbox-drafts/house-style.md` (Cindy's voice, structure and the
+   studio policies she has set), then what you need from the repo for policy:
    - `src/lib/shop/shipping.ts`: countries, rates, free-shipping threshold, duties wording
    - `src/lib/shop/madeToOrder.ts`: lead time, engraving, larger sizes, Christmas cut-off
    - `src/app/(site)/(legal)/shipping/page.tsx` and `src/app/(site)/(legal)/terms/page.tsx`:
      delivery, returns, made-to-order and after-care terms
    - `src/lib/shop/ringSizes.ts`: ring size systems and conversions
+   - A product page, to check a current price or link: `curl -sS https://cinque.studio/shop/<slug>`
 3. Decide by `kind`:
    - **`new`**: a new customer message.
      - Not a customer enquiry (a supplier, press, a content creator or influencer pitching a
@@ -77,9 +79,9 @@ do not look for a token. No other website is reachable, and none is needed.
      (concluded) or `"ignored"` (not a customer), plus `topic`, and `followUpOn` if the
      customer said when to get back to them.
 4. Writing the draft:
-   - Match the `style.examples` closely: greeting, length, warmth, paragraphing and sign-off.
-     British English. Plain text only (no markdown, no bullet symbols unless the examples use
-     them). Use `customerFirstName` in the greeting when given.
+   - Follow `house-style.md`, and match the `style.examples` closely for greeting, length,
+     warmth and paragraphing. Plain text, no markdown, no em dashes. Use `customerFirstName`
+     in the greeting when given.
    - Answer what they asked, using their own order details where relevant (status, size,
      engraving, tracking link). Keep it as short as the examples are.
    - The **first line is always** a review note for Cindy, then a blank line, then the email:
