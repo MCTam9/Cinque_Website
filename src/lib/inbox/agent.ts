@@ -377,18 +377,71 @@ export async function writeTrack(
 
 // ── The studio's voice ──
 
-/** Strip anything identifying from a sent reply before it's used as an example. */
-export function redactExample(text: string): string {
-  return text
+const STREET =
+  /\b(road|rd|street|st|avenue|ave|av|lane|ln|rue|strasse|straße|straat|calle|via|way|drive|close|court|place|square|boulevard|blvd|terrace|gardens|crescent|grove|mews|row|parade|walk|n°)\b/i;
+
+/** A line that reads like part of a postal address (not the studio's own). */
+function isAddressLine(line: string): boolean {
+  if (/808 High R(oa)?d/i.test(line)) return false;
+  const short = line.trim().length <= 80;
+  const houseAndStreet = /\d/.test(line) && STREET.test(line);
+  // Postal codes the UK pattern below misses: 4 to 6 digits not part of a price.
+  // Years (2026) excepted.
+  const postcode = /(?<![£$€\d.,])\b(?!(?:19|20)\d{2}\b)\d{4,6}\b(?![.,]\d)/.test(line);
+  return short && (houseAndStreet || postcode);
+}
+
+/**
+ * Strip anything identifying from a sent reply before it's used as an
+ * example: the names on that conversation, greetings, emails, links, order
+ * numbers, phone numbers, postcodes and address lines.
+ */
+export function redactExample(text: string, names: string[] = []): string {
+  let out = text
+    .split('\n')
+    .map((l) => (isAddressLine(l) ? '[address]' : l))
+    .join('\n')
+    .replace(/(\[address\]\n?)+/g, '[address]\n');
+  // Names as written in a sentence (capitalised), so "May" goes but "may" stays.
+  for (const n of names) {
+    if (n.length < 2) continue;
+    const word = n[0].toUpperCase() + n.slice(1).toLowerCase();
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp(`(?<!\\p{L})${escaped}(?!\\p{L})`, 'gu'), '[name]');
+  }
+  return out
     .replace(
       /^(\s*(?:hi|hello|hey|dear|good (?:morning|afternoon|evening)))[ \t]+[^\n,!.]{1,40}/i,
       '$1 [name]'
     )
     .replace(/\S+@\S+\.\S+/g, '[email]')
-    .replace(/https?:\/\/(?!(?:www\.)?cinque\.studio)\S+/gi, '[link]')
+    .replace(
+      /https?:\/\/(?!(?:www\.)?(?:cinque\.studio|instagram\.com\/cinque\.made))\S+/gi,
+      '[link]'
+    )
     .replace(/\bCQ-\d{6}-[A-Z0-9]{8}\b/g, '[order number]')
     .replace(/\+?\d[\d\s().-]{7,}\d/g, '[number]')
     .replace(/\b[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}\b/g, '[postcode]');
+}
+
+/** The words of the names on a conversation, for redaction. */
+function namesOf(t: Thread): string[] {
+  const own = ownAddress().toLowerCase();
+  const people = [
+    ...t.inbound.flatMap((m) => [m.from, m.replyTo]),
+    ...t.sent.flatMap((m) => m.to),
+  ].filter((a) => a?.address && a.address.toLowerCase() !== own);
+  const words = people.flatMap((a) => [
+    ...(a!.name ?? '').split(/[\s,]+/),
+    ...a!.address!.split('@')[0].split(/[._+-]+/),
+  ]);
+  // Contact-form subjects carry the visitor's name.
+  const subject = /Cinque enquiry from ([^(]+)/.exec(t.inbound[0]?.subject ?? '')?.[1] ?? '';
+  return [
+    ...new Set(
+      [...words, ...subject.split(/\s+/)].map((w) => w.trim()).filter((w) => w.length > 1)
+    ),
+  ];
 }
 
 let styleCache: { at: number; data: { fromName: string; examples: string[] } } | null = null;
@@ -396,19 +449,25 @@ let styleCache: { at: number; data: { fromName: string; examples: string[] } } |
 /** Recent replies to customers, redacted, as examples of tone and format. */
 export async function style(): Promise<{ fromName: string; examples: string[] }> {
   if (styleCache && Date.now() - styleCache.at < 30 * 60_000) return styleCache.data;
+  // Conversations the agent judged not to be customer enquiries aren't examples.
+  const ignored = new Set(
+    (await loadEnquiries()).filter((d) => d.status === 'ignored').map((d) => keyOf(d))
+  );
   const data = await Mailbox.with(async (mb) => {
     const idx = await buildIndex(mb);
     const own = ownAddress().toLowerCase();
     const replies = idx.threads
-      .filter((t) => t.inbound.length && t.sent.length)
-      .flatMap((t) => t.sent)
-      .filter((m) => m.to.some((a) => a.address?.toLowerCase() !== own))
-      .sort((a, b) => b.date - a.date)
-      .slice(0, 15);
+      .filter((t) => t.inbound.length && t.sent.length && !ignored.has(t.key))
+      .flatMap((t) => t.sent.map((m) => ({ m, t })))
+      .filter(({ m }) => m.to.some((a) => a.address?.toLowerCase() !== own))
+      .sort((a, b) => b.m.date - a.m.date);
     const examples: string[] = [];
-    for (const m of replies) {
-      const text = redactExample(newText(await mb.text('sent', m.uid), 1_500));
-      if (text.length > 40) examples.push(text);
+    for (const { m, t } of replies) {
+      if (examples.length >= 15) break;
+      const text = redactExample(newText(await mb.text('sent', m.uid), 1_500), namesOf(t));
+      // The same reply is sometimes sent twice.
+      // Short notes ("the rent has been transferred") aren't customer replies.
+      if (text.length > 160 && !examples.includes(text)) examples.push(text);
     }
     return { fromName: fromName(idx), examples };
   });
