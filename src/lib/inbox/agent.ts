@@ -305,11 +305,20 @@ function trackFields(
   return { set, unset };
 }
 
-const fromName = (idx: MailIndex) =>
-  idx.sentAll
-    .slice()
-    .sort((a, b) => b.date - a.date)
-    .find((m) => m.from?.name)?.from?.name ?? 'Cinque';
+/**
+ * The display name on the studio's own sent mail, so drafts look like what
+ * Cindy sends. Only mail From the studio's address counts: Sent can hold other
+ * people's messages (forwards, redirects), and their names must never be used.
+ * Undefined when the studio sends without a name (just the address).
+ */
+const fromName = (idx: MailIndex): string | undefined => {
+  const own = ownAddress().toLowerCase();
+  return (
+    idx.sentAll
+      .filter((m) => m.from?.address?.toLowerCase() === own)
+      .sort((a, b) => b.date - a.date)[0]?.from?.name?.trim() || undefined
+  );
+};
 
 export async function writeDraft(
   id: string,
@@ -444,10 +453,10 @@ function namesOf(t: Thread): string[] {
   ];
 }
 
-let styleCache: { at: number; data: { fromName: string; examples: string[] } } | null = null;
+let styleCache: { at: number; data: { fromName?: string; examples: string[] } } | null = null;
 
 /** Recent replies to customers, redacted, as examples of tone and format. */
-export async function style(): Promise<{ fromName: string; examples: string[] }> {
+export async function style(): Promise<{ fromName?: string; examples: string[] }> {
   if (styleCache && Date.now() - styleCache.at < 30 * 60_000) return styleCache.data;
   // Conversations the agent judged not to be customer enquiries aren't examples.
   const ignored = new Set(
