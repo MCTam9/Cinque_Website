@@ -36,7 +36,8 @@ export interface MailIndex {
 
 export const hashId = (id: string) => createHash('sha256').update(id).digest('hex').slice(0, 32);
 
-export const ownAddress = () => serverEnv.ICLOUD_IMAP_USER ?? '';
+/** The studio's address: drafts are From it, and mail from it is the studio's own. */
+export const ownAddress = () => serverEnv.INBOX_ADDRESS ?? serverEnv.ICLOUD_IMAP_USER ?? '';
 
 export async function buildIndex(mb: Mailbox): Promise<MailIndex> {
   const since = new Date(Date.now() - LOOKBACK_DAYS * 86_400_000);

@@ -238,7 +238,13 @@ export async function item(id: string): Promise<ItemPayload | { error: string }>
       kind: parseItemId(id)!.kind,
       ticket: issueTicket(id),
       subject: (firstInbound ?? r.target).subject.replace(/[\r\n]+/g, ' ').slice(0, 200),
-      customerFirstName: firstName(r.thread.customer?.name),
+      // The contact form's Reply-To carries no name; its subject does ("Cinque enquiry from Amy").
+      customerFirstName: firstName(
+        r.thread.customer?.name ||
+          (firstInbound && isContactForm(firstInbound, own)
+            ? /^Cinque enquiry from (.+?)(?: \(|$)/.exec(firstInbound.subject)?.[1]
+            : undefined)
+      ),
       viaContactForm: Boolean(firstInbound && isContactForm(firstInbound, own)),
       thread,
       customer: await customerContext(r.thread.customer!.address!),
