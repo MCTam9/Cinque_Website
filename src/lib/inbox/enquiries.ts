@@ -133,14 +133,17 @@ export function followUpDue(doc: EnquiryDoc, t: Thread, now = Date.now()): Follo
     return doc.followUpOn <= ukToday(now) ? (doc.followUpReason ?? 'customerAskedLater') : null;
   }
   const cutoff = CHRISTMAS_CUTOFF.getTime();
-  const festive =
-    now < cutoff &&
-    now >= cutoff - FESTIVE_LEAD_DAYS * DAY &&
-    !doc.festiveSent &&
-    (doc.topic === 'madeToOrder' || doc.topic === 'bespoke') &&
-    quiet >= 3 * DAY;
-  if (festive) return 'christmasCutoff';
-  if (quiet >= NO_REPLY_DAYS * DAY) return 'noReply';
+  const festiveTopic =
+    now < cutoff && !doc.festiveSent && (doc.topic === 'madeToOrder' || doc.topic === 'bespoke');
+  // Ten days out, a quiet made-to-order or bespoke enquiry gets a note about the cut-off.
+  if (festiveTopic && now >= cutoff - FESTIVE_LEAD_DAYS * DAY && quiet >= 3 * DAY) {
+    return 'christmasCutoff';
+  }
+  if (quiet >= NO_REPLY_DAYS * DAY) {
+    // Before the cut-off, the usual check-in mentions it too, so a customer gets one
+    // follow-up rather than a check-in and then a cut-off note a few days later.
+    return festiveTopic ? 'christmasCutoff' : 'noReply';
+  }
   return null;
 }
 
@@ -172,7 +175,14 @@ export async function patchEnquiry(
     followUps: 0,
     handled: [],
   };
-  let patch = sanityWriteClient.patch(enquiryId(key)).set(set);
+  // Who wrote last, and when, from the thread itself: right from the first save.
+  const lastIn = t.inbound.at(-1);
+  const lastOut = t.sent.at(-1);
+  const fromThread: Partial<EnquiryDoc> = {
+    ...(lastIn ? { lastCustomerAt: iso(lastIn.date) } : {}),
+    ...(lastOut ? { lastReplyAt: iso(lastOut.date), replyRef: lastOut.messageId } : {}),
+  };
+  let patch = sanityWriteClient.patch(enquiryId(key)).set({ ...fromThread, ...set });
   if (opts.unset?.length) patch = patch.unset(opts.unset);
   if (opts.inc) patch = patch.inc(opts.inc);
   if (opts.handled) patch = patch.setIfMissing({ handled: [] }).append('handled', [opts.handled]);
