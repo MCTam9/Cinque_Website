@@ -24,6 +24,16 @@ const serverSchema = z.object({
   POSTMARK_SERVER_TOKEN: z.string().optional(),
   EMAIL_FROM: z.string().optional(), // e.g. "Cindy <cindy@cinque.studio>"
   OPS_ALERT_EMAIL: z.string().optional(), // where low-stock alerts go
+  // Inbox agent (src/lib/inbox): the studio mailbox over IMAP, read and
+  // drafted into only. An Apple app-specific password, never the Apple ID's.
+  // The iCloud login: the Apple account's own @icloud.com / @me.com address.
+  // A custom-domain address is an alias and is refused as a login.
+  ICLOUD_IMAP_USER: z.string().email().optional(),
+  ICLOUD_IMAP_PASSWORD: z.string().optional(),
+  // The studio's address on that mailbox (drafts are From it); defaults to the login.
+  INBOX_ADDRESS: z.string().email().optional(),
+  // The cloud agent's bearer token for /api/agent/*; also keys draft tickets.
+  INBOX_AGENT_TOKEN: z.string().min(32).optional(),
 });
 
 const parsed = serverSchema.safeParse({
@@ -37,6 +47,10 @@ const parsed = serverSchema.safeParse({
   POSTMARK_SERVER_TOKEN: process.env.POSTMARK_SERVER_TOKEN,
   EMAIL_FROM: process.env.EMAIL_FROM,
   OPS_ALERT_EMAIL: process.env.OPS_ALERT_EMAIL,
+  ICLOUD_IMAP_USER: process.env.ICLOUD_IMAP_USER || undefined,
+  ICLOUD_IMAP_PASSWORD: process.env.ICLOUD_IMAP_PASSWORD || undefined,
+  INBOX_ADDRESS: process.env.INBOX_ADDRESS || undefined,
+  INBOX_AGENT_TOKEN: process.env.INBOX_AGENT_TOKEN || undefined,
 });
 
 if (!parsed.success) {

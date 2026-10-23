@@ -18,6 +18,7 @@ import { stripeEvent } from './documents/stripeEvent';
 import { abandonedCheckout, cartReminder, reminderOptOut } from './documents/abandonedCheckout';
 import { bespokeOrder } from './documents/bespokeOrder';
 import { announcement } from './documents/announcement';
+import { enquiry } from './documents/enquiry';
 
 export const schemaTypes: SchemaTypeDefinition[] = [
   // objects
@@ -39,4 +40,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   abandonedCheckout,
   reminderOptOut,
   cartReminder,
+  enquiry,
 ];
