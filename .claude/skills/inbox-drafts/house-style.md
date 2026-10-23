@@ -98,7 +98,7 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
 - **Hand & Hand Gimmel Ring:**
   - Sterling silver (£200) and 9ct yellow gold with freshwater pearl (£875) are on the
     shop. The two share a name: link the right one.
-  - 14ct gold: around £1,800, made to order.
+  - 14ct gold: £1,800, made to order. Quote it as a set price ("£1,800"), not "around".
   - Gem swaps, free of charge: white moonstone, black onyx or red garnet instead of the
     pearl. Also available without a stone. The customer writes their choice in the
     **Notes** field when ordering.
