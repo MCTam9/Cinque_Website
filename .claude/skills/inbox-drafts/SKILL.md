@@ -58,7 +58,9 @@ do not look for a token. No other website is reachable, and none is needed.
    - `src/lib/shop/ringSizes.ts`: ring size systems and conversions
 3. Decide by `kind`:
    - **`new`**: a new customer message.
-     - Not a customer enquiry (a supplier, press, spam, personal, an automated notice)?
+     - Not a customer enquiry (a supplier, press, a content creator or influencer pitching a
+       collaboration or paid video, agencies and marketing offers, spam, personal, an
+       automated notice)?
        POST `/api/agent/track` with `{"status": "ignored"}`.
      - Needs no reply (e.g. just "thank you")? POST `/api/agent/track` with `{"status": "closed"}`.
      - Otherwise write a reply and POST `/api/agent/draft`.
