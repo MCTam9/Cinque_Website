@@ -55,3 +55,24 @@ export function checkTicket(itemId: string, ticket: string): boolean {
   if (!Number.isFinite(exp) || exp < Date.now() || !sig) return false;
   return safeEqual(sig, sign(itemId, exp));
 }
+
+// ── Draft seals ──
+
+/** The draft body as compared: line endings and outer whitespace don't count. */
+const normalise = (body: string) => body.replace(/\r\n?/g, '\n').trim();
+
+function sealKey(): Buffer {
+  return createHmac('sha256', serverEnv.INBOX_AGENT_TOKEN ?? '')
+    .update('draft-seal')
+    .digest();
+}
+
+/** "v1.<HMAC of the body>": marks a draft as the agent's, exactly as written. */
+export function sealDraft(body: string): string {
+  return `v1.${createHmac('sha256', sealKey()).update(normalise(body)).digest('base64url')}`;
+}
+
+/** Whether a draft still carries the agent's seal and its words are unchanged. */
+export function isSealedUnchanged(header: string, body: string): boolean {
+  return safeEqual(header.trim(), sealDraft(body));
+}

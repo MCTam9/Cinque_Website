@@ -1,6 +1,6 @@
 import 'server-only';
 import { CHRISTMAS_CUTOFF_LABEL, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
-import { Mailbox, type IndexedMessage } from './imap';
+import { AGENT_DRAFT_HEADER, Mailbox, type IndexedMessage } from './imap';
 import { isContactForm } from './filters';
 import { draftMime, newText, replySubject } from './text';
 import {
@@ -25,7 +25,7 @@ import {
   type FollowUpReason,
 } from './enquiries';
 import { customerContext, orderedSince, type CustomerContext } from './customerContext';
-import { issueTicket } from './auth';
+import { isSealedUnchanged, issueTicket, sealDraft } from './auth';
 
 /**
  * What the inbox agent's endpoints do. Every rule that keeps it safe lives
@@ -206,68 +206,83 @@ export interface ItemPayload {
   followUp?: { reason: FollowUpReason; christmasCutoff: string; madeToOrderLeadTime: string };
 }
 
+/** The customer's first name: from the address, else a contact-form subject. */
+function customerFirstName(t: Thread): string | undefined {
+  const first = t.inbound[0];
+  return firstName(
+    t.customer?.name ||
+      // The contact form's Reply-To carries no name; its subject does ("Cinque enquiry from Amy").
+      (first && isContactForm(first, ownAddress())
+        ? /^Cinque enquiry from (.+?)(?: \(|$)/.exec(first.subject)?.[1]
+        : undefined)
+  );
+}
+
+async function payload(
+  mb: Mailbox,
+  r: Pick<Resolved, 'thread' | 'target' | 'doc' | 'reason'>,
+  id: string,
+  ticket: string
+): Promise<ItemPayload> {
+  const own = ownAddress();
+  const history = [...r.thread.inbound, ...r.thread.sent]
+    .filter((m) => m.date <= r.target.date)
+    .sort((a, b) => a.date - b.date)
+    .slice(-6);
+  const thread: ItemPayload['thread'] = [];
+  for (const m of history) {
+    const text = newText(await mb.text(m.box, m.uid), m === r.target ? 8_000 : 3_000);
+    thread.push(
+      m.box === 'inbox'
+        ? {
+            from: 'customer',
+            date: new Date(m.date).toISOString(),
+            text: fence('customer_email', text),
+          }
+        : {
+            from: 'studio',
+            date: new Date(m.date).toISOString(),
+            text: fence('studio_reply', text),
+          }
+    );
+  }
+  const firstInbound = r.thread.inbound[0];
+  return {
+    id,
+    kind: parseItemId(id)!.kind,
+    ticket,
+    subject: (firstInbound ?? r.target).subject.replace(/[\r\n]+/g, ' ').slice(0, 200),
+    customerFirstName: customerFirstName(r.thread),
+    viaContactForm: Boolean(firstInbound && isContactForm(firstInbound, own)),
+    thread,
+    customer: await customerContext(r.thread.customer!.address!),
+    enquiry: r.doc
+      ? {
+          status: r.doc.status,
+          topic: r.doc.topic,
+          followUps: r.doc.followUps,
+          followUpOn: r.doc.followUpOn,
+          followUpReason: r.doc.followUpReason,
+          note: r.doc.note,
+        }
+      : null,
+    ...(r.reason
+      ? {
+          followUp: {
+            reason: r.reason,
+            christmasCutoff: CHRISTMAS_CUTOFF_LABEL,
+            madeToOrderLeadTime: MADE_TO_ORDER_LEAD_TIME,
+          },
+        }
+      : {}),
+  };
+}
+
 export async function item(id: string): Promise<ItemPayload | { error: string }> {
   return Mailbox.with(async (mb) => {
     const r = await resolve(mb, id);
     if ('error' in r) return r;
-    const own = ownAddress();
-    const history = [...r.thread.inbound, ...r.thread.sent]
-      .filter((m) => m.date <= r.target.date)
-      .sort((a, b) => a.date - b.date)
-      .slice(-6);
-    const thread: ItemPayload['thread'] = [];
-    for (const m of history) {
-      const text = newText(await mb.text(m.box, m.uid), m === r.target ? 8_000 : 3_000);
-      thread.push(
-        m.box === 'inbox'
-          ? {
-              from: 'customer',
-              date: new Date(m.date).toISOString(),
-              text: fence('customer_email', text),
-            }
-          : {
-              from: 'studio',
-              date: new Date(m.date).toISOString(),
-              text: fence('studio_reply', text),
-            }
-      );
-    }
-    const firstInbound = r.thread.inbound[0];
-    return {
-      id,
-      kind: parseItemId(id)!.kind,
-      ticket: issueTicket(id),
-      subject: (firstInbound ?? r.target).subject.replace(/[\r\n]+/g, ' ').slice(0, 200),
-      // The contact form's Reply-To carries no name; its subject does ("Cinque enquiry from Amy").
-      customerFirstName: firstName(
-        r.thread.customer?.name ||
-          (firstInbound && isContactForm(firstInbound, own)
-            ? /^Cinque enquiry from (.+?)(?: \(|$)/.exec(firstInbound.subject)?.[1]
-            : undefined)
-      ),
-      viaContactForm: Boolean(firstInbound && isContactForm(firstInbound, own)),
-      thread,
-      customer: await customerContext(r.thread.customer!.address!),
-      enquiry: r.doc
-        ? {
-            status: r.doc.status,
-            topic: r.doc.topic,
-            followUps: r.doc.followUps,
-            followUpOn: r.doc.followUpOn,
-            followUpReason: r.doc.followUpReason,
-            note: r.doc.note,
-          }
-        : null,
-      ...(r.reason
-        ? {
-            followUp: {
-              reason: r.reason,
-              christmasCutoff: CHRISTMAS_CUTOFF_LABEL,
-              madeToOrderLeadTime: MADE_TO_ORDER_LEAD_TIME,
-            },
-          }
-        : {}),
-    };
+    return payload(mb, r, id, issueTicket(id));
   });
 }
 
@@ -316,9 +331,29 @@ const fromName = (idx: MailIndex): string | undefined => {
   return (
     idx.sentAll
       .filter((m) => m.from?.address?.toLowerCase() === own)
-      .sort((a, b) => b.date - a.date)[0]?.from?.name?.trim() || undefined
+      .sort((a, b) => b.date - a.date)[0]
+      ?.from?.name?.trim() || undefined
   );
 };
+
+const cleanBody = (body: string) =>
+  body.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, 6_000);
+
+/** The draft for a resolved item, sealed as the agent's. */
+function composeDraft(r: Pick<Resolved, 'idx' | 'thread' | 'target'>, body: string): string {
+  const own = ownAddress();
+  const contactForm = r.thread.inbound[0] ? isContactForm(r.thread.inbound[0], own) : false;
+  return draftMime({
+    from: { name: fromName(r.idx), address: own },
+    // Always the customer on the thread, never anything the agent supplied.
+    to: r.thread.customer!,
+    subject: contactForm ? 'Your enquiry to Cinque' : replySubject(r.target.subject),
+    body,
+    inReplyTo: r.target.messageId,
+    references: [...r.target.references, r.target.messageId],
+    seal: sealDraft(body),
+  });
+}
 
 export async function writeDraft(
   id: string,
@@ -329,22 +364,9 @@ export async function writeDraft(
   return Mailbox.with(async (mb) => {
     const r = await resolve(mb, id, now);
     if ('error' in r) return r;
-    const own = ownAddress();
     const kind = parseItemId(id)!.kind;
     if (kind === 'track') return { error: 'Tracking items take no draft.' };
-
-    const contactForm = r.thread.inbound[0] ? isContactForm(r.thread.inbound[0], own) : false;
-    const subject = contactForm ? 'Your enquiry to Cinque' : replySubject(r.target.subject);
-    const mime = draftMime({
-      from: { name: fromName(r.idx), address: own },
-      // Always the customer on the thread, never anything the agent supplied.
-      to: r.thread.customer!,
-      subject,
-      body: body.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, 6_000),
-      inReplyTo: r.target.messageId,
-      references: [...r.target.references, r.target.messageId],
-    });
-    await mb.appendDraft(mime);
+    await mb.appendDraft(composeDraft(r, cleanBody(body)));
 
     const { set, unset } = trackFields(track, now);
     if (kind === 'followUp') {
@@ -381,6 +403,123 @@ export async function writeTrack(
       handled: kind === 'new' ? hashId(r.target.messageId) : undefined,
     });
     return { ok: true };
+  });
+}
+
+// ── Revising a draft (when Cindy asks) ──
+
+interface Revisable extends Pick<Resolved, 'idx' | 'thread' | 'target' | 'doc'> {
+  draft: { uid: number; text: string };
+}
+
+/** The agent's own draft replying to `target`, if it's still exactly as written. */
+async function agentDraftFor(
+  mb: Mailbox,
+  t: Thread,
+  target: IndexedMessage
+): Promise<{ uid: number; text: string } | null> {
+  const mine = t.drafts
+    .filter((d) => d.headers[AGENT_DRAFT_HEADER] && d.inReplyTo === target.messageId)
+    .sort((a, b) => b.date - a.date);
+  for (const d of mine) {
+    const text = await mb.text('drafts', d.uid);
+    if (isSealedUnchanged(d.headers[AGENT_DRAFT_HEADER], text)) {
+      return { uid: d.uid, text: text.replace(/\r\n/g, '\n').trim() };
+    }
+  }
+  return null;
+}
+
+async function resolveRevision(mb: Mailbox, id: string): Promise<Revisable | { error: string }> {
+  const parsed = parseItemId(id);
+  if (!parsed || parsed.kind === 'track') return { error: 'Unknown item.' };
+  const idx = await buildIndex(mb);
+  const thread = idx.byMessageId.get(parsed.messageId);
+  const target = thread?.messages.find((m) => m.messageId === parsed.messageId);
+  if (!thread || !target || !thread.customer?.address) return { error: 'Item not found.' };
+  if (lastMessage(thread)?.messageId !== target.messageId) {
+    return {
+      error: 'The conversation has moved on (a reply was sent, or the customer wrote again).',
+    };
+  }
+  const draft = await agentDraftFor(mb, thread, target);
+  if (!draft) {
+    return {
+      error: 'There is no unedited agent draft to revise: it was edited in Mail, sent or deleted.',
+    };
+  }
+  const doc = (await loadEnquiries()).find((d) => keyOf(d) === thread.key);
+  return { idx, thread, target, doc, draft };
+}
+
+/** Revision tickets are their own kind, so a draft ticket can't be used to revise. */
+export const reviseTicketId = (id: string) => `revise:${id}`;
+
+/** An item to revise: the usual payload plus the current draft, and a revision ticket. */
+export async function revisionItem(
+  id: string
+): Promise<(ItemPayload & { currentDraft: string }) | { error: string }> {
+  return Mailbox.with(async (mb) => {
+    const r = await resolveRevision(mb, id);
+    if ('error' in r) return r;
+    const base = await payload(mb, r, id, issueTicket(reviseTicketId(id)));
+    return { ...base, currentDraft: r.draft.text };
+  });
+}
+
+/**
+ * Replace the agent's draft with a revised one: the new version is saved
+ * first, then the old one removed, and only if it's still the agent's,
+ * word for word. Same recipient and thread as before; nothing is sent.
+ */
+export async function reviseDraft(
+  id: string,
+  body: string,
+  track?: Pick<TrackInput, 'topic' | 'note'>,
+  now = Date.now()
+): Promise<{ ok: true; warning?: string } | { error: string }> {
+  return Mailbox.with(async (mb) => {
+    const r = await resolveRevision(mb, id);
+    if ('error' in r) return r;
+    await mb.appendDraft(composeDraft(r, cleanBody(body)));
+    const removed = await mb.deleteAgentDraft(r.draft.uid, isSealedUnchanged);
+    if (track?.topic || track?.note) {
+      const { set } = trackFields({ topic: track.topic, note: track.note }, now);
+      await patchEnquiry(r.thread.key, r.thread, set);
+    }
+    return removed
+      ? { ok: true }
+      : {
+          ok: true,
+          warning:
+            'The new version is saved, but the old draft was left in place: delete it in Mail.',
+        };
+  });
+}
+
+/** The agent's drafts still waiting for Cindy, unedited, for picking one to revise. */
+export async function agentDrafts(): Promise<
+  { id: string; customerFirstName?: string; subject: string; draftedAt: string }[]
+> {
+  return Mailbox.with(async (mb) => {
+    const idx = await buildIndex(mb);
+    const out: { id: string; customerFirstName?: string; subject: string; draftedAt: string }[] =
+      [];
+    for (const t of idx.threads) {
+      const target = lastMessage(t);
+      if (!target || !t.customer?.address) continue;
+      const draft = t.drafts.find(
+        (d) => d.headers[AGENT_DRAFT_HEADER] && d.inReplyTo === target.messageId
+      );
+      if (!draft || !(await agentDraftFor(mb, t, target))) continue;
+      out.push({
+        id: `${target.box === 'inbox' ? 'new' : 'followUp'}.${b64(target.messageId)}`,
+        customerFirstName: customerFirstName(t),
+        subject: (t.inbound[0] ?? target).subject.replace(/[\r\n<>]+/g, ' ').slice(0, 120),
+        draftedAt: new Date(draft.date).toISOString(),
+      });
+    }
+    return out.sort((a, b) => b.draftedAt.localeCompare(a.draftedAt));
   });
 }
 

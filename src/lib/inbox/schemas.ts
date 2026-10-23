@@ -28,3 +28,11 @@ export const draftSchema = z
   .strict();
 
 export const trackBodySchema = z.object({ ...itemRef, track: trackSchema }).strict();
+
+export const reviseSchema = z
+  .object({
+    ...itemRef,
+    body: z.string().min(20).max(6_000),
+    track: trackSchema.pick({ topic: true, note: true }).optional(),
+  })
+  .strict();

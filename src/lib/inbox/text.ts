@@ -62,6 +62,8 @@ export function draftMime(args: {
   body: string;
   inReplyTo?: string;
   references?: string[];
+  /** The agent's seal (see sealDraft), so it can later replace this draft and nothing else. */
+  seal?: string;
 }): string {
   const domain = (args.from.address ?? 'localhost').split('@')[1] ?? 'localhost';
   const refs = (args.references ?? []).filter((r) => /^<[^<>\s]+>$/.test(r)).slice(-20);
@@ -77,6 +79,9 @@ export function draftMime(args: {
     `Message-ID: <${randomUUID()}@${domain}>`,
     ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`] : []),
     ...(refs.length ? [`References: ${refs.join(' ')}`] : []),
+    ...(args.seal && /^v1\.[A-Za-z0-9_-]+$/.test(args.seal)
+      ? [`X-Cinque-Agent-Draft: ${args.seal}`]
+      : []),
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=utf-8',
     'Content-Transfer-Encoding: base64',

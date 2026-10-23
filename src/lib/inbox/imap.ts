@@ -7,9 +7,12 @@ import { serverEnv } from '@/lib/serverEnv';
  *
  * Read and draft only. Inbox and Sent are opened read-only (EXAMINE) and
  * bodies are fetched with BODY.PEEK, so nothing is marked read, flagged or
- * moved. The one write anywhere is APPENDing a draft to the Drafts mailbox.
- * There is deliberately no SMTP here, or anywhere in this codebase's inbox
- * code: nothing the agent does can send an email.
+ * moved. The writes are APPENDing a draft to the Drafts mailbox, and, when a
+ * draft is revised, deleting the agent's own previous draft: one that still
+ * carries its seal and is word for word what the agent wrote, so a draft Cindy
+ * has edited (or any other message) can never be removed. There is
+ * deliberately no SMTP here, or anywhere in this codebase's inbox code:
+ * nothing the agent does can send an email.
  */
 
 const HOST = 'imap.mail.me.com';
@@ -41,6 +44,9 @@ export interface IndexedMessage {
   headers: Record<string, string>;
 }
 
+/** Set on the agent's drafts: "v1.<seal of the body>" (see sealDraft in auth.ts). */
+export const AGENT_DRAFT_HEADER = 'x-cinque-agent-draft';
+
 const INDEX_HEADERS = [
   'references',
   'in-reply-to',
@@ -49,6 +55,7 @@ const INDEX_HEADERS = [
   'auto-submitted',
   'precedence',
   'x-auto-response-suppress',
+  AGENT_DRAFT_HEADER,
 ];
 
 const MESSAGE_ID = /<[^<>\s]+>/g;
@@ -157,22 +164,53 @@ export class Mailbox {
   async text(box: keyof Mailboxes, uid: number, maxBytes = 64_000): Promise<string> {
     const lock = await this.client.getMailboxLock(this.boxes[box], { readOnly: true });
     try {
-      const msg = await this.client.fetchOne(String(uid), { bodyStructure: true }, { uid: true });
-      if (!msg || !msg.bodyStructure) return '';
-      const part = pickTextPart(msg.bodyStructure);
-      if (!part) return '';
-      const dl = await this.client.download(String(uid), part.part ?? '1', { uid: true, maxBytes });
-      if (!dl.content) return '';
-      const chunks: Buffer[] = [];
-      for await (const chunk of dl.content) chunks.push(Buffer.from(chunk));
-      const raw = Buffer.concat(chunks).toString('utf8');
-      return part.type === 'text/html' ? htmlToText(raw) : raw;
+      return await this.readText(uid, maxBytes);
     } finally {
       lock.release();
     }
   }
 
-  /** Save `mime` as a draft. The only write the inbox agent ever makes. */
+  /** The text of `uid` in the mailbox already selected. */
+  private async readText(uid: number, maxBytes = 64_000): Promise<string> {
+    const msg = await this.client.fetchOne(String(uid), { bodyStructure: true }, { uid: true });
+    if (!msg || !msg.bodyStructure) return '';
+    const part = pickTextPart(msg.bodyStructure);
+    if (!part) return '';
+    const dl = await this.client.download(String(uid), part.part ?? '1', { uid: true, maxBytes });
+    if (!dl.content) return '';
+    const chunks: Buffer[] = [];
+    for await (const chunk of dl.content) chunks.push(Buffer.from(chunk));
+    const raw = Buffer.concat(chunks).toString('utf8');
+    return part.type === 'text/html' ? htmlToText(raw) : raw;
+  }
+
+  /**
+   * Delete one of the agent's own drafts, being replaced by a revision. Only
+   * in Drafts, only a \Draft carrying the agent's header, and only if
+   * `isUnchanged(header, text)` confirms it's exactly what the agent wrote.
+   * Anything else is left alone. Returns whether it was deleted.
+   */
+  async deleteAgentDraft(
+    uid: number,
+    isUnchanged: (header: string, text: string) => boolean
+  ): Promise<boolean> {
+    const lock = await this.client.getMailboxLock(this.boxes.drafts);
+    try {
+      const msg = await this.client.fetchOne(
+        String(uid),
+        { uid: true, flags: true, headers: [AGENT_DRAFT_HEADER] },
+        { uid: true }
+      );
+      if (!msg || !msg.flags?.has('\\Draft')) return false;
+      const header = parseHeaders(msg.headers)[AGENT_DRAFT_HEADER];
+      if (!header || !isUnchanged(header, await this.readText(uid))) return false;
+      return await this.client.messageDelete(String(uid), { uid: true });
+    } finally {
+      lock.release();
+    }
+  }
+
+  /** Save `mime` as a draft. Nothing is ever sent. */
   async appendDraft(mime: string): Promise<void> {
     const res = await this.client.append(this.boxes.drafts, mime, ['\\Draft', '\\Seen']);
     if (!res) throw new Error('Could not save the draft');
