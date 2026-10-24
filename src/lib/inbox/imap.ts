@@ -244,7 +244,10 @@ export function htmlToText(html: string): string {
     .replace(/&rsquo;/g, '’')
     .replace(/&lsquo;/g, '‘')
     .replace(/&amp;/g, '&')
-    .replace(/[ \t]+\n/g, '\n')
+    // Template indentation: trim every line, then collapse runs of blank lines.
+    .split('\n')
+    .map((l) => l.trim())
+    .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
