@@ -336,22 +336,61 @@ const fromName = (idx: MailIndex): string | undefined => {
   );
 };
 
+// Control characters out, and any quoted history cut: the quote is added on saving.
 const cleanBody = (body: string) =>
-  body.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, 6_000);
+  newText(body.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, ''), 6_000);
 
-/** The draft for a resolved item, sealed as the agent's. */
-function composeDraft(r: Pick<Resolved, 'idx' | 'thread' | 'target'>, body: string): string {
+/**
+ * The message being replied to, quoted below the draft the way Mail quotes it
+ * when Cindy presses Reply, so the customer (and Cindy) can see what's being
+ * answered: "On 11 Oct 2026, at 14:03, Name <address> wrote:" then "> " lines.
+ */
+export function quoteOf(target: IndexedMessage, text: string): string {
+  const when = new Date(target.date);
+  const day = when.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Europe/London',
+  });
+  const time = when.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/London',
+  });
+  const who = [target.from?.name, target.from?.address && `<${target.from.address}>`]
+    .filter(Boolean)
+    .join(' ')
+    .replace(/[\r\n]+/g, ' ');
+  const lines = text.replace(/\r\n?/g, '\n').trim().slice(0, 20_000).split('\n');
+  return [
+    `On ${day}, at ${time}, ${who || 'you'} wrote:`,
+    '',
+    ...lines.map((l) => (l ? `> ${l}` : '>')),
+  ].join('\n');
+}
+
+/** The agent's words above the quote, as a full draft body. */
+const withQuote = (body: string, quote: string) => `${body.trim()}\n\n${quote}`;
+
+/** The draft for a resolved item, quoting what it replies to, sealed as the agent's. */
+async function composeDraft(
+  mb: Mailbox,
+  r: Pick<Resolved, 'idx' | 'thread' | 'target'>,
+  body: string
+): Promise<string> {
   const own = ownAddress();
-  const contactForm = r.thread.inbound[0] ? isContactForm(r.thread.inbound[0], own) : false;
+  const full = withQuote(body, quoteOf(r.target, await mb.text(r.target.box, r.target.uid)));
   return draftMime({
     from: { name: fromName(r.idx), address: own },
     // Always the customer on the thread, never anything the agent supplied.
     to: r.thread.customer!,
-    subject: contactForm ? 'Your enquiry to Cinque' : replySubject(r.target.subject),
-    body,
+    // The thread's own subject, as Mail would ("Re: Cinque enquiry from …").
+    subject: replySubject(r.target.subject),
+    body: full,
     inReplyTo: r.target.messageId,
     references: [...r.target.references, r.target.messageId],
-    seal: sealDraft(body),
+    seal: sealDraft(full),
   });
 }
 
@@ -366,7 +405,7 @@ export async function writeDraft(
     if ('error' in r) return r;
     const kind = parseItemId(id)!.kind;
     if (kind === 'track') return { error: 'Tracking items take no draft.' };
-    await mb.appendDraft(composeDraft(r, cleanBody(body)));
+    await mb.appendDraft(await composeDraft(mb, r, cleanBody(body)));
 
     const { set, unset } = trackFields(track, now);
     if (kind === 'followUp') {
@@ -463,7 +502,11 @@ export async function revisionItem(
     const r = await resolveRevision(mb, id);
     if ('error' in r) return r;
     const base = await payload(mb, r, id, issueTicket(reviseTicketId(id)));
-    return { ...base, currentDraft: r.draft.text };
+    // The agent's own words: the quote below them is added again on saving.
+    const quote = quoteOf(r.target, await mb.text(r.target.box, r.target.uid));
+    const text = r.draft.text;
+    const currentDraft = text.endsWith(quote) ? text.slice(0, -quote.length).trim() : text;
+    return { ...base, currentDraft };
   });
 }
 
@@ -481,7 +524,7 @@ export async function reviseDraft(
   return Mailbox.with(async (mb) => {
     const r = await resolveRevision(mb, id);
     if ('error' in r) return r;
-    await mb.appendDraft(composeDraft(r, cleanBody(body)));
+    await mb.appendDraft(await composeDraft(mb, r, cleanBody(body)));
     const removed = await mb.deleteAgentDraft(r.draft.uid, isSealedUnchanged);
     if (track?.topic || track?.note) {
       const { set } = trackFields({ topic: track.topic, note: track.note }, now);
