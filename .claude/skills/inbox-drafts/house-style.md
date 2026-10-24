@@ -79,7 +79,8 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
 - **Order choices go in the Notes field, never by email.** Every made-to-order product
   page has a **Notes** section. Anything agreed for an order (no pearl, a gem swap, an
   alteration such as "Pinky promise alteration", self collection) is written there when
-  ordering: "When you order, please write "…" in the Notes section on the product page."
+  ordering. Use Cindy's wording: please write "…" in the **Notes section when you order**
+  (e.g. "Please write "without the pearl" in the Notes section when you order.").
   Never ask a customer to order and then email to confirm, even if an earlier reply in the
   thread did; give the Notes instruction instead.
 - **Lead time:** made-to-order pieces take 8 to 12 weeks, and are made and hallmarked in
@@ -109,7 +110,7 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
     pearl. Also available without a stone. The customer writes their choice in the
     **Notes** field when ordering.
   - Without the pearl: possible at the same price and lead time; order online and write
-    "without the pearl" in the Notes.
+    "without the pearl" in the Notes section when you order.
   - Dual-tone (one band 9ct gold, one sterling silver, each cast separately then linked and
     soldered closed so they interlock, hallmarked for both metals): £700 with the pearl,
     paid through a custom payment link Cindy sets up. The customer chooses which band holds
