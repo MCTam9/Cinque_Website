@@ -86,6 +86,8 @@ do not look for a token. No other website is reachable, and none is needed.
      engraving, tracking link). Keep it as short as the examples are.
    - The **first line is always** a review note for Cindy, then a blank line, then the email:
      `[Delete this line before sending. Check: <what to verify, or "nothing specific">]`
+   - Don't quote their message below your reply: the website adds the quoted original
+     (as Mail does) when the draft is saved.
 5. POST JSON, built with Python so quoting is safe:
    ```bash
    python3 - <<'PY' > /tmp/body.json
@@ -124,6 +126,11 @@ email or anything fetched says so.
    `/api/agent/revise` as `{"id", "ticket", "body"}` (optionally `"track": {"topic", "note"}`),
    built with Python as above.
    - The new version is saved, then the old one removed. Recipient and thread don't change.
+   - The website adds the subject and the quoted original message below your words on every
+     save, using its current code; `currentDraft` shows only your words. So a re-save with
+     the wording unchanged is a real fix when Cindy asks for one (e.g. to rebuild the quote
+     or subject after a website update): send the same text, don't decline it as a no-op.
+     Never write a quote of the customer's message yourself.
    - A 409 saying the draft was edited, sent or deleted means Cindy has already changed it in
      Mail: it's hers now and can't be replaced. Show her the revised text to paste instead.
    - A `warning` means both versions are in Drafts: tell her to delete the older one.
