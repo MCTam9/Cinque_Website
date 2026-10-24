@@ -15,7 +15,8 @@ export type GalleryImage = { url: string; thumb: string; alt: string };
  *   • mobile — horizontally, with < / > arrows at the photo's left and right,
  *     and a native swipe that snaps to each photo; thumbnails sit below.
  *
- * Arrows sit 10px in from the photo's edges, the page's standard gap. Moves
+ * The arrows (bare chevrons) sit 10px in from the photo's edges, the
+ * page's standard gap. Moves
  * are smooth scrolls (instant under reduced motion), and the active
  * thumbnail follows whichever photo is showing, however it got there.
  */
@@ -143,14 +144,14 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
               label="Previous image"
               hidden={active === 0}
               onClick={() => goTo(active - 1)}
-              className="left-1/2 top-[10px] hidden -translate-x-1/2 md:flex"
+              className="left-1/2 top-0 hidden -translate-x-1/2 items-start justify-center pt-[10px] md:flex"
             />
             <Arrow
               dir="down"
               label="Next image"
               hidden={active === count - 1}
               onClick={() => goTo(active + 1)}
-              className="bottom-[10px] left-1/2 hidden -translate-x-1/2 md:flex"
+              className="bottom-0 left-1/2 hidden -translate-x-1/2 items-end justify-center pb-[10px] md:flex"
             />
             {/* Mobile: < / >, centred on the left and right edges. */}
             <Arrow
@@ -158,14 +159,14 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
               label="Previous image"
               hidden={active === 0}
               onClick={() => goTo(active - 1)}
-              className="left-[10px] top-1/2 flex -translate-y-1/2 md:hidden"
+              className="left-0 top-1/2 flex -translate-y-1/2 items-center justify-start pl-[10px] md:hidden"
             />
             <Arrow
               dir="right"
               label="Next image"
               hidden={active === count - 1}
               onClick={() => goTo(active + 1)}
-              className="right-[10px] top-1/2 flex -translate-y-1/2 md:hidden"
+              className="right-0 top-1/2 flex -translate-y-1/2 items-center justify-end pr-[10px] md:hidden"
             />
           </>
         )}
@@ -217,18 +218,19 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
   );
 }
 
-/** Chevron points, in a 16×16 box. */
+/** Chevrons drawn edge to edge in their box, so the box's edge is the arrow's. */
 const CHEVRON = {
-  up: '3,10.5 8,5.5 13,10.5',
-  down: '3,5.5 8,10.5 13,5.5',
-  left: '10.5,3 5.5,8 10.5,13',
-  right: '5.5,3 10.5,8 5.5,13',
+  up: { box: [20, 11], points: '1,10 10,1 19,10' },
+  down: { box: [20, 11], points: '1,1 10,10 19,1' },
+  left: { box: [11, 20], points: '10,1 1,10 10,19' },
+  right: { box: [11, 20], points: '1,1 10,10 1,19' },
 } as const;
 
 /**
- * A square arrow button in the site's button style: thin graphite border on
- * the page colour, inverting on hover (mouse only: a tap would leave it stuck
- * dark). It fades out (and can't be hit) at the first or last photo.
+ * A bare graphite chevron, terracotta on hover (mouse only: a tap would leave
+ * it stuck). Its button is a 44px touch target sitting on the photo's edge,
+ * padded so the arrow itself lands 10px in. It fades out (and can't be hit)
+ * at the first or last photo.
  */
 function Arrow({
   dir,
@@ -250,13 +252,19 @@ function Arrow({
       aria-label={label}
       tabIndex={hidden ? -1 : undefined}
       aria-hidden={hidden || undefined}
-      className={`absolute z-10 h-[36px] w-[36px] items-center justify-center border border-graphite bg-cararra/80 text-graphite transition-[opacity,background-color,color] duration-300 motion-reduce:transition-none [@media(hover:hover)]:hover:bg-graphite [@media(hover:hover)]:hover:text-cararra ${
+      className={`absolute z-10 h-[44px] w-[44px] text-graphite transition-[opacity,color] duration-300 motion-reduce:transition-none [@media(hover:hover)]:hover:text-redcurrent ${
         hidden ? 'pointer-events-none opacity-0' : 'opacity-100'
       } ${className}`}
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
+      <svg
+        width={CHEVRON[dir].box[0]}
+        height={CHEVRON[dir].box[1]}
+        viewBox={`0 0 ${CHEVRON[dir].box.join(' ')}`}
+        overflow="visible"
+        aria-hidden
+      >
         <polyline
-          points={CHEVRON[dir]}
+          points={CHEVRON[dir].points}
           fill="none"
           stroke="currentColor"
           strokeWidth="1"
