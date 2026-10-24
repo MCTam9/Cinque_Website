@@ -76,6 +76,12 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
 
 - **Materials:** solid sterling silver or solid gold only, never plated. Say so when a
   customer asks about "gold" without specifying, as they may mean plated.
+- **Order choices go in the Notes field, never by email.** Every made-to-order product
+  page has a **Notes** section. Anything agreed for an order (no pearl, a gem swap, an
+  alteration such as "Pinky promise alteration", self collection) is written there when
+  ordering: "When you order, please write "…" in the Notes section on the product page."
+  Never ask a customer to order and then email to confirm, even if an earlier reply in the
+  thread did; give the Notes instruction instead.
 - **Lead time:** made-to-order pieces take 8 to 12 weeks, and are made and hallmarked in
   London. A new design or alteration takes longer: say so and ask for a little more time.
 - **Order thank-you for a made-to-order piece:** thank them for the order by name of the
@@ -102,8 +108,8 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
   - Gem swaps, free of charge: white moonstone, black onyx or red garnet instead of the
     pearl. Also available without a stone. The customer writes their choice in the
     **Notes** field when ordering.
-  - Without the pearl: possible at the same price and lead time; order online and say so in
-    the Notes (or by email).
+  - Without the pearl: possible at the same price and lead time; order online and write
+    "without the pearl" in the Notes.
   - Dual-tone (one band 9ct gold, one sterling silver, each cast separately then linked and
     soldered closed so they interlock, hallmarked for both metals): £700 with the pearl,
     paid through a custom payment link Cindy sets up. The customer chooses which band holds
