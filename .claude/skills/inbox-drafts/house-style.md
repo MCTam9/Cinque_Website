@@ -26,8 +26,8 @@ tone and this file wins on policy.
 2. **Opening line: thanks, specific to them.** "Thank you so much for your lovely message."
    / "Thank you for your interest in the Hand & Hand Gimmel Ring." / "Thank you so much for
    your order of the Hand & Hand Gimmel Ring in Yellow Gold." Then, often, a warm second
-   sentence picking up something they said ("It's wonderful to hear this ring has stayed
-   with you for so long."). Acknowledge a personal story with real empathy ("I'm so sorry to hear about the
+   sentence picking up something they said about the piece or their story ("It's wonderful
+   to hear this ring has stayed with you for so long."), never about where they live. Acknowledge a personal story with real empathy ("I'm so sorry to hear about the
    ring your father gave you").
 3. **The answer**, plainly, one topic per paragraph.
 4. **Next step**: what they should do or send (size, location, photos, how to order).
@@ -64,6 +64,9 @@ tone and this file wins on policy.
 - Don't promise a date sooner than the lead time allows; leave a buffer. Count from the
   order date: 8 to 12 weeks.
 - Don't assume life events ("congratulations") unless the customer says so.
+- Don't remark on where the customer lives ("Lovely to know you're in New York", "How
+  exciting, Sydney!"). Their location only matters for shipping: state what applies,
+  plainly ("We ship to the US with fully tracked and insured delivery.").
 - Don't mention import tax in an address confirmation; the website covers it.
 - Don't give reasons a decline can be negotiated around.
 - Never suggest workarounds for sanctions or customs (hand-carrying, gifting, a relative's
