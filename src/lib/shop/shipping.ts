@@ -14,13 +14,9 @@
  * country. That's what makes a flat UK/international split enforceable.
  */
 
-export const SHIP_COUNTRIES = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'US', name: 'United States' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'JP', name: 'Japan' },
-] as const;
+import { SHIP_COUNTRIES } from './shipCountries';
+
+export { SHIP_COUNTRIES };
 
 export type ShipCountry = (typeof SHIP_COUNTRIES)[number]['code'];
 
@@ -32,50 +28,18 @@ export const SHIP_COUNTRY_CODES = SHIP_COUNTRIES.map((c) => c.code) as [
 export const HOME_COUNTRY: ShipCountry = 'GB';
 
 /**
- * Who pays import duties and taxes, per destination. Every country must be
- * listed, so adding one to SHIP_COUNTRIES forces a decision here.
+ * Who pays import duties and taxes. Every international order is sent DAP:
+ * the destination collects them from the recipient, and the site states that
+ * duties, taxes and carrier handling fees are not included. 'none': domestic,
+ * no customs. (If the studio ever prepays a destination's charges, e.g. Royal
+ * Mail PDDP, give that country an 'included' case here.)
  *
- * 'included': we prepay them (Royal Mail PDDP or equivalent), so the buyer has
- * nothing to pay on delivery. 'buyer': the destination collects them from the
- * recipient on delivery (DAP). 'none': domestic, no customs.
- *
- * Since October 2026 every international destination is 'buyer': the site
- * states that import duties, taxes and carrier handling fees are not included.
- * Deliberately the cautious claim — if the studio later prepays some (e.g.
- * Royal Mail PDDP to the US), switch that country to 'included'.
+ * There's no per-country customs link: with ~190 destinations the buyer is
+ * pointed to one estimator below and their own customs authority instead.
  */
-export const IMPORT_CHARGES: Record<ShipCountry, 'none' | 'included' | 'buyer'> = {
-  GB: 'none',
-  US: 'buyer',
-  CA: 'buyer',
-  AU: 'buyer',
-  JP: 'buyer',
-};
-
-/**
- * Each destination's customs authority and its own guidance on what a buyer
- * pays on goods ordered from abroad — linked wherever the duties notice shows,
- * so the buyer can check the rules with the people who set them.
- */
-export const IMPORT_AUTHORITY: Record<ShipCountry, { name: string; url: string } | null> = {
-  GB: null,
-  US: {
-    name: 'U.S. Customs and Border Protection',
-    url: 'https://www.cbp.gov/trade/basic-import-export/internet-purchases',
-  },
-  CA: {
-    name: 'the Canada Border Services Agency',
-    url: 'https://www.cbsa-asfc.gc.ca/import/postal-postale/menu-eng.html',
-  },
-  AU: {
-    name: 'the Australian Border Force',
-    url: 'https://www.abf.gov.au/buying-online',
-  },
-  JP: {
-    name: 'Japan Customs',
-    url: 'https://www.customs.go.jp/english/c-answer_e/kokusaiyubin/6101_e.htm',
-  },
-};
+export function importCharges(country: ShipCountry): 'none' | 'included' | 'buyer' {
+  return country === HOME_COUNTRY ? 'none' : 'buyer';
+}
 
 /** Third-party estimator, offered as a rough guide only — we quote no figures. */
 export const DUTIES_CALCULATOR = {
@@ -89,13 +53,12 @@ export const INTERNATIONAL_DUTIES_NOTE =
 
 /** Checkout notice on import charges for `country`; null for the UK. */
 export function importChargesNotice(country: ShipCountry): string | null {
-  const charges = IMPORT_CHARGES[country];
+  const charges = importCharges(country);
   if (charges === 'none') return null;
   if (charges === 'included') {
     return 'Import duties and taxes are included. There is nothing more to pay on delivery.';
   }
-  const authority = IMPORT_AUTHORITY[country]?.name ?? 'the destination’s customs authority';
-  return `Import duties, taxes and any carrier handling fees are not included in your order total. They are set by ${authority} and are payable by you before or on delivery.`;
+  return 'Import duties, taxes and any carrier handling fees are not included in your order total. They are set by the destination’s customs authority and are payable by you before or on delivery.';
 }
 
 /**
@@ -108,7 +71,11 @@ export function importChargesNoticeFor(code: string | null | undefined): string 
 
 /** Shown on the /shipping page and each product page while EU shipping is off. */
 export const EU_PAUSE_NOTICE =
-  'Due to recent changes to EU import rules, we have paused shipping to the European Union. We hope to resume soon.';
+  'Due to new EU product safety rules, we have paused shipping to the European Union, Norway, Iceland and Liechtenstein. We hope to resume soon.';
+
+/** Where we ship, in one sentence, for anyone outside it or choosing a country. */
+export const SHIPPING_REACH =
+  'We ship worldwide, except to the European Union, Norway, Iceland, Liechtenstein, Russia and Belarus.';
 
 export const SHIPPING_RATES = {
   domesticPence: 499,
@@ -125,18 +92,22 @@ export function countryName(code: ShipCountry): string {
   return SHIP_COUNTRIES.find((c) => c.code === code)?.name ?? code;
 }
 
-/** Where an address in each destination is, for "Is this going to a UK address?". */
-export const ADDRESS_IN: Record<ShipCountry, string> = {
-  GB: 'a UK address',
-  US: 'a US address',
-  CA: 'a Canadian address',
-  AU: 'an Australian address',
-  JP: 'a Japanese address',
-};
+/** "a UK address", "an address in Canada": for "Is this going to …?". */
+export function addressIn(code: ShipCountry): string {
+  if (code === 'GB') return 'a UK address';
+  if (code === 'US') return 'a US address';
+  return `an address in ${countryInSentence(code)}`;
+}
 
-/** EU member states (ISO 3166-1 alpha-2), for the EU pause notice. */
-const EU_COUNTRY_CODES = new Set(
-  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE'.split(' ')
+/**
+ * Where shipping is paused for EU product-safety rules (the EU, its outermost
+ * regions, and the EEA states Norway, Iceland and Liechtenstein, with
+ * Svalbard), for the pause notice. ISO 3166-1 alpha-2.
+ */
+const PAUSED_COUNTRY_CODES = new Set(
+  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE AX GF GP MQ RE YT MF NO IS LI SJ'.split(
+    ' '
+  )
 );
 
 /** A visitor located (by IP) somewhere we don't ship to. */
@@ -144,7 +115,8 @@ export interface VisitorOutside {
   code: string;
   /** "France" */
   name: string;
-  inEU: boolean;
+  /** Shipping there is paused for EU product-safety rules (rather than never offered). */
+  paused: boolean;
 }
 
 /**
@@ -161,28 +133,29 @@ export function visitorOutside(code: string | null | undefined): VisitorOutside 
   } catch {
     // An unknown code: the code itself will do.
   }
-  return { code, name, inEU: EU_COUNTRY_CODES.has(code) };
+  return { code, name, paused: PAUSED_COUNTRY_CODES.has(code) };
 }
 
-/** "the United Kingdom", "Canada": a country name to use in a sentence. */
+/** "the United Kingdom", "Canada", "the Bahamas": a country name to use in a sentence. */
 export function countryInSentence(code: ShipCountry): string {
-  return code === 'GB' || code === 'US' ? `the ${countryName(code)}` : countryName(code);
+  const name = countryName(code);
+  return /^(United |Bahamas|Gambia|Philippines|Maldives|Comoros|Seychelles|Caribbean)|Islands|Territory|Emirates|Republic/.test(
+    name
+  )
+    ? `the ${name}`
+    : name;
 }
-
-/** "the United Kingdom, the United States, Canada, Australia and Japan". */
-export const SHIP_COUNTRIES_SENTENCE = SHIP_COUNTRY_CODES.map(countryInSentence)
-  .join(', ')
-  .replace(/, ([^,]+)$/, ' and $1');
 
 /**
- * Postcode shapes for the countries we ship to (upper-cased, single-spaced).
+ * Postcode shapes for our main destinations (upper-cased, single-spaced);
+ * other countries' postcodes aren't checked.
  * Stripe's address form takes any postcode under any country, and its
  * embedded checkout no longer lets us reject an address before payment, so
  * the webhook checks the shape after payment and flags a mismatch for the
  * studio to sort out before posting. A buyer in France once paid for UK
  * delivery with "94410" as the postcode.
  */
-const POSTCODE_PATTERNS: Record<ShipCountry, RegExp> = {
+const POSTCODE_PATTERNS: Partial<Record<ShipCountry, RegExp>> = {
   GB: /^(GIR ?0AA|[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}|BFPO ?\d{1,4})$/,
   US: /^\d{5}(-?\d{4})?$/,
   CA: /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/,
@@ -209,7 +182,8 @@ export function addressWarning(
     .trim()
     .replace(/\s+/g, ' ')
     .toUpperCase();
-  if (POSTCODE_PATTERNS[country].test(normalised)) return null;
+  const pattern = POSTCODE_PATTERNS[country];
+  if (!pattern || pattern.test(normalised)) return null;
   return `The postcode doesn’t look like one from ${countryInSentence(country)}, the country chosen at checkout. Check the address with the customer before posting.`;
 }
 

@@ -9,7 +9,7 @@ import {
   EU_PAUSE_NOTICE,
   INTERNATIONAL_DUTIES_NOTE,
   SHIPPING_RATES,
-  SHIP_COUNTRIES_SENTENCE,
+  SHIPPING_REACH,
   formatPence,
   type VisitorOutside,
 } from '@/lib/shop/shipping';
@@ -227,7 +227,7 @@ export default function CartView({
                 We can&rsquo;t ship to {visitor.name} at the moment
               </P1>
               <P1 className="text-graphite">
-                {visitor.inEU ? `${EU_PAUSE_NOTICE} ` : ''}We ship to {SHIP_COUNTRIES_SENTENCE}.
+                {visitor.paused ? EU_PAUSE_NOTICE : SHIPPING_REACH}
               </P1>
             </div>
           )}

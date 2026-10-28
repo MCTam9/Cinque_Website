@@ -157,7 +157,7 @@ export const bespokeOrder = defineType({
       type: 'string',
       fieldset: 'price',
       description:
-        'Any country: the customer enters any address in a country we ship to (UK, US, Canada, Australia, Japan), e.g. to send it to a friend. Shipping is free from £300; under that they choose UK (£4.99) or international (£9.99) delivery. Pick one country to allow only addresses there.',
+        'Any country: the customer enters any address in a country we ship to (worldwide except the EU, Norway, Iceland, Liechtenstein, Russia and Belarus), e.g. to send it to a friend. Shipping is free from £300; under that they choose UK (£4.99) or international (£9.99) delivery. Pick one country to allow only addresses there.',
       options: {
         list: [
           { title: 'Any country we ship to', value: ANY_COUNTRY },

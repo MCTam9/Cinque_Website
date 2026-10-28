@@ -125,7 +125,7 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
 - **Where are they based? Ask early.** For any enquiry that may lead to an order and doesn't
   say where they are: "Before we go further, could you let me know where you're based?
   We're currently unable to ship to the EU from our London studio, so I'd like to check
-  that first."
+  that first." (Counts as one of the 2 questions. Skip it when they've said where they are.)
 - **Hand & Hand Gimmel Ring:**
   - Sterling silver (£200) and 9ct yellow gold with freshwater pearl (£875) are on the
     shop. The two share a name: link the right one.
@@ -170,20 +170,23 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
     afternoon is most accurate, as fingers can be slightly swollen in the morning.
   - Wider rings, like the Gimmel's two bands, fit more snugly: between sizes, suggest the
     larger.
-- **Shipping:** UK, US, Canada, Australia and Japan. Every delivery is **fully tracked and
-  insured**, and free on orders over the free-shipping threshold in
+- **Shipping:** worldwide, except the EU, Norway, Iceland, Liechtenstein, Russia and Belarus
+  (the full list is `src/lib/shop/shipCountries.ts`). UK delivery £4.99, every other country
+  £9.99. Every delivery is **fully tracked and insured**, and free on orders over the
+  free-shipping threshold in
   `src/lib/shop/shipping.ts` (e.g. "with fully tracked and insured delivery to Australia
   included"). Import duties and taxes outside the UK
   are paid by the customer: link the shipping page.
-- **EU:** deliveries are paused. Explanation to give: since Brexit, shipping from the UK to
-  the EU involves customs requirements and EU product safety rules that are difficult for a
-  small independent studio to meet. Offer **self collection** instead (below).
+- **EU (and Norway, Iceland, Liechtenstein):** deliveries are paused. Explanation to give:
+  since Brexit, shipping from the UK to the EU involves customs requirements and EU product
+  safety rules that are difficult for a small independent studio to meet; Norway, Iceland
+  and Liechtenstein follow the same product safety rules. Offer **self collection** instead (below).
 - **Self collection** (for EU customers, or anyone who prefers it): order through the
   website as normal, and enter as the delivery address
   `Self Collection, 808 High Road, London N17 0DH` (the studio). Any postage charged is
   refunded. Only give this address for self collection.
-- **Russia:** cannot supply. Under UK sanctions the studio can't supply gold jewellery for
-  use in Russia, by post or carried by hand. Decline kindly; never suggest a route around it.
+- **Russia and Belarus:** cannot supply. Under UK sanctions the studio can't supply gold
+  jewellery for use in Russia or Belarus, by post or carried by hand. Decline kindly; never suggest a route around it.
 - **An order whose address looks like another country** (the address came through under the
   wrong country): confirm the full address with the customer before making; nothing else.
 - **Correcting a mistake** (e.g. a wrong price): reply in the same thread with a short

@@ -141,7 +141,7 @@ export async function syncBespokeOrder(id: string): Promise<string> {
       : [
           { label: 'UK tracked delivery (UK addresses)', amount: SHIPPING_RATES.domesticPence },
           {
-            label: 'International tracked delivery (US, Canada, Australia, Japan)',
+            label: 'International tracked delivery',
             amount: SHIPPING_RATES.internationalPence,
           },
         ];
