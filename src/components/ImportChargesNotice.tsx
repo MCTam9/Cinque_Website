@@ -1,18 +1,14 @@
 import Link from 'next/link';
 import { P1 } from '@/components/typography';
-import {
-  DUTIES_CALCULATOR,
-  IMPORT_AUTHORITY,
-  importChargesNotice,
-  type ShipCountry,
-} from '@/lib/shop/shipping';
+import { DUTIES_CALCULATOR, importChargesNotice, type ShipCountry } from '@/lib/shop/shipping';
 
 const linkClass = 'underline underline-offset-4 hover:text-redcurrent';
 
 /**
  * The checkout's import-charges notice for `country`: who sets the charges,
- * that the buyer pays them, and where to check — the destination's own customs
- * guidance first, a third-party estimator second. We deliberately quote no
+ * that the buyer pays them, and where to estimate them (a third-party
+ * calculator; no per-country customs links, as we ship almost everywhere).
+ * We deliberately quote no
  * figure of our own: rates turn on product code, value, exchange rate and
  * state or province, and a wrong estimate is worse than none.
  *
@@ -28,20 +24,12 @@ export default function ImportChargesNotice({
 }) {
   const notice = importChargesNotice(country);
   if (!notice) return null;
-  const authority = IMPORT_AUTHORITY[country];
 
   return (
     <div className={`flex flex-col gap-[6px] border border-graphite p-[10px] ${className}`}>
       <P1 className="font-bold text-graphite">Import duties &amp; taxes</P1>
       <P1 className="text-graphite">{notice}</P1>
       {/* One link per line. */}
-      {authority && (
-        <P1 className="text-oslo">
-          <a href={authority.url} target="_blank" rel="noopener noreferrer" className={linkClass}>
-            Guidance from {authority.name}
-          </a>
-        </P1>
-      )}
       <P1 className="text-oslo">
         <a
           href={DUTIES_CALCULATOR.url}

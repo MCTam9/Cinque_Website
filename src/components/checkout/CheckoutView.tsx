@@ -8,10 +8,10 @@ import Container, { contentPadY } from '@/components/Container';
 import ImportChargesNotice from '@/components/ImportChargesNotice';
 import { H1, P1 } from '@/components/typography';
 import {
-  ADDRESS_IN,
+  addressIn,
   EU_PAUSE_NOTICE,
   SHIP_COUNTRIES,
-  SHIP_COUNTRIES_SENTENCE,
+  SHIPPING_REACH,
   countryName,
   formatPence,
   isShipCountry,
@@ -167,7 +167,14 @@ export function CheckoutView({
                   Choose a country
                 </option>
               )}
-              {SHIP_COUNTRIES.map((c) => (
+              {/* UK and US first, then everywhere else A–Z. */}
+              {SHIP_COUNTRIES.slice(0, 2).map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+              <option disabled>──────────</option>
+              {SHIP_COUNTRIES.slice(2).map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
                 </option>
@@ -196,7 +203,7 @@ export function CheckoutView({
             }`}
           >
             <P1 className="font-bold text-graphite">You seem to be in {visitor.name}</P1>
-            <P1 className="text-graphite">Is this order going to {ADDRESS_IN[country]}?</P1>
+            <P1 className="text-graphite">Is this order going to {addressIn(country)}?</P1>
             <label className="type-p1 flex cursor-pointer items-start gap-[10px] text-graphite">
               <input
                 type="checkbox"
@@ -207,14 +214,14 @@ export function CheckoutView({
                 }}
                 className="mt-[3px] h-[16px] w-[16px] shrink-0 accent-graphite"
               />
-              <span>Yes, it&rsquo;s going to {ADDRESS_IN[country]}</span>
+              <span>Yes, it&rsquo;s going to {addressIn(country)}</span>
             </label>
             {confirmError && !addressConfirmed && (
               <P1 className="text-redcurrent">
                 Please confirm the address, or change the country above.
               </P1>
             )}
-            {visitor.inEU && <P1 className="text-oslo">{EU_PAUSE_NOTICE}</P1>}
+            {visitor.paused && <P1 className="text-oslo">{EU_PAUSE_NOTICE}</P1>}
           </div>
         )}
         {country ? (
@@ -227,7 +234,7 @@ export function CheckoutView({
               </P1>
             )}
             <P1 className="text-oslo">
-              We ship to {SHIP_COUNTRIES_SENTENCE}. {EU_PAUSE_NOTICE}
+              {SHIPPING_REACH} {EU_PAUSE_NOTICE}
             </P1>
           </>
         )}
