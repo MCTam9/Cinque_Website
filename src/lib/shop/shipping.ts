@@ -147,20 +147,40 @@ export function countryInSentence(code: ShipCountry): string {
 }
 
 /**
- * Postcode shapes for our main destinations (upper-cased, single-spaced);
- * other countries' postcodes aren't checked.
+ * Postcode shapes for the European countries we ship to (upper-cased,
+ * single-spaced); elsewhere postcodes aren't checked.
  * Stripe's address form takes any postcode under any country, and its
  * embedded checkout no longer lets us reject an address before payment, so
  * the webhook checks the shape after payment and flags a mismatch for the
- * studio to sort out before posting. A buyer in France once paid for UK
- * delivery with "94410" as the postcode.
+ * studio to sort out before posting. The risk is a buyer in the EU, where we
+ * don't ship, choosing a European country we do ship to: one in France once
+ * paid for UK delivery with "94410" as the postcode.
+ *
+ * Where a neighbour shares a format (Swiss and Belgian postcodes are both four
+ * digits) a mismatch can't be seen; Monaco, San Marino and the Vatican use
+ * their own ranges inside France's and Italy's, so those are pinned exactly.
  */
 const POSTCODE_PATTERNS: Partial<Record<ShipCountry, RegExp>> = {
   GB: /^(GIR ?0AA|[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}|BFPO ?\d{1,4})$/,
-  US: /^\d{5}(-?\d{4})?$/,
-  CA: /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/,
-  AU: /^\d{4}$/,
-  JP: /^\d{3}-?\d{4}$/,
+  JE: /^JE\d{1,2} ?\d[A-Z]{2}$/,
+  GG: /^GY\d{1,2} ?\d[A-Z]{2}$/,
+  IM: /^IM\d{1,2} ?\d[A-Z]{2}$/,
+  GI: /^GX11 ?1AA$/,
+  CH: /^[1-9]\d{3}$/,
+  MC: /^980\d{2}$/,
+  AD: /^AD ?\d{3}$/,
+  SM: /^4789\d$/,
+  VA: /^00120$/,
+  FO: /^(FO-?)?\d{3}$/,
+  UA: /^\d{5}$/,
+  MD: /^(MD-?)?\d{4}$/,
+  RS: /^\d{5}$/,
+  ME: /^8\d{4}$/,
+  BA: /^\d{5}$/,
+  XK: /^\d{5}$/,
+  MK: /^\d{4}$/,
+  AL: /^\d{4}$/,
+  TR: /^\d{5}$/,
 };
 
 /**
@@ -177,8 +197,7 @@ export function addressWarning(
     return `The shipping country (${country || 'none'}) isn’t one we ship to. Check the address in Stripe before posting.`;
   }
   const normalised = (postcode ?? '')
-    .normalize('NFKC') // full-width digits and hyphens, as typed in Japan
-    .replace(/^〒/, '')
+    .normalize('NFKC') // full-width digits and hyphens
     .trim()
     .replace(/\s+/g, ' ')
     .toUpperCase();
