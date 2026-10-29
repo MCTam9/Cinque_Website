@@ -27,7 +27,8 @@ export const variant = defineType({
         'Drop: CIN + the drop number in three digits (CIN000 for one-offs not tied to a drop). ' +
         'Type: P Pendant, N Necklace, R Ring, E Earring, B Bracelet, O Object; add C for ' +
         'a piece sold with a chain (P01C). Number: two digits, unique per type within the drop. ' +
-        'Material: S Sterling Silver, 9G 9ct Gold, 14G / 14R / 14W 14ct Yellow / Rose / White Gold, ' +
+        'Material: S Sterling Silver, 9G / 9R / 9W 9ct Yellow / Rose / White Gold, ' +
+        '14G / 14R / 14W 14ct Yellow / Rose / White Gold, ' +
         '18G / 18R / 18W 18ct Yellow / Rose / White Gold, P Platinum, V Gold Vermeil, ' +
         'B Brass, C custom / multiple materials. Append -Size only if the variant has one ' +
         '(CIN001-R02-S-M), or -C for a made-to-order custom size (CIN001-R02-S-C). Every SKU must be unique across the whole catalog.',
@@ -39,8 +40,10 @@ export const variant = defineType({
       type: 'string',
       options: {
         list: [
-          { title: '9ct Gold', value: '9ct_gold' },
-          // 14ct_gold / 18ct_gold are the yellow ones (named before rose and white).
+          // 9ct_gold / 14ct_gold / 18ct_gold are the yellow ones (named before rose and white).
+          { title: '9ct Yellow Gold', value: '9ct_gold' },
+          { title: '9ct Rose Gold', value: '9ct_rose_gold' },
+          { title: '9ct White Gold', value: '9ct_white_gold' },
           { title: '14ct Yellow Gold', value: '14ct_gold' },
           { title: '14ct Rose Gold', value: '14ct_rose_gold' },
           { title: '14ct White Gold', value: '14ct_white_gold' },

@@ -7,8 +7,10 @@
 import type { MaterialGroup } from '@/lib/shop/materials';
 
 export type MetalType =
+  /** 9ct_gold, 14ct_gold and 18ct_gold are yellow gold. */
   | '9ct_gold'
-  /** 14ct_gold and 18ct_gold are yellow gold. */
+  | '9ct_rose_gold'
+  | '9ct_white_gold'
   | '14ct_gold'
   | '14ct_rose_gold'
   | '14ct_white_gold'
