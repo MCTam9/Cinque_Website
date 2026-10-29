@@ -4,7 +4,9 @@ import type { CardSize, MetalType, Product, ProductCardData, SanityImageRef, Var
 
 /** Metal enum → display label (spaced). */
 const METAL_LABELS: Record<Exclude<MetalType, 'custom'>, string> = {
-  '9ct_gold': '9ct Gold',
+  '9ct_gold': '9ct Yellow Gold',
+  '9ct_rose_gold': '9ct Rose Gold',
+  '9ct_white_gold': '9ct White Gold',
   '14ct_gold': '14ct Yellow Gold',
   '14ct_rose_gold': '14ct Rose Gold',
   '14ct_white_gold': '14ct White Gold',

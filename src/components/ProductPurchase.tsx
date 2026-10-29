@@ -15,7 +15,7 @@ import { IN_STOCK_LINE, formatPence } from '@/lib/shop/shipping';
 export interface PurchaseVariant {
   key: string;
   sku: string;
-  /** e.g. "9ct Gold"; groups the variants into the Material choice. */
+  /** e.g. "9ct Yellow Gold"; groups the variants into the Material choice. */
   material?: string;
   /** A stocked size, e.g. "M"; none for made to order. */
   size?: string;
