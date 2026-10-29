@@ -17,6 +17,8 @@ export interface PurchaseVariant {
   sku: string;
   /** e.g. "9ct Yellow Gold"; groups the variants into the Material choice. */
   material?: string;
+  /** Its stone, e.g. "Pearl": shown after the material, not part of the choice. */
+  stone?: string;
   /** A stocked size, e.g. "M"; none for made to order. */
   size?: string;
   /** What the cart line and order add to the title, e.g. "14ct Gold" (see variantDetail). */
@@ -218,7 +220,10 @@ export default function ProductPurchase({
             <SpecRow key={spec.label} {...spec} />
           ))}
           {materials.length > 0 && (
-            <SpecRow label="Material" value={selected?.material}>
+            <SpecRow
+              label="Material"
+              value={[selected?.material, selected?.stone].filter(Boolean).join(', ')}
+            >
               {materials.length > 1 && (
                 <OptionButtons
                   label="Material"

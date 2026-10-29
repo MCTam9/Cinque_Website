@@ -65,3 +65,22 @@ export function sortByMaterialThenCategory<T extends { category?: string; title:
       a.title.localeCompare(b.title, 'en-GB', { sensitivity: 'base' })
   );
 }
+
+/** Stone types, as the Admin lists them and the site names them. */
+export const STONE_TYPES = [
+  { title: 'Diamond', value: 'diamond' },
+  { title: 'Lab-Grown Diamond', value: 'lab_diamond' },
+  { title: 'Sapphire', value: 'sapphire' },
+  { title: 'Emerald', value: 'emerald' },
+  { title: 'Ruby', value: 'ruby' },
+  { title: 'Pearl', value: 'pearl' },
+  { title: 'Moonstone', value: 'moonstone' },
+  { title: 'Topaz', value: 'topaz' },
+  { title: 'None', value: 'none' },
+] as const;
+
+/** "Pearl" for 'pearl'; nothing for no stone (or "None"). */
+export function stoneLabel(type?: string | null): string | undefined {
+  if (!type || type === 'none') return undefined;
+  return STONE_TYPES.find((s) => s.value === type)?.title;
+}

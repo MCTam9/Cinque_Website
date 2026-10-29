@@ -26,6 +26,7 @@ import {
   shippingDetailsJsonLd,
 } from '@/lib/seo';
 import { categoryBy, isReservedShopSlug } from '@/lib/shop/categories';
+import { stoneLabel } from '@/lib/shop/materials';
 import {
   EU_PAUSE_NOTICE,
   INTERNATIONAL_DUTIES_NOTE,
@@ -157,6 +158,7 @@ export default async function ProductPage({
     key: v._key,
     sku: v.sku,
     material: materialLabel(v),
+    stone: stoneLabel(v.stone?.stoneType),
     size: v.madeToOrder ? undefined : v.size || undefined,
     detail: variantDetail(v, product.variants),
     largeSizes: largeSizesOf(product.category, v),

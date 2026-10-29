@@ -1,5 +1,10 @@
 import { urlFor } from '@/lib/sanity/image';
-import { materialGroupOf, sortByMaterialThenCategory, type MaterialGroup } from '@/lib/shop/materials';
+import {
+  materialGroupOf,
+  sortByMaterialThenCategory,
+  stoneLabel,
+  type MaterialGroup,
+} from '@/lib/shop/materials';
 import type { CardSize, MetalType, Product, ProductCardData, SanityImageRef, Variant } from '@/types';
 
 /** Metal enum → display label (spaced). */
@@ -59,10 +64,11 @@ const GOLD_COLOURS = ['Yellow', 'Rose', 'White'];
  *
  * Carats run low to high, colours yellow, rose, white. Anything that isn't a
  * coloured gold (silver, a custom material) keeps its own label, in variant
- * order, and the groups are joined with commas.
+ * order, and the groups are joined with commas. Stones come last, once each,
+ * since the metal is what changes between variants: "9ct / 14ct Yellow Gold, Pearl".
  */
 export function materialsSummary(
-  variants?: Pick<Variant, 'metalType' | 'customMaterial'>[] | null
+  variants?: Pick<Variant, 'metalType' | 'customMaterial' | 'stone'>[] | null
 ): string | undefined {
   const labels = materialsOf(variants);
   const golds = labels.flatMap((l) => {
@@ -83,7 +89,12 @@ export function materialsSummary(
   const firstGold = labels.findIndex((l) => GOLD_LABEL.test(l));
   const rest = labels.filter((l) => !GOLD_LABEL.test(l));
   const parts = firstGold < 0 ? rest : [...rest.slice(0, firstGold), ...gold, ...rest.slice(firstGold)];
-  return parts.join(', ') || undefined;
+  const stones = [
+    ...new Set(
+      (variants ?? []).map((v) => stoneLabel(v.stone?.stoneType)).filter((s): s is string => !!s)
+    ),
+  ];
+  return [...parts, ...stones].join(', ') || undefined;
 }
 
 /**
