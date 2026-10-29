@@ -45,7 +45,11 @@ function SpecRow({
     <div className="grid grid-cols-[auto_1fr] gap-x-[10px] type-p1">
       <dt className="text-oslo">{label}</dt>
       <dd className="text-right text-graphite">{value}</dd>
-      {children && <dd className="col-span-2 pb-[8px] pt-[8px]">{children}</dd>}
+      {/* 10px above the buttons, and below them unless the list ends here,
+          the same rhythm as the made-to-order fields underneath. */}
+      {children && (
+        <dd className="col-span-2 pt-[10px] [div:not(:last-child)>&]:pb-[10px]">{children}</dd>
+      )}
     </div>
   );
 }
@@ -66,7 +70,11 @@ export function SpecList({ specs }: { specs: Spec[] }) {
   );
 }
 
-/** A choice's square buttons: red when picked, struck through when sold out. */
+/**
+ * A choice's buttons, sized like the size picker's box below them (40px tall,
+ * 10px in) and sharing the row's width: red when picked, struck through when
+ * sold out.
+ */
 function OptionButtons({
   label,
   options,
@@ -89,7 +97,7 @@ function OptionButtons({
           onClick={o.onSelect}
           disabled={!o.available}
           aria-pressed={o.selected}
-          className={`type-p1 flex h-[50px] min-w-[50px] items-center justify-center border px-[8px] transition-colors ${
+          className={`type-p1 flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap border px-[10px] transition-colors ${
             o.selected
               ? 'border-redcurrent text-redcurrent'
               : 'border-graphite text-graphite hover:border-redcurrent'
@@ -200,95 +208,98 @@ export default function ProductPurchase({
 
   return (
     <div className="flex flex-col gap-[20px]">
-      <dl className="flex flex-col gap-0.5">
-        {specs.map((spec) => (
-          <SpecRow key={spec.label} {...spec} />
-        ))}
-        {materials.length > 0 && (
-          <SpecRow label="Material" value={selected?.material}>
-            {materials.length > 1 && (
-              <OptionButtons
-                label="Material"
-                options={materials.map((m) => ({
-                  id: m,
-                  text: m,
-                  selected: m === selected?.material,
-                  available: variants.some((v) => v.material === m && v.inStock),
-                  onSelect: () => pickMaterial(m),
-                }))}
+      {/* The choices and what follows from them, in one 10px rhythm. */}
+      <div className="flex flex-col gap-[10px]">
+        <dl className="flex flex-col gap-0.5">
+          {specs.map((spec) => (
+            <SpecRow key={spec.label} {...spec} />
+          ))}
+          {materials.length > 0 && (
+            <SpecRow label="Material" value={selected?.material}>
+              {materials.length > 1 && (
+                <OptionButtons
+                  label="Material"
+                  options={materials.map((m) => ({
+                    id: m,
+                    text: m,
+                    selected: m === selected?.material,
+                    available: variants.some((v) => v.material === m && v.inStock),
+                    onSelect: () => pickMaterial(m),
+                  }))}
+                />
+              )}
+            </SpecRow>
+          )}
+          {showSize && selected && (
+            <SpecRow label="Size" value={sizeOf(selected)}>
+              {ofMaterial.length > 1 && (
+                <OptionButtons
+                  label="Size"
+                  options={ofMaterial.map((v) => ({
+                    id: v.key,
+                    text: sizeOf(v),
+                    selected: v.key === selected.key,
+                    available: v.inStock,
+                    onSelect: () => setSelectedKey(v.key),
+                  }))}
+                />
+              )}
+            </SpecRow>
+          )}
+        </dl>
+
+        {selected?.inStock && !needsSize && <P1 className="text-graphite">{IN_STOCK_LINE}</P1>}
+
+        {needsSize && (
+          <div className="flex flex-col gap-[10px]">
+            <P1 className="text-graphite">{MADE_TO_ORDER_LINE}</P1>
+            {ring ? (
+              <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
+            ) : (
+              <label className="flex flex-col gap-[6px]">
+                <span className="type-p1 text-oslo">Your size</span>
+                <input
+                  type="text"
+                  value={customSize}
+                  onChange={(e) => setCustomSize(e.target.value)}
+                  maxLength={CUSTOM_SIZE_MAX}
+                  required
+                  placeholder="e.g. 45cm"
+                  className={`type-p1 min-h-[40px] w-full border bg-transparent px-[10px] placeholder:text-oslo focus:border-redcurrent focus:outline-none ${
+                    size ? 'border-redcurrent text-redcurrent' : 'border-graphite text-graphite'
+                  }`}
+                />
+              </label>
+            )}
+            {ring && largeSizes && (
+              <p className="type-p2 text-oslo">
+                {`Sizes ${LARGE_SIZE_LETTERS[0]}–${largeSizes.upTo}${
+                  largeSizes.surchargeGBP
+                    ? ` add ${formatPence(largeSizes.surchargeGBP)} for the extra gold`
+                    : ' are made to order too'
+                }.`}
+              </p>
+            )}
+            {ring && (
+              <a
+                href={`#${RING_SIZE_CHART_ID}`}
+                className="type-p1 w-fit text-oslo underline underline-offset-4 hover:text-redcurrent"
+              >
+                Ring size chart
+              </a>
+            )}
+            {extras && (
+              <MadeToOrderExtras
+                offerEngraving={offerEngraving}
+                engraving={engraving}
+                onEngravingChange={setEngraving}
+                notes={notes}
+                onNotesChange={setNotes}
               />
             )}
-          </SpecRow>
+          </div>
         )}
-        {showSize && selected && (
-          <SpecRow label="Size" value={sizeOf(selected)}>
-            {ofMaterial.length > 1 && (
-              <OptionButtons
-                label="Size"
-                options={ofMaterial.map((v) => ({
-                  id: v.key,
-                  text: sizeOf(v),
-                  selected: v.key === selected.key,
-                  available: v.inStock,
-                  onSelect: () => setSelectedKey(v.key),
-                }))}
-              />
-            )}
-          </SpecRow>
-        )}
-      </dl>
-
-      {selected?.inStock && !needsSize && <P1 className="text-graphite">{IN_STOCK_LINE}</P1>}
-
-      {needsSize && (
-        <div className="flex flex-col gap-[10px]">
-          <P1 className="text-graphite">{MADE_TO_ORDER_LINE}</P1>
-          {ring ? (
-            <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
-          ) : (
-            <label className="flex flex-col gap-[6px]">
-              <span className="type-p1 text-oslo">Your size</span>
-              <input
-                type="text"
-                value={customSize}
-                onChange={(e) => setCustomSize(e.target.value)}
-                maxLength={CUSTOM_SIZE_MAX}
-                required
-                placeholder="e.g. 45cm"
-                className={`type-p1 min-h-[40px] w-full border bg-transparent px-[10px] placeholder:text-oslo focus:border-redcurrent focus:outline-none ${
-                  size ? 'border-redcurrent text-redcurrent' : 'border-graphite text-graphite'
-                }`}
-              />
-            </label>
-          )}
-          {ring && largeSizes && (
-            <p className="type-p2 text-oslo">
-              {`Sizes ${LARGE_SIZE_LETTERS[0]}–${largeSizes.upTo}${
-                largeSizes.surchargeGBP
-                  ? ` add ${formatPence(largeSizes.surchargeGBP)} for the extra gold`
-                  : ' are made to order too'
-              }.`}
-            </p>
-          )}
-          {ring && (
-            <a
-              href={`#${RING_SIZE_CHART_ID}`}
-              className="type-p1 w-fit text-oslo underline underline-offset-4 hover:text-redcurrent"
-            >
-              Ring size chart
-            </a>
-          )}
-          {extras && (
-            <MadeToOrderExtras
-              offerEngraving={offerEngraving}
-              engraving={engraving}
-              onEngravingChange={setEngraving}
-              notes={notes}
-              onNotesChange={setNotes}
-            />
-          )}
-        </div>
-      )}
+      </div>
 
       <H3 as="p" className="text-right">
         {selected ? formatGBP(selected.priceGBP + engravingGBP + largeSizeGBP) : '—'}
