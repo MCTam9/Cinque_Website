@@ -68,7 +68,7 @@ export function formatRingSize(system: RingSizeSystem, row: number): string {
   return system === 'UK' ? uk : `${uk} (${system} ${ringSizeLabel(system, row)})`;
 }
 
-/** A product's larger sizes: the largest it offers and the surcharge (pence). */
+/** A variant's larger sizes: the largest it offers and the surcharge (pence). */
 export interface LargeSizes {
   upTo: string;
   surchargeGBP: number;
@@ -108,23 +108,44 @@ export function ringSizeCharge(
   return { ok: true, surchargeGBP: isLargeRow(row) ? (large?.surchargeGBP ?? 0) : 0 };
 }
 
-/** A product made only in silver: larger sizes aren't offered on it. */
-export const silverOnly = (metals?: (string | null | undefined)[] | null) =>
-  Boolean(metals?.length) && metals!.every((m) => m === 'sterling_silver');
+/** Larger sizes are an option on made-to-order rings in anything but silver. */
+export const offersLargeSizes = (
+  category?: string | null,
+  v?: { metalType?: string | null; madeToOrder?: boolean | null } | null
+) => category === 'rings' && Boolean(v?.madeToOrder) && v?.metalType !== 'sterling_silver';
 
 /**
- * The product's larger sizes from its Admin fields, or null when it offers
- * none (or is silver only). Shared by the PDP and the checkout API so they
+ * The PDP chart's larger sizes across a product's variants: up to the largest
+ * any offers, with the surcharge only when they all charge the same (it's
+ * shown with each choice above otherwise).
+ */
+export function chartLargeSizes(list: (LargeSizes | null | undefined)[]): LargeSizes | null {
+  const offered = list.filter((l): l is LargeSizes => Boolean(l));
+  if (!offered.length) return null;
+  const upTo = offered
+    .map((l) => l.upTo)
+    .sort()
+    .at(-1)!;
+  const charges = new Set(offered.map((l) => l.surchargeGBP));
+  return { upTo, surchargeGBP: charges.size === 1 ? offered[0].surchargeGBP : 0 };
+}
+
+/**
+ * A ring variant's larger sizes from its Admin fields, or null when it offers
+ * none. Each variant has its own, so 14ct can charge more for the extra gold
+ * than 9ct. Shared by the PDP, the checkout API and the cart reminder so they
  * always agree.
  */
-export function largeSizesOf(doc: {
-  category?: string | null;
-  largeSizesUpTo?: string | null;
-  largeSizeSurchargeGBP?: number | null;
-  variants?: { metalType?: string | null }[] | null;
-}): LargeSizes | null {
-  if (doc.category !== 'rings' || !doc.largeSizesUpTo) return null;
-  if (silverOnly(doc.variants?.map((v) => v.metalType))) return null;
-  if (!LARGE_SIZE_LETTERS.includes(doc.largeSizesUpTo)) return null;
-  return { upTo: doc.largeSizesUpTo, surchargeGBP: Math.max(0, doc.largeSizeSurchargeGBP ?? 0) };
+export function largeSizesOf(
+  category: string | null | undefined,
+  v?: {
+    metalType?: string | null;
+    madeToOrder?: boolean | null;
+    largeSizesUpTo?: string | null;
+    largeSizeSurchargeGBP?: number | null;
+  } | null
+): LargeSizes | null {
+  if (!offersLargeSizes(category, v) || !v?.largeSizesUpTo) return null;
+  if (!LARGE_SIZE_LETTERS.includes(v.largeSizesUpTo)) return null;
+  return { upTo: v.largeSizesUpTo, surchargeGBP: Math.max(0, v.largeSizeSurchargeGBP ?? 0) };
 }

@@ -1,4 +1,8 @@
 import { defineField, defineType } from 'sanity';
+import { LARGE_SIZE_LETTERS, RING_SIZE_ROWS, offersLargeSizes } from '@/lib/shop/ringSizes';
+
+/** The variant being edited, as the larger-size fields' `hidden` checks read it. */
+type Parent = { metalType?: string; madeToOrder?: boolean; largeSizesUpTo?: string } | undefined;
 
 /**
  * A purchasable SKU. A product has one or more variants; inventory,
@@ -138,6 +142,33 @@ export const variant = defineType({
       description:
         'Sold regardless of stock, which is not tracked. The customer enters their own size, ' +
         'and the site shows an 8–12 week lead time. Leave Size blank — the option shows as "Made to Order".',
+    }),
+    defineField({
+      name: 'largeSizesUpTo',
+      title: 'Larger sizes up to',
+      type: 'string',
+      description:
+        'Made-to-order gold rings only. Standard sizes are UK G–T. Pick a size here to also sell UK U up to it, at the surcharge below. Leave empty for G–T only.',
+      options: {
+        list: LARGE_SIZE_LETTERS.map((uk) => {
+          const row = RING_SIZE_ROWS.find((r) => r.uk === uk)!;
+          return { title: `UK ${uk} (US ${row.us})`, value: uk };
+        }),
+      },
+      // Not offered on silver, or on a stocked size.
+      hidden: ({ document, parent }) =>
+        !offersLargeSizes(document?.category as string | undefined, parent as Parent),
+    }),
+    defineField({
+      name: 'largeSizeSurchargeGBP',
+      title: 'Larger size surcharge (GBP, in pence)',
+      type: 'number',
+      description:
+        'Added to this variant’s price for UK U and above, e.g. £75.00 → 7500. Leave empty or 0 to sell larger sizes at the normal price.',
+      validation: (rule) => rule.min(0).integer(),
+      hidden: ({ document, parent }) =>
+        !offersLargeSizes(document?.category as string | undefined, parent as Parent) ||
+        !(parent as Parent)?.largeSizesUpTo,
     }),
   ],
   preview: {

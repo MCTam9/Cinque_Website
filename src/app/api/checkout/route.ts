@@ -66,9 +66,6 @@ type VariantResult = {
   status: string;
   category?: string;
   offerEngraving?: boolean;
-  largeSizesUpTo?: string | null;
-  largeSizeSurchargeGBP?: number | null;
-  variants?: { metalType?: string | null }[] | null;
   variant: {
     _key: string;
     sku: string;
@@ -78,6 +75,9 @@ type VariantResult = {
     stockQuantity: number;
     allowBackorder?: boolean;
     madeToOrder?: boolean;
+    metalType?: string;
+    largeSizesUpTo?: string;
+    largeSizeSurchargeGBP?: number;
   } | null;
 };
 
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
     // larger-size surcharge, worked out here and never taken from the client.
     let largeSizeGBP = 0;
     if (ringExtras && customSize) {
-      const charge = ringSizeCharge(customSize, largeSizesOf(result));
+      const charge = ringSizeCharge(customSize, largeSizesOf(result.category, variant));
       if (!charge.ok) {
         return NextResponse.json(
           { error: `Please choose your size for ${result.title} again.` },
