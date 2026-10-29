@@ -31,8 +31,8 @@ export const CHRISTMAS_CUTOFF_LABEL = CHRISTMAS_CUTOFF.toLocaleDateString('en-GB
   timeZone: 'Europe/London',
 });
 
-/** The PDP and cart line for a made-to-order piece. */
-export const MADE_TO_ORDER_LINE = `Made to order, ships in ${MADE_TO_ORDER_LEAD_TIME}`;
+/** The PDP, cart and order-email line for a made-to-order piece. */
+export const MADE_TO_ORDER_LINE = `Ships in ${MADE_TO_ORDER_LEAD_TIME}`;
 
 /** Longest custom size a customer can enter, e.g. "UK N (US 6¾)" or "17.5mm". */
 export const CUSTOM_SIZE_MAX = 20;
