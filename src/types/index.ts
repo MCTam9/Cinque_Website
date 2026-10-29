@@ -8,6 +8,7 @@ import type { MaterialGroup } from '@/lib/shop/materials';
 
 export type MetalType =
   | '9ct_gold'
+  | '14ct_gold'
   | '18ct_gold'
   | 'sterling_silver'
   | 'platinum'
@@ -150,7 +151,8 @@ export interface ProductCardData {
   imageUrl?: string;
   imageAlt: string;
   priceGBP: number; // pence — the default variant's price
-  material?: string; // display label, e.g. "Sterling_Silver"
+  /** Every material the piece comes in, e.g. "9ct Gold / 14ct Gold". */
+  material?: string;
   drop?: string; // e.g. "01_Metal_Veil"
   edition?: string;
   size?: string;

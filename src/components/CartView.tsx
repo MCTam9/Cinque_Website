@@ -7,6 +7,7 @@ import { cartLineId, linePriceGBP, useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
 import {
   EU_PAUSE_NOTICE,
+  IN_STOCK_LINE,
   INTERNATIONAL_DUTIES_NOTE,
   SHIPPING_RATES,
   SHIPPING_REACH,
@@ -130,7 +131,9 @@ export default function CartView({
                 <div className="flex flex-1 flex-col gap-1">
                   <P1>{l.title}</P1>
                   <P2 className="text-oslo">{l.sku}</P2>
-                  {l.madeToOrder && <P2 className="text-graphite">{MADE_TO_ORDER_LINE}</P2>}
+                  <P2 className="text-graphite">
+                    {l.madeToOrder ? MADE_TO_ORDER_LINE : IN_STOCK_LINE}
+                  </P2>
                   {l.customSize && <P2 className="text-graphite">Size {l.customSize}</P2>}
                   {/* One row per priced item, amounts right-aligned with the line total. */}
                   {rows && (

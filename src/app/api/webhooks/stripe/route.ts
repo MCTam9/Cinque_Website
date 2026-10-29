@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe';
 import { serverEnv } from '@/lib/serverEnv';
 import { sanityWriteClient } from '@/lib/sanity/writeClient';
 import { urlFor } from '@/lib/sanity/image';
+import { variantDetail } from '@/lib/products';
 import { createShipment } from '@/lib/fulfillment/shipping';
 import {
   sendOrderConfirmation,
@@ -154,7 +155,10 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       `*[_type == "product" && _id == $pid][0]{
         _id, title,
         "image": images[0],
-        "variant": variants[_key == $vkey][0]{ _key, sku, priceGBP, madeToOrder }
+        "variant": variants[_key == $vkey][0]{
+          _key, sku, priceGBP, madeToOrder, metalType, customMaterial, size
+        },
+        "variants": variants[]{ metalType, customMaterial }
       }`,
       { pid: fl.p, vkey: fl.v }
     );
@@ -178,7 +182,10 @@ async function handleCheckoutCompleted(sessionStub: Stripe.Checkout.Session) {
       product: { _type: 'reference', _ref: fl.p, _weak: true },
       variantKey: fl.v,
       sku: doc.variant.sku as string,
-      titleSnapshot: doc.title as string,
+      // With the material and stocked size when they tell this piece apart.
+      titleSnapshot: [doc.title as string, variantDetail(doc.variant, doc.variants ?? [])]
+        .filter(Boolean)
+        .join(' — '),
       quantity: fl.q,
       unitPriceGBP: doc.variant.priceGBP as number,
       ...(madeToOrder ? { madeToOrder: true, customSize: fl.s ?? '' } : {}),

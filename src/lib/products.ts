@@ -5,6 +5,7 @@ import type { CardSize, MetalType, Product, ProductCardData, SanityImageRef, Var
 /** Metal enum → display label (spaced). */
 const METAL_LABELS: Record<Exclude<MetalType, 'custom'>, string> = {
   '9ct_gold': '9ct Gold',
+  '14ct_gold': '14ct Gold',
   '18ct_gold': '18ct Gold',
   sterling_silver: 'Sterling Silver',
   platinum: 'Platinum',
@@ -26,6 +27,33 @@ export function materialLabel(
   if (!v) return undefined;
   if (v.metalType === 'custom') return v.customMaterial?.trim() || undefined;
   return metalLabel(v.metalType);
+}
+
+/** Every material a product comes in, in variant order, e.g. ["9ct Gold", "14ct Gold"]. */
+export function materialsOf(
+  variants?: Pick<Variant, 'metalType' | 'customMaterial'>[] | null
+): string[] {
+  return [
+    ...new Set(
+      (variants ?? []).map((v) => materialLabel(v)).filter((m): m is string => Boolean(m))
+    ),
+  ];
+}
+
+/**
+ * What tells a variant apart from the product's others, for a cart line and
+ * the order: its material when the product comes in more than one, and its
+ * size when it's a stocked size (a made-to-order size travels separately as
+ * the customer's own). "14ct Gold", "Size M" or "14ct Gold, size M".
+ */
+export function variantDetail(
+  v: Pick<Variant, 'metalType' | 'customMaterial' | 'size' | 'madeToOrder'>,
+  variants: Pick<Variant, 'metalType' | 'customMaterial'>[]
+): string | undefined {
+  const material = materialsOf(variants).length > 1 ? materialLabel(v) : undefined;
+  const size = !v.madeToOrder && v.size ? v.size : undefined;
+  if (material && size) return `${material}, size ${size}`;
+  return material ?? (size ? `Size ${size}` : undefined);
 }
 
 /**
@@ -139,7 +167,7 @@ export function toCardData(product: Product): ProductCardData {
     imageUrl,
     imageAlt: firstImage?.alt || product.title,
     priceGBP: minPrice,
-    material: materialLabel(defaultVariant),
+    material: materialsOf(variants).join(' / ') || undefined,
     drop: dropLabel(product.collection),
     edition: product.edition,
     size: defaultVariant?.size,
