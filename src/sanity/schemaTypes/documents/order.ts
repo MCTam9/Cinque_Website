@@ -1,6 +1,7 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 import { CARRIERS } from '@/lib/fulfillment/tracking';
 import { MAKING_TARGET_WEEKS } from '@/lib/shop/madeToOrder';
+import { IN_STOCK_DISPATCH_DAYS } from '@/lib/shop/shipping';
 
 /**
  * Orders are created/finalized by the Stripe webhook, NOT by hand.
@@ -203,7 +204,7 @@ export const order = defineType({
           name: 'targetShipDate',
           title: 'Target ship date',
           type: 'date',
-          description: `Internal. Leave empty to aim for ${MAKING_TARGET_WEEKS} weeks after payment (made-to-order pieces); set a date to override it, e.g. one agreed with the customer.`,
+          description: `Internal. Leave empty to aim for ${MAKING_TARGET_WEEKS} weeks after payment (made-to-order pieces) or ${IN_STOCK_DISPATCH_DAYS} working days (in-stock); set a date to override it, e.g. one agreed with the customer.`,
         }),
         defineField({ name: 'shipStationOrderId', title: 'ShipStation Order ID', type: 'string' }),
         defineField({ name: 'shippedAt', title: 'Shipped At', type: 'datetime' }),
