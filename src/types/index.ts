@@ -43,6 +43,9 @@ export interface Variant {
   allowBackorder?: boolean;
   /** Sold regardless of stock; the customer enters their own size. */
   madeToOrder?: boolean;
+  /** Made-to-order gold rings: the largest size above UK T on offer, and its surcharge (pence). */
+  largeSizesUpTo?: string;
+  largeSizeSurchargeGBP?: number;
 }
 
 export type ProductCategory = 'rings' | 'earrings' | 'necklaces' | 'objects';

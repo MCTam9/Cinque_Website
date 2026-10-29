@@ -215,6 +215,12 @@ export default function RingSizePicker({
 
   const system = RING_SIZE_SYSTEMS[draft.systemIndex];
   const rows = ringRowCount(largeSizes);
+
+  // Switching to a variant with fewer sizes (another material) drops a pick
+  // it no longer offers, so the buyer chooses again.
+  useEffect(() => {
+    if (picked && picked.row >= rows) setPicked(null);
+  }, [picked, rows]);
   const surcharge = largeSizes?.surchargeGBP ?? 0;
   /** " (+£75)" after a larger size, when it costs extra. */
   const extra = (row: number) =>

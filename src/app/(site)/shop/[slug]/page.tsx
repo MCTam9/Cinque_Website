@@ -40,7 +40,7 @@ import ProductPurchase, {
 import ProductGallery from '@/components/ProductGallery';
 import Disclosure from '@/components/Disclosure';
 import RingSizeChart from '@/components/RingSizeChart';
-import { largeSizesOf } from '@/lib/shop/ringSizes';
+import { chartLargeSizes, largeSizesOf } from '@/lib/shop/ringSizes';
 import type { PortableTextBlock } from '@portabletext/types';
 import type { CollectionRef, ProductCategory, RingOccasion, SanityImageRef, Variant } from '@/types';
 
@@ -59,8 +59,6 @@ interface PDPProduct {
   edition?: string;
   ringOccasions?: RingOccasion[];
   offerEngraving?: boolean;
-  largeSizesUpTo?: string;
-  largeSizeSurchargeGBP?: number;
   description?: PortableTextBlock[];
   careInstructions?: string;
   images?: SanityImageRef[];
@@ -161,6 +159,7 @@ export default async function ProductPage({
     material: materialLabel(v),
     size: v.madeToOrder ? undefined : v.size || undefined,
     detail: variantDetail(v, product.variants),
+    largeSizes: largeSizesOf(product.category, v),
     label:
       [materialLabel(v), v.madeToOrder ? 'made to order in your size' : v.size]
         .filter(Boolean)
@@ -326,7 +325,6 @@ export default async function ProductPage({
               imageUrl={thumbUrl}
               ring={product.category === 'rings'}
               engraving={product.category === 'rings' && Boolean(product.offerEngraving)}
-              largeSizes={largeSizesOf(product)}
             />
           ) : (
             <SpecList specs={specs} />
@@ -391,7 +389,7 @@ export default async function ProductPage({
       {/* Ring size chart — only relevant for rings */}
       {product.category === 'rings' && (
         <div className="mt-[40px] md:mt-[60px]">
-          <RingSizeChart largeSizes={largeSizesOf(product)} />
+          <RingSizeChart largeSizes={chartLargeSizes(purchaseVariants.map((v) => v.largeSizes))} />
         </div>
       )}
     </ShopLayout>

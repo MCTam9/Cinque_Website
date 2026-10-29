@@ -21,6 +21,8 @@ export interface PurchaseVariant {
   size?: string;
   /** What the cart line and order add to the title, e.g. "14ct Gold" (see variantDetail). */
   detail?: string;
+  /** A made-to-order ring's sizes above UK T and their surcharge, if it offers them. */
+  largeSizes?: LargeSizes | null;
   label: string; // full label for a11y
   priceGBP: number;
   inStock: boolean;
@@ -135,7 +137,6 @@ export default function ProductPurchase({
   imageUrl,
   ring = false,
   engraving: offerEngraving = false,
-  largeSizes = null,
 }: {
   productId: string;
   title: string;
@@ -147,8 +148,6 @@ export default function ProductPurchase({
   ring?: boolean;
   /** Ring with "Offer engraving" on in the Admin: made to order can add a £30 engraving. */
   engraving?: boolean;
-  /** Ring sizes above UK T offered in the Admin, and their surcharge. */
-  largeSizes?: LargeSizes | null;
 }) {
   const addLine = useCart((s) => s.addLine);
   const router = useRouter();
@@ -175,6 +174,7 @@ export default function ProductPurchase({
     if (next) setSelectedKey(next.key);
   };
 
+  const largeSizes = selected?.largeSizes ?? null;
   const size = customSize.trim();
   const needsSize = Boolean(selected?.madeToOrder);
   // Notes exist on any made-to-order ring; engraving only where the Admin offers it.
@@ -185,7 +185,10 @@ export default function ProductPurchase({
   // What the checkout API will charge for this size (UK U and up).
   const largeSizeGBP =
     needsSize && ring && size ? ringSizeCharge(size, largeSizes).surchargeGBP : 0;
-  const canAdd = Boolean(selected?.inStock) && (!needsSize || size.length > 0);
+  // A ring size must be one this variant offers (a material switch can take
+  // away the larger ones).
+  const sizeOk = !needsSize || (size.length > 0 && (!ring || ringSizeCharge(size, largeSizes).ok));
+  const canAdd = Boolean(selected?.inStock) && sizeOk;
 
   const handleAdd = () => {
     if (!selected || !canAdd) return;

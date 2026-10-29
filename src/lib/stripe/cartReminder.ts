@@ -89,10 +89,11 @@ export async function cartFromSession(session: Stripe.Checkout.Session): Promise
   for (const [i, fl] of fls.entries()) {
     const doc = await sanityWriteClient.fetch(
       `*[_type == "product" && _id == $pid][0]{
-        _id, title, status, category, offerEngraving, largeSizesUpTo, largeSizeSurchargeGBP,
-        "variants": variants[]{ metalType },
+        _id, title, status, category, offerEngraving,
         "image": images[0],
-        "variant": variants[_key == $vkey][0]{ _key, sku, priceGBP, madeToOrder }
+        "variant": variants[_key == $vkey][0]{
+          _key, sku, priceGBP, madeToOrder, metalType, largeSizesUpTo, largeSizeSurchargeGBP
+        }
       }`,
       { pid: fl.p, vkey: fl.v },
     );
@@ -100,7 +101,8 @@ export async function cartFromSession(session: Stripe.Checkout.Session): Promise
     const mto = Boolean(doc.variant.madeToOrder);
     const ring = mto && doc.category === 'rings';
     const size = mto ? fl.s : undefined;
-    const largeSizeGBP = ring && size ? ringSizeCharge(size, largeSizesOf(doc)).surchargeGBP : 0;
+    const largeSizeGBP =
+      ring && size ? ringSizeCharge(size, largeSizesOf(doc.category, doc.variant)).surchargeGBP : 0;
     const engraving = ring && doc.offerEngraving ? fl.e : undefined;
     const notes = ring ? session.metadata?.[`n${i}`] : undefined;
     lines.push({
