@@ -84,6 +84,13 @@ export const SHIPPING_RATES = {
   freeFromPence: 30000,
 } as const;
 
+/**
+ * In-stock pieces are dispatched within this many working days of payment.
+ * The /shipping page quotes it, and the Admin's Orders table counts down to it.
+ */
+export const IN_STOCK_DISPATCH_DAYS = 5;
+export const IN_STOCK_LEAD_TIME = `3–${IN_STOCK_DISPATCH_DAYS} working days`;
+
 export function isShipCountry(code: string | null | undefined): code is ShipCountry {
   return SHIP_COUNTRY_CODES.includes(code as ShipCountry);
 }

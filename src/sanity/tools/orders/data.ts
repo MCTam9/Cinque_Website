@@ -11,6 +11,7 @@
  */
 
 import { MAKING_TARGET_WEEKS } from '@/lib/shop/madeToOrder';
+import { IN_STOCK_DISPATCH_DAYS } from '@/lib/shop/shipping';
 
 export const ORDER_STATUSES = [
   { value: 'paid', title: 'Paid' },
@@ -164,7 +165,10 @@ export interface Row {
   tracking?: string;
   shippedAt?: string;
   emailedAt?: string;
-  /** "YYYY-MM-DD": the order's own target date, else payment + the making target (made to order only). */
+  /**
+   * "YYYY-MM-DD": the order's own target date, else payment + the making
+   * target (made to order) or + the in-stock dispatch time (everything else).
+   */
   shipBy?: string;
   addressWarning?: string;
   // Unpaid checkouts
@@ -193,7 +197,13 @@ export function toRows(data: TableData): Row[] {
       tracking: o.tracking,
       shippedAt: o.shippedAt,
       emailedAt: o.emailedAt,
-      shipBy: o.targetShipDate || (making && o.createdAt ? makingTarget(o.createdAt) : undefined),
+      shipBy:
+        o.targetShipDate ||
+        (o.createdAt
+          ? making
+            ? makingTarget(o.createdAt)
+            : inStockTarget(o.createdAt)
+          : undefined),
       addressWarning: o.addressWarning,
       internalNotes: o.notes || undefined,
       details: b?.description || undefined,
@@ -341,6 +351,19 @@ export function makingTarget(paidAt: string): string {
   return new Date(day).toISOString().slice(0, 10);
 }
 
+/**
+ * Payment (UK date) plus the in-stock dispatch time in working days, as
+ * "YYYY-MM-DD". Skips weekends; bank holidays aren't counted.
+ */
+export function inStockTarget(paidAt: string): string {
+  const day = new Date(`${ukDate(paidAt)}T00:00:00Z`);
+  for (let left = IN_STOCK_DISPATCH_DAYS; left > 0; ) {
+    day.setUTCDate(day.getUTCDate() + 1);
+    if (day.getUTCDay() !== 0 && day.getUTCDay() !== 6) left--;
+  }
+  return day.toISOString().slice(0, 10);
+}
+
 /** "15 Nov" from "YYYY-MM-DD". */
 export function shortDate(ymd: string): string {
   return new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', {
@@ -375,8 +398,8 @@ export function shipByStatus(
 }
 
 /**
- * "To fulfil" runs by urgency: earliest ship-by date first. An in-stock order
- * has no making time, so its payment date stands in and it sorts ahead.
+ * "To fulfil" runs by urgency: earliest ship-by date first. Every order has
+ * one; the payment date is only a fallback for an order with no date at all.
  */
 export function byUrgency(a: Row, b: Row): number {
   const due = (r: Row) => r.shipBy ?? (r.date ? ukDate(r.date) : '');

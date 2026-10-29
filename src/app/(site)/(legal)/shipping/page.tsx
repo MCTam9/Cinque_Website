@@ -4,6 +4,7 @@ import { H1, H3, P1, P2 } from '@/components/typography';
 import {
   DUTIES_CALCULATOR,
   EU_PAUSE_NOTICE,
+  IN_STOCK_LEAD_TIME,
   SHIPPING_RATES,
   SHIPPING_REACH,
   formatPence,
@@ -36,7 +37,7 @@ const DESTINATIONS = `${SHIPPING_REACH} Orders are sent via a tracked, insured s
 // Must match importCharges() in lib/shop/shipping.ts (every destination 'buyer').
 const DUTIES = 'For orders outside the United Kingdom, our prices and delivery charges do not include import duties, taxes (such as sales tax, GST or consumption tax) or carrier handling fees. These are set by the customs authority of the destination country, collected by the carrier or postal service before or on delivery, and are the recipient’s responsibility. We cannot predict the exact amount, as it depends on the value of your order and your country’s rules; please check with your local customs authority before ordering.';
 
-const LEAD_TIMES = `Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are typically dispatched within 3–5 working days. Made-to-order pieces are made to the size you enter at checkout and are dispatched within ${MADE_TO_ORDER_LEAD_TIME}. Commissioned pieces have longer lead times, which are confirmed at the time of order.`;
+const LEAD_TIMES = `Cinque® pieces are individually made, cast and hallmarked in London. In-stock pieces are typically dispatched within ${IN_STOCK_LEAD_TIME}. Made-to-order pieces are made to the size you enter at checkout and are dispatched within ${MADE_TO_ORDER_LEAD_TIME}. Commissioned pieces have longer lead times, which are confirmed at the time of order.`;
 
 const RETURNS = 'Under the UK Consumer Contracts Regulations, you may cancel an eligible order within 14 days of receipt for a refund. Items must be returned unworn and in their original condition and packaging. Made-to-order pieces are made to the size you give us, and bespoke, commissioned, personalised or altered pieces are made to your specification; none of these are eligible for return unless faulty. Please check your size against our ring size chart before ordering, or email us if you are unsure.';
 
