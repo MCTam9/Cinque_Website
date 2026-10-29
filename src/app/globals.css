@@ -133,7 +133,9 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .img-bw {
+    /* .bw-in too: its two classes would otherwise outrank this and fade anyway. */
+    .img-bw,
+    .img-bw.bw-in {
       transition: none;
       animation: none;
     }
