@@ -7,7 +7,7 @@ import { groq } from 'next-sanity';
 
 /**
  * The fields every catalog card needs. Shared by the all-products query and the
- * per-category one so the two cannot drift apart — a card missing `metalFinish`
+ * per-category one so the two cannot drift apart — a card missing `customMaterial`
  * or `stone` in one listing but not the other is exactly the kind of bug that
  * only shows up on one route.
  */
@@ -23,7 +23,7 @@ const productCardProjection = `
     cardSize,
     cardImage{ alt, asset, crop, hotspot },
     variants[]{
-      _key, sku, metalType, customMaterial, metalFinish, size, priceGBP, stripePriceId,
+      _key, sku, metalType, customMaterial, size, priceGBP, stripePriceId,
       stockQuantity, allowBackorder, madeToOrder,
       stone
     }
@@ -72,7 +72,7 @@ export const productBySlugQuery = groq`
     "images": images[]{ alt, asset, crop, hotspot },
     "collection": collection->{ title, "slug": slug.current, dropNumber },
     variants[]{
-      _key, sku, metalType, customMaterial, metalFinish, size, priceGBP, stripePriceId,
+      _key, sku, metalType, customMaterial, size, priceGBP, stripePriceId,
       weightGrams, stockQuantity, lowStockThreshold, allowBackorder, madeToOrder,
       largeSizesUpTo, largeSizeSurchargeGBP, stone
     }
