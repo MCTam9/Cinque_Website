@@ -7,7 +7,7 @@ import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import {
   materialLabel,
-  materialsOf,
+  materialsSummary,
   formatLabel,
   variantDetail,
   variantIsAvailable,
@@ -175,7 +175,7 @@ export default async function ProductPage({
     (product.collection.dropNumber
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
-  const material = materialsOf(product.variants).join(' / ');
+  const material = materialsSummary(product.variants);
   // The spec rows; Material and Size follow them as the purchase panel's choices.
   const specs: Spec[] = [
     ...(drop

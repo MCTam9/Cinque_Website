@@ -46,6 +46,46 @@ export function materialsOf(
   ];
 }
 
+const GOLD_LABEL = /^(\d+ct) (Yellow|Rose|White) Gold$/;
+const GOLD_COLOURS = ['Yellow', 'Rose', 'White'];
+
+/**
+ * A product's materials in one short phrase, for the card's Material row:
+ * golds sharing a colour or a carat are grouped, so it reads
+ * "9ct / 14ct Yellow Gold" rather than "9ct Yellow Gold / 14ct Yellow Gold".
+ *
+ *   • every carat in every colour: "14ct Yellow / Rose Gold", "9ct / 18ct Yellow / White Gold"
+ *   • otherwise one group per colour: "9ct / 14ct Yellow Gold, 18ct Rose Gold"
+ *
+ * Carats run low to high, colours yellow, rose, white. Anything that isn't a
+ * coloured gold (silver, a custom material) keeps its own label, in variant
+ * order, and the groups are joined with commas.
+ */
+export function materialsSummary(
+  variants?: Pick<Variant, 'metalType' | 'customMaterial'>[] | null
+): string | undefined {
+  const labels = materialsOf(variants);
+  const golds = labels.flatMap((l) => {
+    const m = GOLD_LABEL.exec(l);
+    return m ? [{ carat: m[1], colour: m[2] }] : [];
+  });
+  const carats = [...new Set(golds.map((g) => g.carat))].sort((a, b) => parseInt(a) - parseInt(b));
+  const colours = GOLD_COLOURS.filter((c) => golds.some((g) => g.colour === c));
+  const caratsIn = (colour: string) =>
+    carats.filter((c) => golds.some((g) => g.carat === c && g.colour === colour)).join(' / ');
+  const gold =
+    golds.length === 0
+      ? []
+      : golds.length === carats.length * colours.length
+        ? [`${carats.join(' / ')} ${colours.join(' / ')} Gold`]
+        : colours.map((colour) => `${caratsIn(colour)} ${colour} Gold`);
+  // The gold phrase sits where the product's first gold does.
+  const firstGold = labels.findIndex((l) => GOLD_LABEL.test(l));
+  const rest = labels.filter((l) => !GOLD_LABEL.test(l));
+  const parts = firstGold < 0 ? rest : [...rest.slice(0, firstGold), ...gold, ...rest.slice(firstGold)];
+  return parts.join(', ') || undefined;
+}
+
 /**
  * What tells a variant apart from the product's others, for a cart line and
  * the order: its material when the product comes in more than one, and its
@@ -173,7 +213,7 @@ export function toCardData(product: Product): ProductCardData {
     imageUrl,
     imageAlt: firstImage?.alt || product.title,
     priceGBP: minPrice,
-    material: materialsOf(variants).join(' / ') || undefined,
+    material: materialsSummary(variants),
     drop: dropLabel(product.collection),
     edition: product.edition,
     size: defaultVariant?.size,
