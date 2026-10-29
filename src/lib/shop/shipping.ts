@@ -86,10 +86,14 @@ export const SHIPPING_RATES = {
 
 /**
  * In-stock pieces are dispatched within this many working days of payment.
- * The /shipping page quotes it, and the Admin's Orders table counts down to it.
+ * The /shipping page, the PDP and the cart quote it, and the Admin's Orders
+ * table counts down to it.
  */
 export const IN_STOCK_DISPATCH_DAYS = 5;
 export const IN_STOCK_LEAD_TIME = `3–${IN_STOCK_DISPATCH_DAYS} working days`;
+
+/** The PDP and cart line for an in-stock piece, alongside MADE_TO_ORDER_LINE. */
+export const IN_STOCK_LINE = `In stock, ships in ${IN_STOCK_LEAD_TIME}`;
 
 export function isShipCountry(code: string | null | undefined): code is ShipCountry {
   return SHIP_COUNTRY_CODES.includes(code as ShipCountry);

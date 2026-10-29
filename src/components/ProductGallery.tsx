@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { replayFade } from '@/components/ImageColorReveal';
 
 export type GalleryImage = { url: string; thumb: string; alt: string };
 
@@ -19,6 +20,10 @@ export type GalleryImage = { url: string; thumb: string; alt: string };
  * page's standard gap. Moves
  * are smooth scrolls (instant under reduced motion), and the active
  * thumbnail follows whichever photo is showing, however it got there.
+ *
+ * Every slide loads up front, so its colour → black & white fade would play
+ * out of sight. Instead each photo replays the fade as it starts to slide into
+ * view, by arrow, thumbnail or swipe, and arrives in colour like the first.
  */
 export default function ProductGallery({ images }: { images: GalleryImage[] }) {
   const [active, setActive] = useState(0);
@@ -69,6 +74,32 @@ export default function ProductGallery({ images }: { images: GalleryImage[] }) {
     observer.observe(el);
     return () => observer.disconnect();
   }, [goTo]);
+
+  // Replay the fade on a slide as it enters the photo frame. The first report
+  // is only the starting state (photo 1 already fades on its own load). Not 0:
+  // slides sit edge to edge, and edge-adjacent counts as intersecting at 0.
+  useEffect(() => {
+    const el = track.current;
+    if (!el || count < 2) return;
+    const visible = new Map<Element, boolean>();
+    let first = true;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const now = entry.intersectionRatio > 0;
+          if (now && !visible.get(entry.target) && !first) {
+            const img = entry.target.querySelector('img.img-bw');
+            if (img instanceof HTMLImageElement) replayFade(img);
+          }
+          visible.set(entry.target, now);
+        }
+        first = false;
+      },
+      { root: el, threshold: 0.01 }
+    );
+    Array.from(el.children).forEach((slide) => observer.observe(slide));
+    return () => observer.disconnect();
+  }, [count]);
 
   // Keep the active thumbnail in view in the desktop column, scrolling only
   // the column (never the page).

@@ -5,7 +5,13 @@ import { sanityFetch } from '@/lib/sanity/fetch';
 import { sanityClient } from '@/lib/sanity/client';
 import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
-import { materialLabel, formatLabel, variantIsAvailable } from '@/lib/products';
+import {
+  materialLabel,
+  materialsOf,
+  formatLabel,
+  variantDetail,
+  variantIsAvailable,
+} from '@/lib/products';
 import ShopLayout from '@/components/ShopLayout';
 import JsonLd from '@/components/JsonLd';
 import { PortableText } from '@/components/PortableText';
@@ -26,7 +32,11 @@ import {
   SHIPPING_RATES,
   formatPence,
 } from '@/lib/shop/shipping';
-import ProductPurchase, { type PurchaseVariant } from '@/components/ProductPurchase';
+import ProductPurchase, {
+  SpecList,
+  type PurchaseVariant,
+  type Spec,
+} from '@/components/ProductPurchase';
 import ProductGallery from '@/components/ProductGallery';
 import Disclosure from '@/components/Disclosure';
 import RingSizeChart from '@/components/RingSizeChart';
@@ -121,11 +131,6 @@ export async function generateStaticParams() {
   }
 }
 
-function variantSwatch(v: Variant): string {
-  if (v.madeToOrder) return 'Made to Order';
-  return v.size || materialLabel(v)?.replace(/_/g, ' ') || v.sku;
-}
-
 export default async function ProductPage({
   params,
 }: {
@@ -153,7 +158,9 @@ export default async function ProductPage({
   const purchaseVariants: PurchaseVariant[] = (product.variants ?? []).map((v) => ({
     key: v._key,
     sku: v.sku,
-    swatch: variantSwatch(v),
+    material: materialLabel(v),
+    size: v.madeToOrder ? undefined : v.size || undefined,
+    detail: variantDetail(v, product.variants),
     label:
       [materialLabel(v), v.madeToOrder ? 'made to order in your size' : v.size]
         .filter(Boolean)
@@ -169,14 +176,28 @@ export default async function ProductPage({
     (product.collection.dropNumber
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
-  const material = materialLabel(product.variants?.[0]);
-  // Distinct sizes across the variants (e.g. "M / P", or "M / Made to Order" when a
-  // made-to-order variant is offered); empty for sizeless pieces.
-  const sizes = Array.from(
-    new Set(
-      (product.variants ?? []).map((v) => (v.madeToOrder ? 'Made to Order' : v.size)).filter(Boolean)
-    )
-  ).join(' / ');
+  const material = materialsOf(product.variants).join(' / ');
+  // The spec rows; Material and Size follow them as the purchase panel's choices.
+  const specs: Spec[] = [
+    ...(drop
+      ? [
+          {
+            label: 'Drop',
+            value: product.collection?.slug ? (
+              <Link
+                href={`/lookbook?drop=${product.collection.slug}`}
+                className="underline underline-offset-4 hover:text-redcurrent"
+              >
+                {drop}
+              </Link>
+            ) : (
+              drop
+            ),
+          },
+        ]
+      : []),
+    ...(product.edition ? [{ label: 'Edition', value: product.edition }] : []),
+  ];
   // Rings tagged in the Studio as engagement rings / wedding bands.
   const occasions = ringOccasionLabels(product).map((o) => o.toLowerCase());
   const occasionPhrase = occasions
@@ -296,33 +317,20 @@ export default async function ProductPage({
 
         {/* Info */}
         <div className="mt-[30px] flex flex-col gap-[20px] md:col-start-3 md:row-start-2 md:mt-0">
-          <dl className="flex justify-between type-p1">
-            <div className="flex flex-col gap-0.5 text-oslo">
-              {drop && <dt>Drop</dt>}
-              {material && <dt>Material</dt>}
-              {product.edition && <dt>Edition</dt>}
-              {sizes && <dt>Size</dt>}
-            </div>
-            <div className="flex flex-col gap-0.5 text-right text-graphite">
-              {drop && (
-                <dd>
-                  {product.collection?.slug ? (
-                    <Link
-                      href={`/lookbook?drop=${product.collection.slug}`}
-                      className="underline underline-offset-4 hover:text-redcurrent"
-                    >
-                      {drop}
-                    </Link>
-                  ) : (
-                    drop
-                  )}
-                </dd>
-              )}
-              {material && <dd>{material}</dd>}
-              {product.edition && <dd>{product.edition}</dd>}
-              {sizes && <dd>{sizes}</dd>}
-            </div>
-          </dl>
+          {purchaseVariants.length > 0 ? (
+            <ProductPurchase
+              productId={product._id}
+              title={formatLabel(product.title)}
+              specs={specs}
+              variants={purchaseVariants}
+              imageUrl={thumbUrl}
+              ring={product.category === 'rings'}
+              engraving={product.category === 'rings' && Boolean(product.offerEngraving)}
+              largeSizes={largeSizesOf(product)}
+            />
+          ) : (
+            <SpecList specs={specs} />
+          )}
 
           {occasions.length > 0 && (
             <P1 className="text-graphite">
@@ -332,18 +340,6 @@ export default async function ProductPage({
               </Link>
               .
             </P1>
-          )}
-
-          {purchaseVariants.length > 0 && (
-            <ProductPurchase
-              productId={product._id}
-              title={formatLabel(product.title)}
-              variants={purchaseVariants}
-              imageUrl={thumbUrl}
-              ring={product.category === 'rings'}
-              engraving={product.category === 'rings' && Boolean(product.offerEngraving)}
-              largeSizes={largeSizesOf(product)}
-            />
           )}
 
           {/* The CMS description. Queried since day one but never rendered,

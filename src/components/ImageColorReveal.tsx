@@ -47,6 +47,15 @@ const isBwImage = (n: unknown): n is HTMLImageElement =>
 
 const isLoaded = (img: HTMLImageElement) => img.complete && img.naturalWidth > 0;
 
+/**
+ * Play the fade again on a photo coming into view, for images that loaded
+ * (and faded) out of sight. One still loading is left alone: it shows in
+ * colour and fades on its load, as usual.
+ */
+export function replayFade(img: HTMLImageElement) {
+  if (isLoaded(img)) fadeIn(img);
+}
+
 export default function ImageColorReveal() {
   // The opening colour → black & white fade, on every device.
   useEffect(() => {
