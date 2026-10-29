@@ -27,7 +27,8 @@ export const variant = defineType({
         'Drop: CIN + the drop number in three digits (CIN000 for one-offs not tied to a drop). ' +
         'Type: P Pendant, N Necklace, R Ring, E Earring, B Bracelet, O Object; add C for ' +
         'a piece sold with a chain (P01C). Number: two digits, unique per type within the drop. ' +
-        'Material: S Sterling Silver, 9G 9ct Gold, 14G 14ct Gold, 18G 18ct Gold, P Platinum, V Gold Vermeil, ' +
+        'Material: S Sterling Silver, 9G 9ct Gold, 14G / 14R / 14W 14ct Yellow / Rose / White Gold, ' +
+        '18G / 18R / 18W 18ct Yellow / Rose / White Gold, P Platinum, V Gold Vermeil, ' +
         'B Brass, C custom / multiple materials. Append -Size only if the variant has one ' +
         '(CIN001-R02-S-M), or -C for a made-to-order custom size (CIN001-R02-S-C). Every SKU must be unique across the whole catalog.',
       validation: (rule) => rule.required(),
@@ -39,8 +40,13 @@ export const variant = defineType({
       options: {
         list: [
           { title: '9ct Gold', value: '9ct_gold' },
-          { title: '14ct Gold', value: '14ct_gold' },
-          { title: '18ct Gold', value: '18ct_gold' },
+          // 14ct_gold / 18ct_gold are the yellow ones (named before rose and white).
+          { title: '14ct Yellow Gold', value: '14ct_gold' },
+          { title: '14ct Rose Gold', value: '14ct_rose_gold' },
+          { title: '14ct White Gold', value: '14ct_white_gold' },
+          { title: '18ct Yellow Gold', value: '18ct_gold' },
+          { title: '18ct Rose Gold', value: '18ct_rose_gold' },
+          { title: '18ct White Gold', value: '18ct_white_gold' },
           { title: 'Sterling Silver', value: 'sterling_silver' },
           { title: 'Platinum', value: 'platinum' },
           { title: 'Gold Vermeil', value: 'gold_vermeil' },
@@ -66,14 +72,6 @@ export const variant = defineType({
           }
           return true;
         }),
-    }),
-    defineField({
-      name: 'metalFinish',
-      title: 'Metal Finish',
-      type: 'string',
-      options: {
-        list: ['polished', 'matte', 'brushed', 'oxidised', 'hammered'],
-      },
     }),
     defineField({
       name: 'size',
