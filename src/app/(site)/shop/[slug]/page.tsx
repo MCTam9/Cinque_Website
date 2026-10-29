@@ -232,9 +232,6 @@ export default async function ProductPage({
           ...(occasions.length ? { keywords: occasions.join(', ') } : {}),
           ...(material ? { material } : {}),
           ...(product.category ? { category: categoryBy(product.category).label } : {}),
-          ...(product.variants?.[0]?.metalFinish
-            ? { color: product.variants[0].metalFinish }
-            : {}),
           // One Offer per variant: each SKU has its own price and stock, which
           // a single aggregate Offer hid entirely.
           offers: {

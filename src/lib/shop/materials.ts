@@ -10,7 +10,19 @@ import { SHOP_CATEGORIES } from '@/lib/shop/categories';
  * card never sits under a heading that contradicts its own Material row.
  */
 export const MATERIAL_GROUPS = [
-  { value: 'gold', label: 'Gold', metals: ['9ct_gold', '14ct_gold', '18ct_gold'] },
+  {
+    value: 'gold',
+    label: 'Gold',
+    metals: [
+      '9ct_gold',
+      '14ct_gold',
+      '14ct_rose_gold',
+      '14ct_white_gold',
+      '18ct_gold',
+      '18ct_rose_gold',
+      '18ct_white_gold',
+    ],
+  },
   { value: 'silver', label: 'Silver', metals: ['sterling_silver'] },
   // Gold vermeil, platinum, brass and mixed ("custom") materials.
   { value: 'other', label: 'Other', metals: [] },

@@ -8,8 +8,13 @@ import type { MaterialGroup } from '@/lib/shop/materials';
 
 export type MetalType =
   | '9ct_gold'
+  /** 14ct_gold and 18ct_gold are yellow gold. */
   | '14ct_gold'
+  | '14ct_rose_gold'
+  | '14ct_white_gold'
   | '18ct_gold'
+  | '18ct_rose_gold'
+  | '18ct_white_gold'
   | 'sterling_silver'
   | 'platinum'
   | 'gold_vermeil'
@@ -32,7 +37,6 @@ export interface Variant {
   metalType: MetalType;
   /** The Material text when `metalType` is 'custom' (e.g. a piece in two metals). */
   customMaterial?: string;
-  metalFinish?: string;
   size?: string;
   stone?: StoneSpec;
   priceGBP: number; // pence
