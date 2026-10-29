@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
@@ -266,16 +265,9 @@ export default function ProductPurchase({
             <p className="type-p2 text-oslo">
               {`Sizes ${LARGE_SIZE_LETTERS[0]}–${largeSizes.upTo}${
                 largeSizes.surchargeGBP
-                  ? ` add ${formatPence(largeSizes.surchargeGBP)}`
+                  ? ` add ${formatPence(largeSizes.surchargeGBP)} for the extra gold`
                   : ' are made to order too'
-              }. Need a different size? `}
-              <Link
-                href="/studio#contact"
-                className="underline underline-offset-4 hover:text-redcurrent"
-              >
-                Message us
-              </Link>
-              .
+              }.`}
             </p>
           )}
           {ring && (
