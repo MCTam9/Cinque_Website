@@ -7,7 +7,7 @@ import { productBySlugQuery, productSlugsQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
 import {
   materialLabel,
-  materialsOf,
+  materialsSummary,
   formatLabel,
   variantDetail,
   variantIsAvailable,
@@ -26,6 +26,7 @@ import {
   shippingDetailsJsonLd,
 } from '@/lib/seo';
 import { categoryBy, isReservedShopSlug } from '@/lib/shop/categories';
+import { stoneLabel } from '@/lib/shop/materials';
 import {
   EU_PAUSE_NOTICE,
   INTERNATIONAL_DUTIES_NOTE,
@@ -157,6 +158,7 @@ export default async function ProductPage({
     key: v._key,
     sku: v.sku,
     material: materialLabel(v),
+    stone: stoneLabel(v.stone?.stoneType),
     size: v.madeToOrder ? undefined : v.size || undefined,
     detail: variantDetail(v, product.variants),
     largeSizes: largeSizesOf(product.category, v),
@@ -175,7 +177,7 @@ export default async function ProductPage({
     (product.collection.dropNumber
       ? `${String(product.collection.dropNumber).padStart(2, '0')}/${product.collection.title}`
       : product.collection.title);
-  const material = materialsOf(product.variants).join(' / ');
+  const material = materialsSummary(product.variants);
   // The spec rows; Material and Size follow them as the purchase panel's choices.
   const specs: Spec[] = [
     ...(drop

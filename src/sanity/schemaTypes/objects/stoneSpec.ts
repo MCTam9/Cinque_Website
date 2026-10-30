@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import { STONE_TYPES } from '@/lib/shop/materials';
 
 /**
  * Precise stone specification for a variant. Dimensions are in millimetres
@@ -13,19 +14,7 @@ export const stoneSpec = defineType({
       name: 'stoneType',
       title: 'Stone Type',
       type: 'string',
-      options: {
-        list: [
-          { title: 'Diamond', value: 'diamond' },
-          { title: 'Lab-Grown Diamond', value: 'lab_diamond' },
-          { title: 'Sapphire', value: 'sapphire' },
-          { title: 'Emerald', value: 'emerald' },
-          { title: 'Ruby', value: 'ruby' },
-          { title: 'Pearl', value: 'pearl' },
-          { title: 'Moonstone', value: 'moonstone' },
-          { title: 'Topaz', value: 'topaz' },
-          { title: 'None', value: 'none' },
-        ],
-      },
+      options: { list: [...STONE_TYPES] },
     }),
     defineField({
       name: 'carat',
