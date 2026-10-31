@@ -119,7 +119,7 @@ function OptionPanel({
   );
 }
 
-/** Engraving (£30, 10 characters, where offered) and notes for a made-to-order ring. */
+/** Engraving (£30, 16 characters, where offered) and notes for a made-to-order ring. */
 export default function MadeToOrderExtras({
   offerEngraving,
   engraving,

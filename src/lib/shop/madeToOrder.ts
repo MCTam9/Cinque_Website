@@ -39,7 +39,7 @@ export const CUSTOM_SIZE_MAX = 20;
 
 /** Engraving on a made-to-order ring: price per piece (pence) and length. */
 export const ENGRAVING_PRICE_PENCE = 3000;
-export const ENGRAVING_MAX = 10;
+export const ENGRAVING_MAX = 16;
 
 /**
  * What can be engraved: letters (accented too), digits, spaces and a few
