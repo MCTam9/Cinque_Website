@@ -86,7 +86,7 @@ export const product = defineType({
       type: 'boolean',
       group: 'content',
       description:
-        'Rings only. Lets buyers add a £30 engraving (10 characters) when they choose a Made to Order size.',
+        'Rings only. Lets buyers add a £30 engraving (16 characters) when they choose a Made to Order size.',
       initialValue: false,
       hidden: ({ document }) => document?.category !== 'rings',
     }),
