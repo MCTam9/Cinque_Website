@@ -54,8 +54,7 @@ export const engravable = (text: string) =>
 
 /** Notes on a made-to-order ring: changes already agreed with the studio. */
 export const NOTES_MAX = 200;
-export const NOTES_HINT =
-  'Only for changes we’ve already agreed with you by email or Instagram. Anything new, please message us before ordering.';
+export const NOTES_HINT = 'For changes we’ve already agreed together. Something new in mind? Message us first.';
 
 /** A cart or order line, as far as its price breakdown needs. */
 export interface PricedLine {

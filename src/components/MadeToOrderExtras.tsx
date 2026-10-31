@@ -152,7 +152,7 @@ export default function MadeToOrderExtras({
         onChange={onNotesChange}
         max={NOTES_MAX}
         multiline
-        placeholder="e.g. as agreed by email on 3 October"
+        placeholder="e.g. Moonstone instead of pearl, as discussed on email"
         hint={NOTES_HINT}
       />
     </div>
