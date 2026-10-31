@@ -109,6 +109,7 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
   thread did; give the Notes instruction instead.
 - **Lead time:** made-to-order pieces take 8 to 12 weeks, and are made and hallmarked in
   London. A new design or alteration takes longer: say so and ask for a little more time.
+  A piece the product page shows as in stock ships in 3 to 5 working days.
 - **Order thank-you for a made-to-order piece:** thank them for the order by name of the
   piece, add anything they should know (e.g. the large-size note), and close with "Your
   ring will be made and hallmarked in London, and ships in 8 to 12 weeks."
@@ -127,13 +128,13 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
   We're currently unable to ship to the EU from our London studio, so I'd like to check
   that first." (Counts as one of the 2 questions. Skip it when they've said where they are.)
 - **Hand & Hand Gimmel Ring:**
-  - Sterling silver (£200) and 9ct yellow gold with freshwater pearl (£875) are on the
-    shop. The two share a name: link the right one.
-  - 14ct gold: £1,800, made to order. Quote it as a set price ("£1,800"), not "around".
-    It isn't on the shop and costs more than the 9ct, so it's paid through a custom payment
-    link Cindy sets up: `[Cindy: payment link]`. Never tell them to order the 9ct (or
-    anything else) online and note 14ct in the Notes section. Ask for their size and stone
-    choice by email instead, so the link can be made for exactly their ring.
+  - Two pages on the shop, sharing a name, so link the right one:
+    - Sterling silver, £200: https://cinque.studio/shop/hand-and-hand-gimmel-ring
+    - Yellow gold with freshwater pearl, 9ct £875 or 14ct £1,800, chosen under Material:
+      https://cinque.studio/shop/hand-and-hand-gimmel-ring-in-yellow-gold
+  - 14ct is ordered online like the 9ct: pick 14ct under Material on the gold page. Quote it
+    as a set price ("£1,800"), not "around". A gem swap or no pearl goes in the Notes
+    section, as for the 9ct.
   - Gem swaps, free of charge: white moonstone, black onyx or red garnet instead of the
     pearl. Also available without a stone. The customer writes their choice in the
     **Notes** field when ordering.
@@ -156,9 +157,12 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
   - The shop photos show a UK size M (around US 6¼). The hands are the same size on every
     band size, so at a larger size (e.g. US 10) they look slightly smaller in proportion,
     with a little more band showing. Mention this when someone orders a much larger size.
-- **Engraving:** £30 for up to 10 characters, added in the Engraving field on the product page.
-- **Larger sizes:** selected in the size options; the larger-size fee is added automatically
-  at checkout.
+- **Engraving:** £30 for up to 16 characters, added in the Engraving field on the product
+  page. Only pieces whose page shows it offer engraving (currently the gold Gimmel).
+- **Larger sizes:** the size picker goes up to UK T on every ring. Gold made-to-order rings
+  also go from UK U up to Z for a larger-size fee, for the extra gold: on the gold Gimmel,
+  £75 for 9ct and £100 for 14ct. It's shown on the product page and added automatically at
+  checkout. Sterling silver stops at T.
 - **9ct gold and wear:** 9ct is harder than 14ct, 18ct or silver, which is why it's used:
   fine details like the fingers hold up to years of daily wear. It may tarnish slightly over
   time, and a simple polish restores it. Freshwater pearls are soft and sensitive to
