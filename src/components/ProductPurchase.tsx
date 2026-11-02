@@ -17,7 +17,7 @@ export interface PurchaseVariant {
   sku: string;
   /** e.g. "9ct Yellow Gold"; groups the variants into the Material choice. */
   material?: string;
-  /** Its stone, e.g. "Pearl": shown after the material, not part of the choice. */
+  /** Its stone, e.g. "Pearl": named after the material in its box. */
   stone?: string;
   /** A stocked size, e.g. "M"; none for made to order. */
   size?: string;
@@ -34,7 +34,8 @@ export interface PurchaseVariant {
 
 /**
  * One label/value row, as on the product card: label left, value right. A
- * choice's buttons (`children`) go on the line below it.
+ * choice has no value: its buttons (`children`) go on the line below, the
+ * picked one showing what's chosen.
  */
 function SpecRow({
   label,
@@ -42,13 +43,13 @@ function SpecRow({
   children,
 }: {
   label: string;
-  value: ReactNode;
+  value?: ReactNode;
   children?: ReactNode;
 }) {
   return (
     <div className="grid grid-cols-[auto_1fr] gap-x-[10px] type-p1">
       <dt className="text-oslo">{label}</dt>
-      <dd className="text-right text-graphite">{value}</dd>
+      {value !== undefined && <dd className="text-right text-graphite">{value}</dd>}
       {/* 10px above the buttons, and below them unless the list ends here,
           the same rhythm as the made-to-order fields underneath. */}
       {children && (
@@ -119,10 +120,11 @@ const sizeOf = (v: PurchaseVariant) => (v.madeToOrder ? 'Made to Order' : (v.siz
 
 /**
  * PDP purchase panel (Figma). The product's spec rows (Drop, Edition) run
- * straight on into its choices, Material then Size, in the same label/value
- * rows, so the whole block reads as one list in the card's order. A choice
- * with more than one option puts its square buttons under its row; with one,
- * it's just the row. The price sits right-aligned over the Add to cart button.
+ * straight on into its choices, Material then Size, so the whole block reads
+ * as one list in the card's order. Each choice puts its square buttons under
+ * its label, the picked one in red, even when there's only one to pick: the
+ * box is the value, never repeated beside the label. A material's box names
+ * its stone after the metal ("14ct Yellow Gold, Pearl"), as the card does. The price sits right-aligned over the Add to cart button.
  *
  * Under the choices: the dispatch time for an in-stock piece, or for made to
  * order the lead time and a required size: a UK/US/EU/JP wheel for rings,
@@ -165,6 +167,11 @@ export default function ProductPurchase({
   const materials = [...new Set(variants.map((v) => v.material).filter((m): m is string => !!m))];
   const ofMaterial = variants.filter((v) => v.material === selected?.material);
   const showSize = ofMaterial.length > 1 || ofMaterial.some((v) => v.madeToOrder || v.size);
+
+  // The stone a material's box names: the picked piece's, else its first.
+  const stoneIn = (material: string) =>
+    (selected?.material === material ? selected : variants.find((v) => v.material === material))
+      ?.stone;
 
   // A new material keeps the size where it can, else its first piece in stock.
   const pickMaterial = (material: string) => {
@@ -220,38 +227,31 @@ export default function ProductPurchase({
             <SpecRow key={spec.label} {...spec} />
           ))}
           {materials.length > 0 && (
-            <SpecRow
-              label="Material"
-              value={[selected?.material, selected?.stone].filter(Boolean).join(', ')}
-            >
-              {materials.length > 1 && (
-                <OptionButtons
-                  label="Material"
-                  options={materials.map((m) => ({
-                    id: m,
-                    text: m,
-                    selected: m === selected?.material,
-                    available: variants.some((v) => v.material === m && v.inStock),
-                    onSelect: () => pickMaterial(m),
-                  }))}
-                />
-              )}
+            <SpecRow label="Material">
+              <OptionButtons
+                label="Material"
+                options={materials.map((m) => ({
+                  id: m,
+                  text: [m, stoneIn(m)].filter(Boolean).join(', '),
+                  selected: m === selected?.material,
+                  available: variants.some((v) => v.material === m && v.inStock),
+                  onSelect: () => pickMaterial(m),
+                }))}
+              />
             </SpecRow>
           )}
           {showSize && selected && (
-            <SpecRow label="Size" value={sizeOf(selected)}>
-              {ofMaterial.length > 1 && (
-                <OptionButtons
-                  label="Size"
-                  options={ofMaterial.map((v) => ({
-                    id: v.key,
-                    text: sizeOf(v),
-                    selected: v.key === selected.key,
-                    available: v.inStock,
-                    onSelect: () => setSelectedKey(v.key),
-                  }))}
-                />
-              )}
+            <SpecRow label="Size">
+              <OptionButtons
+                label="Size"
+                options={ofMaterial.map((v) => ({
+                  id: v.key,
+                  text: sizeOf(v),
+                  selected: v.key === selected.key,
+                  available: v.inStock,
+                  onSelect: () => setSelectedKey(v.key),
+                }))}
+              />
             </SpecRow>
           )}
         </dl>
