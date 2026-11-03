@@ -11,7 +11,7 @@ import {
 } from '@/lib/shop/madeToOrder';
 
 /**
- * A collapsible row of the made-to-order list, under the ring size: opens
+ * A collapsible option in its own grey box (engraving, notes): opens
  * downwards on tap to show its field, and turns red once something is
  * entered. Closing it clears the field, so tapping the header again is how a
  * buyer takes the option (and its price) back off.
@@ -134,44 +134,43 @@ function OptionPanel({
   );
 }
 
-/**
- * Engraving (£30, 16 characters, where offered) and notes for a made-to-order
- * ring: rows to sit in the made-to-order list under the size.
- */
-export default function MadeToOrderExtras({
-  offerEngraving,
-  engraving,
-  onEngravingChange,
-  notes,
-  onNotesChange,
+/** Engraving on a made-to-order ring, where the Admin offers it: £30, 16 characters. */
+export function EngravingOption({
+  value,
+  onChange,
 }: {
-  offerEngraving: boolean;
-  engraving: string;
-  onEngravingChange: (value: string) => void;
-  notes: string;
-  onNotesChange: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   return (
-    <>
-      {offerEngraving && (
-        <OptionPanel
-          label="Engraving"
-          price={formatGBP(ENGRAVING_PRICE_PENCE)}
-          value={engraving}
-          onChange={onEngravingChange}
-          max={ENGRAVING_MAX}
-          placeholder={`${ENGRAVING_MAX} characters`}
-          filter={engravable}
-        />
-      )}
-      <OptionPanel
-        label="Notes"
-        value={notes}
-        onChange={onNotesChange}
-        max={NOTES_MAX}
-        multiline
-        placeholder={NOTES_HINT}
-      />
-    </>
+    <OptionPanel
+      label="Engraving"
+      price={formatGBP(ENGRAVING_PRICE_PENCE)}
+      value={value}
+      onChange={onChange}
+      max={ENGRAVING_MAX}
+      placeholder={`${ENGRAVING_MAX} characters`}
+      filter={engravable}
+    />
+  );
+}
+
+/** Notes on a made-to-order ring: changes already agreed with the studio. */
+export function NotesOption({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <OptionPanel
+      label="Notes"
+      value={value}
+      onChange={onChange}
+      max={NOTES_MAX}
+      multiline
+      placeholder={NOTES_HINT}
+    />
   );
 }

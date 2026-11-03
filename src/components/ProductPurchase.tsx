@@ -8,7 +8,7 @@ import { CUSTOM_SIZE_MAX, ENGRAVING_PRICE_PENCE, MADE_TO_ORDER_LINE } from '@/li
 import { H3, P1 } from '@/components/typography';
 import { RING_SIZE_CHART_ID } from '@/components/RingSizeChart';
 import RingSizePicker from '@/components/RingSizePicker';
-import MadeToOrderExtras from '@/components/MadeToOrderExtras';
+import { EngravingOption, NotesOption } from '@/components/MadeToOrderExtras';
 import { LARGE_SIZE_LETTERS, ringSizeCharge, type LargeSizes } from '@/lib/shop/ringSizes';
 import { IN_STOCK_LINE, formatPence } from '@/lib/shop/shipping';
 
@@ -252,12 +252,12 @@ const sizeOf = (v: PurchaseVariant) => (v.madeToOrder ? 'Made to Order' : (v.siz
  * material names its stone after the metal ("14ct Yellow Gold, Pearl"), as
  * the card does.
  *
- * Picking Made to Order unfolds its panel under the Size box: one list of the
- * required size (a UK/US/EU/JP wheel for rings, free text otherwise) and, on
- * rings, a paid engraving where the Admin offers one and notes. A ring with
- * larger sizes (UK U and up) adds their surcharge when one is picked. Below,
- * the dispatch time sits beside the price, over the Add to cart button, which
- * waits until a size is given.
+ * Picking Made to Order unfolds its panel under the Size box: the required
+ * size (a UK/US/EU/JP wheel for rings, free text otherwise) and, on rings, a
+ * paid engraving where the Admin offers one. A ring with larger sizes (UK U
+ * and up) adds their surcharge when one is picked. A made-to-order ring's
+ * notes follow the Size box. Below, the dispatch time sits beside the price,
+ * over the Add to cart button, which waits until a size is given.
  */
 export default function ProductPurchase({
   productId,
@@ -348,8 +348,8 @@ export default function ProductPurchase({
   const sizes = [...ofMaterial].sort((a, b) => Number(a.madeToOrder) - Number(b.madeToOrder));
 
   // What Made to Order unfolds: the size (required, dark) with the larger-size
-  // note and the size chart under it, then on rings the optional engraving and
-  // notes, together in a grey box.
+  // note and the size chart under it, then on rings the optional engraving in
+  // a grey box. Notes go under the Size box, outside the panel.
   const madeToOrder = (
     <div className="flex flex-col gap-[10px]">
       <div className="border border-graphite">
@@ -387,15 +387,9 @@ export default function ProductPurchase({
           Ring size chart
         </a>
       )}
-      {extras && (
-        <div className="flex flex-col divide-y divide-oslo/50 border border-oslo/50">
-          <MadeToOrderExtras
-            offerEngraving={offerEngraving}
-            engraving={engraving}
-            onEngravingChange={setEngraving}
-            notes={notes}
-            onNotesChange={setNotes}
-          />
+      {extras && offerEngraving && (
+        <div className="border border-oslo/50">
+          <EngravingOption value={engraving} onChange={setEngraving} />
         </div>
       )}
     </div>
@@ -440,6 +434,14 @@ export default function ProductPurchase({
           </SpecRow>
         )}
       </dl>
+
+      {/* Notes sit apart from the size and engraving: they're about an agreed
+          change to the order, not part of choosing the piece. */}
+      {extras && (
+        <div className="border border-oslo/50">
+          <NotesOption value={notes} onChange={setNotes} />
+        </div>
+      )}
 
       <div className="flex items-baseline justify-between gap-[10px]">
         {selected?.inStock && (
