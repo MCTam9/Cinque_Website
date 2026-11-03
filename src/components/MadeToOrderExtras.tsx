@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { formatGBP } from '@/lib/products';
 import {
   ENGRAVING_MAX,
@@ -11,7 +11,7 @@ import {
 } from '@/lib/shop/madeToOrder';
 
 /**
- * A collapsible option under the ring size: light grey until used, opens
+ * A collapsible option in its own grey box (engraving, notes): opens
  * downwards on tap to show its field, and turns red once something is
  * entered. Closing it clears the field, so tapping the header again is how a
  * buyer takes the option (and its price) back off.
@@ -24,7 +24,6 @@ function OptionPanel({
   max,
   multiline = false,
   placeholder,
-  hint,
   filter = (text) => text,
 }: {
   label: string;
@@ -34,7 +33,6 @@ function OptionPanel({
   max: number;
   multiline?: boolean;
   placeholder?: string;
-  hint?: string;
   /** Applied to every keystroke and paste before the length cap. */
   filter?: (text: string) => string;
 }) {
@@ -57,22 +55,33 @@ function OptionPanel({
 
   const change = (text: string) => onChange([...filter(text)].slice(0, max).join(''));
 
-  const tone = used ? 'border-redcurrent text-redcurrent' : 'border-oslo/50 text-oslo';
-  const fieldClass = `type-p1 w-full bg-transparent text-graphite placeholder:text-oslo/70 focus:outline-none`;
+  // Notes grow with what's typed (from 3 lines) rather than scrolling.
+  useLayoutEffect(() => {
+    const el = fieldRef.current;
+    if (!multiline || !el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [multiline, value]);
+
+  const fieldClass = `type-p1 w-full bg-transparent px-0 text-graphite placeholder:text-oslo focus:outline-none`;
 
   return (
-    <div className={`border transition-colors ${tone}`}>
+    <div>
       <button
         type="button"
         onClick={toggle}
         aria-expanded={open}
         aria-controls={panelId}
+        // Grey until opened, as it's optional; red once something's entered.
         className={`type-p1 flex min-h-[40px] w-full items-center justify-between px-[10px] text-left transition-colors ${
-          used ? '' : 'hover:text-graphite'
+          used ? 'text-redcurrent' : open ? 'text-graphite' : 'text-oslo hover:text-graphite'
         }`}
       >
         <span>{label}</span>
-        {price && <span>{price}</span>}
+        <span>
+          {price && `${price} `}
+          {open ? '−' : '+'}
+        </span>
       </button>
       <div
         id={panelId}
@@ -82,7 +91,13 @@ function OptionPanel({
       >
         <div className="overflow-hidden">
           <div className="flex flex-col gap-[6px] px-[10px] pb-[10px]">
-            <div className={`flex items-start gap-[10px] border px-[10px] py-[6px] ${tone}`}>
+            {/* One underline, like the contact form's fields: grey until
+                something's typed, then red. */}
+            <div
+              className={`flex items-end gap-[10px] border-b py-[6px] transition-colors ${
+                used ? 'border-redcurrent' : 'border-oslo/50'
+              }`}
+            >
               {multiline ? (
                 <textarea
                   ref={fieldRef}
@@ -92,7 +107,7 @@ function OptionPanel({
                   placeholder={placeholder}
                   aria-label={label}
                   tabIndex={open ? 0 : -1}
-                  className={`${fieldClass} resize-none`}
+                  className={`${fieldClass} resize-none overflow-hidden`}
                 />
               ) : (
                 <input
@@ -107,11 +122,11 @@ function OptionPanel({
                   className={`${fieldClass} min-h-[28px]`}
                 />
               )}
-              <span className="type-p2 shrink-0 pt-[2px] text-oslo" aria-live="polite">
+              {/* The count sits on the line, after the last line of text. */}
+              <span className="type-p2 shrink-0 text-oslo" aria-live="polite">
                 {count}/{max}
               </span>
             </div>
-            {hint && <p className="type-p2 text-oslo">{hint}</p>}
           </div>
         </div>
       </div>
@@ -119,42 +134,43 @@ function OptionPanel({
   );
 }
 
-/** Engraving (£30, 16 characters, where offered) and notes for a made-to-order ring. */
-export default function MadeToOrderExtras({
-  offerEngraving,
-  engraving,
-  onEngravingChange,
-  notes,
-  onNotesChange,
+/** Engraving on a made-to-order ring, where the Admin offers it: £30, 16 characters. */
+export function EngravingOption({
+  value,
+  onChange,
 }: {
-  offerEngraving: boolean;
-  engraving: string;
-  onEngravingChange: (value: string) => void;
-  notes: string;
-  onNotesChange: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-[10px]">
-      {offerEngraving && (
-        <OptionPanel
-          label="Engraving"
-          price={formatGBP(ENGRAVING_PRICE_PENCE)}
-          value={engraving}
-          onChange={onEngravingChange}
-          max={ENGRAVING_MAX}
-          placeholder={`${ENGRAVING_MAX} characters`}
-          filter={engravable}
-        />
-      )}
-      <OptionPanel
-        label="Notes"
-        value={notes}
-        onChange={onNotesChange}
-        max={NOTES_MAX}
-        multiline
-        placeholder="e.g. Moonstone instead of pearl, as discussed on email"
-        hint={NOTES_HINT}
-      />
-    </div>
+    <OptionPanel
+      label="Engraving"
+      price={formatGBP(ENGRAVING_PRICE_PENCE)}
+      value={value}
+      onChange={onChange}
+      max={ENGRAVING_MAX}
+      placeholder={`${ENGRAVING_MAX} characters`}
+      filter={engravable}
+    />
+  );
+}
+
+/** Notes on a made-to-order ring: changes already agreed with the studio. */
+export function NotesOption({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <OptionPanel
+      label="Notes"
+      value={value}
+      onChange={onChange}
+      max={NOTES_MAX}
+      multiline
+      placeholder={NOTES_HINT}
+    />
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { formatGBP } from '@/lib/products';
@@ -8,7 +8,7 @@ import { CUSTOM_SIZE_MAX, ENGRAVING_PRICE_PENCE, MADE_TO_ORDER_LINE } from '@/li
 import { H3, P1 } from '@/components/typography';
 import { RING_SIZE_CHART_ID } from '@/components/RingSizeChart';
 import RingSizePicker from '@/components/RingSizePicker';
-import MadeToOrderExtras from '@/components/MadeToOrderExtras';
+import { EngravingOption, NotesOption } from '@/components/MadeToOrderExtras';
 import { LARGE_SIZE_LETTERS, ringSizeCharge, type LargeSizes } from '@/lib/shop/ringSizes';
 import { IN_STOCK_LINE, formatPence } from '@/lib/shop/shipping';
 
@@ -75,44 +75,169 @@ export function SpecList({ specs }: { specs: Spec[] }) {
   );
 }
 
+interface Option {
+  id: string;
+  text: string;
+  selected: boolean;
+  available: boolean;
+  onSelect: () => void;
+  /** Picking it unfolds the group's panel (Made to Order). */
+  opensPanel?: boolean;
+}
+
 /**
- * A choice's buttons, sized like the size picker's box below them (40px tall,
- * 10px in) and sharing the row's width: red when picked, struck through when
- * sold out.
+ * A choice as one box: its options share a border, split by hairlines (a
+ * column for long names like materials, a row for sizes), and a red outline
+ * (1.5px, a touch heavier than the hairlines) slides to the picked one. Sold-out options are struck through. Where an
+ * option opens a `panel` (Made to Order's size and extras), picking it
+ * unfolds the panel under the box and the outline takes in both, like a tab;
+ * that option goes last, so the tab sits on the box's bottom edge.
  */
-function OptionButtons({
+function OptionGroup({
   label,
   options,
+  column = false,
+  panel,
 }: {
   label: string;
-  options: {
-    id: string;
-    text: string;
-    selected: boolean;
-    available: boolean;
-    onSelect: () => void;
-  }[];
+  options: Option[];
+  column?: boolean;
+  panel?: ReactNode;
 }) {
+  const box = useRef<HTMLDivElement>(null);
+  const buttons = useRef(new Map<string, HTMLButtonElement>());
+  const panelRef = useRef<HTMLDivElement>(null);
+  const picked = options.find((o) => o.selected);
+  const pickedId = picked?.id;
+  const open = Boolean(panel && picked?.opensPanel);
+  const [outline, setOutline] = useState<Rect | null>(null);
+  const [slide, setSlide] = useState(false);
+  const layout = options.map((o) => o.id).join(' ');
+
+  // Lay the outline over the picked option (1px out, over the hairlines),
+  // and again whenever the box changes size. Measured unrounded: offsetLeft
+  // and offsetWidth are whole pixels, which leaves a sliver of the grey line
+  // showing beside the red at fractional widths or browser zoom.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const place = () => {
+      const b = pickedId && buttons.current.get(pickedId);
+      if (!b) return setOutline(null);
+      const outer = el.getBoundingClientRect();
+      const r = b.getBoundingClientRect();
+      setOutline({
+        left: r.left - outer.left - el.clientLeft - 1,
+        top: r.top - outer.top - el.clientTop - 1,
+        width: r.width + 2,
+        height: r.height + 2,
+      });
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [pickedId, layout]);
+
+  // Placed without motion on load; from then on it slides.
+  useEffect(() => {
+    if (!outline || slide) return;
+    const frame = requestAnimationFrame(() => setSlide(true));
+    return () => cancelAnimationFrame(frame);
+  }, [outline, slide]);
+
+  // A folded panel's fields stay out of the tab order.
+  useEffect(() => {
+    if (panelRef.current) panelRef.current.inert = !open;
+  }, [open]);
+
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-[10px]">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          onClick={o.onSelect}
-          disabled={!o.available}
-          aria-pressed={o.selected}
-          className={`type-p1 flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap border px-[10px] transition-colors ${
-            o.selected
-              ? 'border-redcurrent text-redcurrent'
-              : 'border-graphite text-graphite hover:border-redcurrent'
-          } disabled:cursor-not-allowed disabled:border-oslo disabled:text-oslo disabled:line-through`}
+    <div>
+      <div
+        ref={box}
+        role="radiogroup"
+        aria-label={label}
+        // The hairlines are the background showing between options; it stops
+        // at the border, so an open panel can take the bottom edge away.
+        className={`relative flex gap-px border border-graphite bg-graphite bg-clip-padding transition-colors ${
+          column ? 'flex-col' : ''
+        } ${open ? 'border-b-transparent' : ''}`}
+      >
+        {options.map((o) => (
+          <button
+            key={o.id}
+            ref={(el) => {
+              if (el) buttons.current.set(o.id, el);
+              else buttons.current.delete(o.id);
+            }}
+            type="button"
+            role="radio"
+            aria-checked={o.selected}
+            onClick={o.onSelect}
+            disabled={!o.available}
+            className={`type-p1 flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap bg-cararra px-[10px] transition-colors ${
+              o.selected ? 'text-redcurrent' : 'text-graphite hover:text-redcurrent'
+            } disabled:cursor-not-allowed disabled:text-oslo disabled:line-through`}
+          >
+            {o.text}
+          </button>
+        ))}
+        {outline && (
+          <>
+            {/* The open panel's top edge, under the options before the picked
+                one, up to the outline. Drawn only where it shows, never over
+                another line, so no grey peeks through at the joins. */}
+            <span
+              aria-hidden
+              style={{ left: -1, width: outline.left + 2 }}
+              className={`pointer-events-none absolute -bottom-px h-[1.5px] bg-redcurrent ${
+                open ? 'opacity-100' : 'opacity-0'
+              } ${
+                slide
+                  ? 'transition-[width,opacity] duration-[250ms] ease-out motion-reduce:transition-none'
+                  : ''
+              }`}
+            />
+            {/* Open at the bottom, into the panel. */}
+            <span
+              aria-hidden
+              style={outline}
+              className={`pointer-events-none absolute border-[1.5px] border-redcurrent ${
+                open ? 'border-b-0' : ''
+              } ${
+                slide
+                  ? 'transition-[left,top,width,height] duration-[250ms] ease-out motion-reduce:transition-none'
+                  : ''
+              }`}
+            />
+          </>
+        )}
+      </div>
+      {panel && (
+        <div
+          className={`grid transition-[grid-template-rows] duration-[250ms] ease-out motion-reduce:transition-none ${
+            open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          }`}
         >
-          {o.text}
-        </button>
-      ))}
+          <div className="overflow-hidden">
+            <div
+              ref={panelRef}
+              className="border-x-[1.5px] border-b-[1.5px] border-redcurrent p-[10px]"
+            >
+              {panel}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+interface Rect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
 /** A variant's place in the Size choice. */
@@ -121,17 +246,18 @@ const sizeOf = (v: PurchaseVariant) => (v.madeToOrder ? 'Made to Order' : (v.siz
 /**
  * PDP purchase panel (Figma). The product's spec rows (Drop, Edition) run
  * straight on into its choices, Material then Size, so the whole block reads
- * as one list in the card's order. Each choice puts its square buttons under
- * its label, the picked one in red, even when there's only one to pick: the
- * box is the value, never repeated beside the label. A material's box names
- * its stone after the metal ("14ct Yellow Gold, Pearl"), as the card does. The price sits right-aligned over the Add to cart button.
+ * as one list in the card's order. Each choice is one box under its label
+ * (see OptionGroup), the picked option outlined in red, even when there's
+ * only one to pick: the box is the value, never repeated beside the label. A
+ * material names its stone after the metal ("14ct Yellow Gold, Pearl"), as
+ * the card does.
  *
- * Under the choices: the dispatch time for an in-stock piece, or for made to
- * order the lead time and a required size: a UK/US/EU/JP wheel for rings,
- * free text otherwise. Made-to-order rings also take notes, and a paid
- * engraving where the Admin offers one. A ring with larger sizes (UK U and
- * up) adds their surcharge when one is picked. Add to cart waits until a
- * size is given.
+ * Picking Made to Order unfolds its panel under the Size box: the required
+ * size (a UK/US/EU/JP wheel for rings, free text otherwise) and, on rings, a
+ * paid engraving where the Admin offers one. A ring with larger sizes (UK U
+ * and up) adds their surcharge when one is picked. A made-to-order ring's
+ * notes follow the Size box. Below, the dispatch time sits beside the price,
+ * over the Add to cart button, which waits until a size is given.
  */
 export default function ProductPurchase({
   productId,
@@ -218,100 +344,113 @@ export default function ProductPurchase({
     router.push(`/cart?added=${encodeURIComponent(title)}`);
   };
 
-  return (
-    <div className="flex flex-col gap-[20px]">
-      {/* The choices and what follows from them, in one 10px rhythm. */}
-      <div className="flex flex-col gap-[10px]">
-        <dl className="flex flex-col gap-0.5">
-          {specs.map((spec) => (
-            <SpecRow key={spec.label} {...spec} />
-          ))}
-          {materials.length > 0 && (
-            <SpecRow label="Material">
-              <OptionButtons
-                label="Material"
-                options={materials.map((m) => ({
-                  id: m,
-                  text: [m, stoneIn(m)].filter(Boolean).join(', '),
-                  selected: m === selected?.material,
-                  available: variants.some((v) => v.material === m && v.inStock),
-                  onSelect: () => pickMaterial(m),
-                }))}
-              />
-            </SpecRow>
-          )}
-          {showSize && selected && (
-            <SpecRow label="Size">
-              <OptionButtons
-                label="Size"
-                options={ofMaterial.map((v) => ({
-                  id: v.key,
-                  text: sizeOf(v),
-                  selected: v.key === selected.key,
-                  available: v.inStock,
-                  onSelect: () => setSelectedKey(v.key),
-                }))}
-              />
-            </SpecRow>
-          )}
-        </dl>
+  // Stocked sizes first; Made to Order last, where its panel opens.
+  const sizes = [...ofMaterial].sort((a, b) => Number(a.madeToOrder) - Number(b.madeToOrder));
 
-        {selected?.inStock && !needsSize && <P1 className="text-graphite">{IN_STOCK_LINE}</P1>}
-
-        {needsSize && (
-          <div className="flex flex-col gap-[10px]">
-            <P1 className="text-graphite">{MADE_TO_ORDER_LINE}</P1>
-            {ring ? (
-              <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
-            ) : (
-              <label className="flex flex-col gap-[6px]">
-                <span className="type-p1 text-oslo">Your size</span>
-                <input
-                  type="text"
-                  value={customSize}
-                  onChange={(e) => setCustomSize(e.target.value)}
-                  maxLength={CUSTOM_SIZE_MAX}
-                  required
-                  placeholder="e.g. 45cm"
-                  className={`type-p1 min-h-[40px] w-full border bg-transparent px-[10px] placeholder:text-oslo focus:border-redcurrent focus:outline-none ${
-                    size ? 'border-redcurrent text-redcurrent' : 'border-graphite text-graphite'
-                  }`}
-                />
-              </label>
-            )}
-            {ring && largeSizes && (
-              <p className="type-p2 text-oslo">
-                {`Sizes ${LARGE_SIZE_LETTERS[0]}–${largeSizes.upTo}${
-                  largeSizes.surchargeGBP
-                    ? ` add ${formatPence(largeSizes.surchargeGBP)} for the extra gold`
-                    : ' are made to order too'
-                }.`}
-              </p>
-            )}
-            {ring && (
-              <a
-                href={`#${RING_SIZE_CHART_ID}`}
-                className="type-p1 w-fit text-oslo underline underline-offset-4 hover:text-redcurrent"
-              >
-                Ring size chart
-              </a>
-            )}
-            {extras && (
-              <MadeToOrderExtras
-                offerEngraving={offerEngraving}
-                engraving={engraving}
-                onEngravingChange={setEngraving}
-                notes={notes}
-                onNotesChange={setNotes}
-              />
-            )}
-          </div>
+  // What Made to Order unfolds: the size (required, dark) with the larger-size
+  // note and the size chart under it, then on rings the optional engraving in
+  // a grey box. Notes go under the Size box, outside the panel.
+  const madeToOrder = (
+    <div className="flex flex-col gap-[10px]">
+      <div className="border border-graphite">
+        {ring ? (
+          <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
+        ) : (
+          <input
+            type="text"
+            value={customSize}
+            onChange={(e) => setCustomSize(e.target.value)}
+            maxLength={CUSTOM_SIZE_MAX}
+            required
+            aria-label="Your size"
+            placeholder="Your size, e.g. 45cm"
+            className={`type-p1 min-h-[40px] w-full bg-transparent px-[10px] placeholder:text-graphite focus:outline-none ${
+              size ? 'text-redcurrent' : 'text-graphite'
+            }`}
+          />
         )}
       </div>
+      {ring && largeSizes && (
+        <p className="type-p2 text-oslo">
+          {`Sizes ${LARGE_SIZE_LETTERS[0]}–${largeSizes.upTo}${
+            largeSizes.surchargeGBP
+              ? ` add ${formatPence(largeSizes.surchargeGBP)} for the extra gold`
+              : ' are made to order too'
+          }.`}
+        </p>
+      )}
+      {ring && (
+        <a
+          href={`#${RING_SIZE_CHART_ID}`}
+          className="type-p1 w-fit text-oslo underline underline-offset-4 hover:text-redcurrent"
+        >
+          Ring size chart
+        </a>
+      )}
+      {extras && offerEngraving && (
+        <div className="border border-oslo/50">
+          <EngravingOption value={engraving} onChange={setEngraving} />
+        </div>
+      )}
+    </div>
+  );
 
-      <H3 as="p" className="text-right">
-        {selected ? formatGBP(selected.priceGBP + engravingGBP + largeSizeGBP) : '—'}
-      </H3>
+  return (
+    <div className="flex flex-col gap-[20px]">
+      <dl className="flex flex-col gap-0.5">
+        {specs.map((spec) => (
+          <SpecRow key={spec.label} {...spec} />
+        ))}
+        {materials.length > 0 && (
+          <SpecRow label="Material">
+            <OptionGroup
+              label="Material"
+              column
+              options={materials.map((m) => ({
+                id: m,
+                text: [m, stoneIn(m)].filter(Boolean).join(', '),
+                selected: m === selected?.material,
+                available: variants.some((v) => v.material === m && v.inStock),
+                onSelect: () => pickMaterial(m),
+              }))}
+            />
+          </SpecRow>
+        )}
+        {showSize && selected && (
+          <SpecRow label="Size">
+            <OptionGroup
+              label="Size"
+              column={sizes.length > 4}
+              options={sizes.map((v) => ({
+                id: v.key,
+                text: sizeOf(v),
+                selected: v.key === selected.key,
+                available: v.inStock,
+                onSelect: () => setSelectedKey(v.key),
+                opensPanel: v.madeToOrder,
+              }))}
+              panel={madeToOrder}
+            />
+          </SpecRow>
+        )}
+      </dl>
+
+      {/* Notes sit apart from the size and engraving: they're about an agreed
+          change to the order, not part of choosing the piece. */}
+      {extras && (
+        <div className="border border-oslo/50">
+          <NotesOption value={notes} onChange={setNotes} />
+        </div>
+      )}
+
+      <div className="flex items-baseline justify-between gap-[10px]">
+        {selected?.inStock && (
+          <P1 className="text-graphite">{needsSize ? MADE_TO_ORDER_LINE : IN_STOCK_LINE}</P1>
+        )}
+        <H3 as="p" className="ml-auto shrink-0 text-right">
+          {selected ? formatGBP(selected.priceGBP + engravingGBP + largeSizeGBP) : '—'}
+        </H3>
+      </div>
 
       <button
         type="button"
