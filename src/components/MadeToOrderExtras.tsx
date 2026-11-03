@@ -63,12 +63,6 @@ function OptionPanel({
     el.style.height = `${el.scrollHeight}px`;
   }, [multiline, value]);
 
-  const counter = (
-    <span className="type-p2 ml-auto shrink-0 pt-[2px] text-oslo" aria-live="polite">
-      {count}/{max}
-    </span>
-  );
-
   const fieldClass = `type-p1 w-full bg-transparent px-0 text-graphite placeholder:text-oslo focus:outline-none`;
 
   return (
@@ -128,11 +122,11 @@ function OptionPanel({
                   className={`${fieldClass} min-h-[28px]`}
                 />
               )}
-              {/* A one-line field keeps its count beside it; notes get the
-                  full width, with the count under them. */}
-              {!multiline && counter}
+              {/* The count sits on the line, after the last line of text. */}
+              <span className="type-p2 shrink-0 text-oslo" aria-live="polite">
+                {count}/{max}
+              </span>
             </div>
-            {multiline && counter}
           </div>
         </div>
       </div>
