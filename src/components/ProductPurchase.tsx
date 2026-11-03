@@ -175,9 +175,7 @@ function OptionGroup({
             aria-checked={o.selected}
             onClick={o.onSelect}
             disabled={!o.available}
-            className={`type-p1 flex min-h-[40px] flex-1 items-center whitespace-nowrap bg-cararra px-[10px] transition-colors ${
-              column ? 'justify-start text-left' : 'justify-center'
-            } ${
+            className={`type-p1 flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap bg-cararra px-[10px] transition-colors ${
               o.selected ? 'text-redcurrent' : 'text-graphite hover:text-redcurrent'
             } disabled:cursor-not-allowed disabled:text-oslo disabled:line-through`}
           >
