@@ -11,7 +11,7 @@ import {
 } from '@/lib/shop/madeToOrder';
 
 /**
- * A collapsible option under the ring size: light grey until used, opens
+ * A collapsible row of the made-to-order list, under the ring size: opens
  * downwards on tap to show its field, and turns red once something is
  * entered. Closing it clears the field, so tapping the header again is how a
  * buyer takes the option (and its price) back off.
@@ -57,22 +57,24 @@ function OptionPanel({
 
   const change = (text: string) => onChange([...filter(text)].slice(0, max).join(''));
 
-  const tone = used ? 'border-redcurrent text-redcurrent' : 'border-oslo/50 text-oslo';
   const fieldClass = `type-p1 w-full bg-transparent text-graphite placeholder:text-oslo/70 focus:outline-none`;
 
   return (
-    <div className={`border transition-colors ${tone}`}>
+    <div>
       <button
         type="button"
         onClick={toggle}
         aria-expanded={open}
         aria-controls={panelId}
         className={`type-p1 flex min-h-[40px] w-full items-center justify-between px-[10px] text-left transition-colors ${
-          used ? '' : 'hover:text-graphite'
+          used ? 'text-redcurrent' : 'text-graphite hover:text-redcurrent'
         }`}
       >
         <span>{label}</span>
-        {price && <span>{price}</span>}
+        <span>
+          {price && `${price} `}
+          {open ? '−' : '+'}
+        </span>
       </button>
       <div
         id={panelId}
@@ -82,7 +84,11 @@ function OptionPanel({
       >
         <div className="overflow-hidden">
           <div className="flex flex-col gap-[6px] px-[10px] pb-[10px]">
-            <div className={`flex items-start gap-[10px] border px-[10px] py-[6px] ${tone}`}>
+            <div
+              className={`flex items-start gap-[10px] border px-[10px] py-[6px] transition-colors ${
+                used ? 'border-redcurrent' : 'border-graphite'
+              }`}
+            >
               {multiline ? (
                 <textarea
                   ref={fieldRef}
@@ -119,7 +125,10 @@ function OptionPanel({
   );
 }
 
-/** Engraving (£30, 16 characters, where offered) and notes for a made-to-order ring. */
+/**
+ * Engraving (£30, 16 characters, where offered) and notes for a made-to-order
+ * ring: rows to sit in the made-to-order list under the size.
+ */
 export default function MadeToOrderExtras({
   offerEngraving,
   engraving,
@@ -134,7 +143,7 @@ export default function MadeToOrderExtras({
   onNotesChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-[10px]">
+    <>
       {offerEngraving && (
         <OptionPanel
           label="Engraving"
@@ -155,6 +164,6 @@ export default function MadeToOrderExtras({
         placeholder="e.g. Moonstone instead of pearl, as discussed on email"
         hint={NOTES_HINT}
       />
-    </div>
+    </>
   );
 }

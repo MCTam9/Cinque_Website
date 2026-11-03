@@ -146,7 +146,8 @@ function fadeBackdrop(dialog: HTMLDialogElement, out: boolean) {
 }
 
 /**
- * Made-to-order ring size. A single row on the page; tapping it opens a sheet
+ * Made-to-order ring size. A single row in the made-to-order list (its box
+ * belongs to the list around it); tapping it opens a sheet
  * (bottom of the screen on phones, centred on desktop) with two wheels: size
  * system on the left, its sizes on the right.
  *
@@ -265,13 +266,13 @@ export default function RingSizePicker({
         ref={triggerRef}
         onClick={show}
         aria-haspopup="dialog"
-        // Red once a size is chosen, like a selected option swatch.
-        className={`type-p1 flex min-h-[40px] w-full items-center justify-between border px-[10px] text-left transition-colors ${
-          picked ? 'border-redcurrent text-redcurrent' : 'border-graphite hover:border-redcurrent'
+        // Red once a size is chosen, like a picked option.
+        className={`type-p1 flex min-h-[40px] w-full items-center justify-between px-[10px] text-left transition-colors ${
+          picked ? 'text-redcurrent' : 'text-graphite hover:text-redcurrent'
         }`}
       >
-        <span className={picked ? '' : 'text-oslo'}>{picked ? value : 'Choose your size'}</span>
-        <span className={picked ? '' : 'text-oslo'}>{picked ? 'Change' : '+'}</span>
+        <span>{picked ? value : 'Choose your size'}</span>
+        <span>{picked ? 'Change' : '+'}</span>
       </button>
 
       <dialog
