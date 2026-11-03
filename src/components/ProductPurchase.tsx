@@ -88,7 +88,7 @@ interface Option {
 /**
  * A choice as one box: its options share a border, split by hairlines (a
  * column for long names like materials, a row for sizes), and a red outline
- * slides to the picked one. Sold-out options are struck through. Where an
+ * (1.5px, a touch heavier than the hairlines) slides to the picked one. Sold-out options are struck through. Where an
  * option opens a `panel` (Made to Order's size and extras), picking it
  * unfolds the panel under the box and the outline takes in both, like a tab;
  * that option goes last, so the tab sits on the box's bottom edge.
@@ -192,7 +192,7 @@ function OptionGroup({
             <span
               aria-hidden
               style={{ left: -1, width: outline.left + 2 }}
-              className={`pointer-events-none absolute -bottom-px h-px bg-redcurrent ${
+              className={`pointer-events-none absolute -bottom-px h-[1.5px] bg-redcurrent ${
                 open ? 'opacity-100' : 'opacity-0'
               } ${
                 slide
@@ -204,7 +204,7 @@ function OptionGroup({
             <span
               aria-hidden
               style={outline}
-              className={`pointer-events-none absolute border border-redcurrent ${
+              className={`pointer-events-none absolute border-[1.5px] border-redcurrent ${
                 open ? 'border-b-0' : ''
               } ${
                 slide
@@ -222,7 +222,10 @@ function OptionGroup({
           }`}
         >
           <div className="overflow-hidden">
-            <div ref={panelRef} className="border-x border-b border-redcurrent p-[10px]">
+            <div
+              ref={panelRef}
+              className="border-x-[1.5px] border-b-[1.5px] border-redcurrent p-[10px]"
+            >
               {panel}
             </div>
           </div>

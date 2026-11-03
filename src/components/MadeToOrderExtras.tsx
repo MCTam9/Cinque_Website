@@ -101,7 +101,7 @@ function OptionPanel({
           <div className="flex flex-col gap-[6px] px-[10px] pb-[10px]">
             <div
               className={`flex items-start gap-[10px] border px-[10px] py-[6px] transition-colors ${
-                used ? 'border-redcurrent' : 'border-graphite'
+                used ? 'border-redcurrent' : 'border-oslo/50'
               }`}
             >
               {multiline ? (
