@@ -24,7 +24,6 @@ function OptionPanel({
   max,
   multiline = false,
   placeholder,
-  hint,
   filter = (text) => text,
 }: {
   label: string;
@@ -34,7 +33,6 @@ function OptionPanel({
   max: number;
   multiline?: boolean;
   placeholder?: string;
-  hint?: string;
   /** Applied to every keystroke and paste before the length cap. */
   filter?: (text: string) => string;
 }) {
@@ -71,7 +69,7 @@ function OptionPanel({
     </span>
   );
 
-  const fieldClass = `type-p1 w-full bg-transparent text-graphite placeholder:text-oslo/70 focus:outline-none`;
+  const fieldClass = `type-p1 w-full bg-transparent px-0 text-graphite placeholder:text-oslo focus:outline-none`;
 
   return (
     <div>
@@ -99,8 +97,10 @@ function OptionPanel({
       >
         <div className="overflow-hidden">
           <div className="flex flex-col gap-[6px] px-[10px] pb-[10px]">
+            {/* One underline, like the contact form's fields: grey until
+                something's typed, then red. */}
             <div
-              className={`flex items-start gap-[10px] border px-[10px] py-[6px] transition-colors ${
+              className={`flex items-end gap-[10px] border-b py-[6px] transition-colors ${
                 used ? 'border-redcurrent' : 'border-oslo/50'
               }`}
             >
@@ -132,12 +132,7 @@ function OptionPanel({
                   full width, with the count under them. */}
               {!multiline && counter}
             </div>
-            {(hint || multiline) && (
-              <div className="flex items-start justify-between gap-[10px]">
-                {hint && <p className="type-p2 text-oslo">{hint}</p>}
-                {multiline && counter}
-              </div>
-            )}
+            {multiline && counter}
           </div>
         </div>
       </div>
@@ -181,8 +176,7 @@ export default function MadeToOrderExtras({
         onChange={onNotesChange}
         max={NOTES_MAX}
         multiline
-        placeholder="e.g. Moonstone instead of pearl, as discussed on email"
-        hint={NOTES_HINT}
+        placeholder={NOTES_HINT}
       />
     </>
   );
