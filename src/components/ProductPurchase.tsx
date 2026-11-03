@@ -352,7 +352,8 @@ export default function ProductPurchase({
   // a grey box. Notes go under the Size box, outside the panel.
   const madeToOrder = (
     <div className="flex flex-col gap-[10px]">
-      <div className="border border-graphite">
+      {/* Each box turns red once it's filled in, like a picked option. */}
+      <div className={`border transition-colors ${size ? 'border-redcurrent' : 'border-graphite'}`}>
         {ring ? (
           <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
         ) : (
@@ -388,7 +389,11 @@ export default function ProductPurchase({
         </a>
       )}
       {extras && offerEngraving && (
-        <div className="border border-oslo/50">
+        <div
+          className={`border transition-colors ${
+            engraving.trim() ? 'border-redcurrent' : 'border-oslo/50'
+          }`}
+        >
           <EngravingOption value={engraving} onChange={setEngraving} />
         </div>
       )}
