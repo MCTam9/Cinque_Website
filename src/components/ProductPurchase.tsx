@@ -347,11 +347,12 @@ export default function ProductPurchase({
   // Stocked sizes first; Made to Order last, where its panel opens.
   const sizes = [...ofMaterial].sort((a, b) => Number(a.madeToOrder) - Number(b.madeToOrder));
 
-  // What Made to Order unfolds: the size, then (rings) engraving and notes, as
-  // one list, with the larger-size note and the size chart under it.
+  // What Made to Order unfolds: the size (required, dark) with the larger-size
+  // note and the size chart under it, then on rings the optional engraving and
+  // notes, together in a grey box.
   const madeToOrder = (
     <div className="flex flex-col gap-[10px]">
-      <div className="flex flex-col divide-y divide-graphite border border-graphite">
+      <div className="border border-graphite">
         {ring ? (
           <RingSizePicker onChange={setCustomSize} largeSizes={largeSizes} />
         ) : (
@@ -366,15 +367,6 @@ export default function ProductPurchase({
             className={`type-p1 min-h-[40px] w-full bg-transparent px-[10px] placeholder:text-graphite focus:outline-none ${
               size ? 'text-redcurrent' : 'text-graphite'
             }`}
-          />
-        )}
-        {extras && (
-          <MadeToOrderExtras
-            offerEngraving={offerEngraving}
-            engraving={engraving}
-            onEngravingChange={setEngraving}
-            notes={notes}
-            onNotesChange={setNotes}
           />
         )}
       </div>
@@ -394,6 +386,17 @@ export default function ProductPurchase({
         >
           Ring size chart
         </a>
+      )}
+      {extras && (
+        <div className="flex flex-col divide-y divide-oslo/50 border border-oslo/50">
+          <MadeToOrderExtras
+            offerEngraving={offerEngraving}
+            engraving={engraving}
+            onEngravingChange={setEngraving}
+            notes={notes}
+            onNotesChange={setNotes}
+          />
+        </div>
       )}
     </div>
   );
