@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { formatGBP } from '@/lib/products';
 import {
   ENGRAVING_MAX,
@@ -57,6 +57,20 @@ function OptionPanel({
 
   const change = (text: string) => onChange([...filter(text)].slice(0, max).join(''));
 
+  // Notes grow with what's typed (from 3 lines) rather than scrolling.
+  useLayoutEffect(() => {
+    const el = fieldRef.current;
+    if (!multiline || !el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [multiline, value]);
+
+  const counter = (
+    <span className="type-p2 ml-auto shrink-0 pt-[2px] text-oslo" aria-live="polite">
+      {count}/{max}
+    </span>
+  );
+
   const fieldClass = `type-p1 w-full bg-transparent text-graphite placeholder:text-oslo/70 focus:outline-none`;
 
   return (
@@ -66,8 +80,9 @@ function OptionPanel({
         onClick={toggle}
         aria-expanded={open}
         aria-controls={panelId}
+        // Grey until opened, as it's optional; red once something's entered.
         className={`type-p1 flex min-h-[40px] w-full items-center justify-between px-[10px] text-left transition-colors ${
-          used ? 'text-redcurrent' : 'text-graphite hover:text-redcurrent'
+          used ? 'text-redcurrent' : open ? 'text-graphite' : 'text-oslo hover:text-graphite'
         }`}
       >
         <span>{label}</span>
@@ -98,7 +113,7 @@ function OptionPanel({
                   placeholder={placeholder}
                   aria-label={label}
                   tabIndex={open ? 0 : -1}
-                  className={`${fieldClass} resize-none`}
+                  className={`${fieldClass} resize-none overflow-hidden`}
                 />
               ) : (
                 <input
@@ -113,11 +128,16 @@ function OptionPanel({
                   className={`${fieldClass} min-h-[28px]`}
                 />
               )}
-              <span className="type-p2 shrink-0 pt-[2px] text-oslo" aria-live="polite">
-                {count}/{max}
-              </span>
+              {/* A one-line field keeps its count beside it; notes get the
+                  full width, with the count under them. */}
+              {!multiline && counter}
             </div>
-            {hint && <p className="type-p2 text-oslo">{hint}</p>}
+            {(hint || multiline) && (
+              <div className="flex items-start justify-between gap-[10px]">
+                {hint && <p className="type-p2 text-oslo">{hint}</p>}
+                {multiline && counter}
+              </div>
+            )}
           </div>
         </div>
       </div>

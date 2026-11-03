@@ -115,22 +115,23 @@ function OptionGroup({
   const layout = options.map((o) => o.id).join(' ');
 
   // Lay the outline over the picked option (1px out, over the hairlines),
-  // and again whenever the box changes size.
+  // and again whenever the box changes size. Measured unrounded: offsetLeft
+  // and offsetWidth are whole pixels, which leaves a sliver of the grey line
+  // showing beside the red at fractional widths or browser zoom.
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
     const place = () => {
       const b = pickedId && buttons.current.get(pickedId);
-      setOutline(
-        b
-          ? {
-              left: b.offsetLeft - 1,
-              top: b.offsetTop - 1,
-              width: b.offsetWidth + 2,
-              height: b.offsetHeight + 2,
-            }
-          : null
-      );
+      if (!b) return setOutline(null);
+      const outer = el.getBoundingClientRect();
+      const r = b.getBoundingClientRect();
+      setOutline({
+        left: r.left - outer.left - el.clientLeft - 1,
+        top: r.top - outer.top - el.clientTop - 1,
+        width: r.width + 2,
+        height: r.height + 2,
+      });
     };
     place();
     const observer = new ResizeObserver(place);
@@ -156,7 +157,11 @@ function OptionGroup({
         ref={box}
         role="radiogroup"
         aria-label={label}
-        className={`relative flex gap-px border border-graphite bg-graphite ${column ? 'flex-col' : ''}`}
+        // The hairlines are the background showing between options; it stops
+        // at the border, so an open panel can take the bottom edge away.
+        className={`relative flex gap-px border border-graphite bg-graphite bg-clip-padding transition-colors ${
+          column ? 'flex-col' : ''
+        } ${open ? 'border-b-transparent' : ''}`}
       >
         {options.map((o) => (
           <button
@@ -179,26 +184,35 @@ function OptionGroup({
             {o.text}
           </button>
         ))}
-        {/* The open panel's top edge, under the other options. */}
-        <span
-          aria-hidden
-          className={`pointer-events-none absolute -inset-x-px -bottom-px h-px bg-redcurrent transition-opacity duration-[250ms] ${
-            open ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
         {outline && (
-          <span
-            aria-hidden
-            style={outline}
-            className={`pointer-events-none absolute border border-redcurrent ${
-              slide
-                ? 'transition-[left,top,width,height] duration-[250ms] ease-out motion-reduce:transition-none'
-                : ''
-            }`}
-          >
+          <>
+            {/* The open panel's top edge, under the options before the picked
+                one, up to the outline. Drawn only where it shows, never over
+                another line, so no grey peeks through at the joins. */}
+            <span
+              aria-hidden
+              style={{ left: -1, width: outline.left + 2 }}
+              className={`pointer-events-none absolute -bottom-px h-px bg-redcurrent ${
+                open ? 'opacity-100' : 'opacity-0'
+              } ${
+                slide
+                  ? 'transition-[width,opacity] duration-[250ms] ease-out motion-reduce:transition-none'
+                  : ''
+              }`}
+            />
             {/* Open at the bottom, into the panel. */}
-            {open && <span className="absolute inset-x-0 -bottom-px h-px bg-cararra" />}
-          </span>
+            <span
+              aria-hidden
+              style={outline}
+              className={`pointer-events-none absolute border border-redcurrent ${
+                open ? 'border-b-0' : ''
+              } ${
+                slide
+                  ? 'transition-[left,top,width,height] duration-[250ms] ease-out motion-reduce:transition-none'
+                  : ''
+              }`}
+            />
+          </>
         )}
       </div>
       {panel && (
