@@ -16,30 +16,35 @@ const BESPOKE_SKU = 'Bespoke';
 
 /**
  * ─────────────────────────────────────────────────────────────
- * TRANSACTIONAL EMAIL — Postmark
+ * TRANSACTIONAL EMAIL — Resend, with Postmark as the fallback
  * ─────────────────────────────────────────────────────────────
- * Five senders: order confirmation, a new-order notification to the studio,
- * shipping confirmation, a public contact-form relay, and an internal
- * low-stock alert. All are best-effort: if
- * Postmark isn't configured (no server token), they log and no-op so local dev
- * and the webhooks still work.
+ * Six senders: order confirmation, a new-order notification to the studio,
+ * shipping confirmation, a public contact-form relay, an internal low-stock
+ * alert and the cart reminder. All are best-effort: with no provider
+ * configured they log and no-op, so local dev and the webhooks still work.
  *
- * Postmark rather than Resend because Resend's domain verification requires an
- * MX record on a `send.` subdomain, which Wix — the domain's DNS host at the
- * time — could not create. Postmark verifies with a DKIM TXT and a Return-Path
- * CNAME (`pm-bounces` → pm.mtasv.net). DNS has since moved to Porkbun, which
- * has no such limit, but there's no reason to switch back.
+ * Resend once RESEND_API_KEY is set: Postmark's free plan stops sending at 100
+ * emails a month, which a busy month of orders (about 3 emails each) passes,
+ * and Resend's allows 3,000 (100 a day). Postmark stays configured as the
+ * fallback: an email Resend refuses or can't take is sent through Postmark
+ * instead, so moving between them never drops one. Without the Resend key,
+ * Postmark alone sends, as before.
  *
- * Current DNS (Porkbun): mailboxes are iCloud (MX + SPF include:icloud.com),
- * and DMARC aggregate reports go to Valimail, not the studio inbox.
+ * Both verify cinque.studio by DNS (Porkbun), side by side: Resend with a
+ * DKIM TXT at `resend._domainkey` and MX + SPF on its `send.` subdomain;
+ * Postmark with its own DKIM TXT and a Return-Path CNAME (`pm-bounces` →
+ * pm.mtasv.net). Neither touches the root: mailboxes are iCloud (MX + SPF
+ * include:icloud.com), and DMARC aggregate reports go to Valimail, not the
+ * studio inbox.
  *
- * The REST API is called directly with `fetch` rather than via Postmark's SDK —
- * the payload is five fields, so the dependency buys nothing.
+ * Both REST APIs are called directly with `fetch` rather than via an SDK: the
+ * payload is a handful of fields, so the dependency buys nothing.
  *
  * HTML is assembled server-side as email markup (not browser DOM), and every
  * value that originates from a customer is HTML-escaped before interpolation.
  */
 
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 const POSTMARK_ENDPOINT = 'https://api.postmarkapp.com/email';
 
 function escapeHtml(input: string): string {
@@ -133,22 +138,63 @@ export interface SendEmailResult {
   error?: string;
 }
 
-async function send(args: {
+interface Message {
   to: string;
   subject: string;
   html: string;
   replyTo?: string;
   headers?: { Name: string; Value: string }[];
-}): Promise<SendEmailResult> {
-  const token = serverEnv.POSTMARK_SERVER_TOKEN;
+}
+
+async function send(args: Message): Promise<SendEmailResult> {
   const from = serverEnv.EMAIL_FROM;
-  if (!token || !from) {
-    console.info('[email] Postmark not configured — skipping send', {
+  const resendKey = serverEnv.RESEND_API_KEY;
+  const postmarkToken = serverEnv.POSTMARK_SERVER_TOKEN;
+  if (!from || (!resendKey && !postmarkToken)) {
+    console.info('[email] not configured — skipping send', {
       to: args.to,
       subject: args.subject,
     });
     return { ok: false, error: 'email not configured' };
   }
+  if (resendKey) {
+    const sent = await viaResend(resendKey, from, args);
+    if (sent.ok || !postmarkToken) return sent;
+    console.warn('[email] Resend failed — falling back to Postmark', { error: sent.error });
+  }
+  return viaPostmark(postmarkToken!, from, args);
+}
+
+async function viaResend(key: string, from: string, args: Message): Promise<SendEmailResult> {
+  try {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        from,
+        to: [args.to],
+        subject: args.subject,
+        html: args.html,
+        ...(args.replyTo ? { reply_to: args.replyTo } : {}),
+        ...(args.headers
+          ? { headers: Object.fromEntries(args.headers.map((h) => [h.Name, h.Value])) }
+          : {}),
+      }),
+    });
+    const body = (await res.json().catch(() => null)) as { id?: string; message?: string } | null;
+    if (!res.ok || !body?.id) {
+      const reason = body?.message ?? `HTTP ${res.status}`;
+      console.error('[email] Resend send failed', { status: res.status, message: reason });
+      return { ok: false, error: reason };
+    }
+    return { ok: true, id: body.id };
+  } catch (err) {
+    console.error('[email] Resend send threw', err);
+    return { ok: false, error: 'send exception' };
+  }
+}
+
+async function viaPostmark(token: string, from: string, args: Message): Promise<SendEmailResult> {
   try {
     const res = await fetch(POSTMARK_ENDPOINT, {
       method: 'POST',
@@ -174,7 +220,7 @@ async function send(args: {
       | null;
     if (!res.ok || !body || (body.ErrorCode ?? 0) !== 0) {
       const reason = body?.Message ?? `HTTP ${res.status}`;
-      console.error('[email] send failed', {
+      console.error('[email] Postmark send failed', {
         status: res.status,
         errorCode: body?.ErrorCode,
         message: reason,
@@ -183,7 +229,7 @@ async function send(args: {
     }
     return { ok: true, id: body.MessageID };
   } catch (err) {
-    console.error('[email] send threw', err);
+    console.error('[email] Postmark send threw', err);
     return { ok: false, error: 'send exception' };
   }
 }
