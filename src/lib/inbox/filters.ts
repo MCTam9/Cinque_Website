@@ -11,6 +11,7 @@ import type { Address, IndexedMessage } from './imap';
 const AUTOMATED_DOMAINS = [
   'stripe.com',
   'postmarkapp.com',
+  'resend.com',
   'vercel.com',
   'sanity.io',
   'github.com',
@@ -56,8 +57,8 @@ export function isAutomated(m: IndexedMessage): boolean {
 
 /**
  * The person to reply to, or null when there isn't one. Mail from the
- * studio's own address is the website's contact form (sent through Postmark
- * with the visitor as Reply-To); anything else from the studio is internal.
+ * studio's own address is the website's contact form (sent through Resend or
+ * Postmark with the visitor as Reply-To); anything else from the studio is internal.
  */
 export function customerOf(m: IndexedMessage, ownAddress: string): Address | null {
   const own = ownDomain(ownAddress);
