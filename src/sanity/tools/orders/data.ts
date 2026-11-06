@@ -406,6 +406,15 @@ export function byUrgency(a: Row, b: Row): number {
   return due(a).localeCompare(due(b)) || (a.date ?? '').localeCompare(b.date ?? '');
 }
 
+/**
+ * "Fulfilled" runs by when each order went out, most recent first. An order
+ * marked shipped or delivered without a ship time falls back to its payment date.
+ */
+export function byShipped(a: Row, b: Row): number {
+  const out = (r: Row) => r.shippedAt ?? r.date ?? '';
+  return out(b).localeCompare(out(a));
+}
+
 // ── Sorting by column ──
 
 export type SortKey =
@@ -472,6 +481,7 @@ export function sortRows(
 
 export const TABS = [
   { id: 'toFulfil', title: 'To fulfil' },
+  { id: 'fulfilled', title: 'Fulfilled' },
   { id: 'orders', title: 'All orders' },
   { id: 'unpaid', title: 'Unpaid checkouts' },
   { id: 'links', title: 'Bespoke links' },
@@ -485,6 +495,8 @@ export function inTab(row: Row, tab: TabId): boolean {
   switch (tab) {
     case 'toFulfil':
       return isOrder && (row.status === 'paid' || row.status === 'fulfilling' || !row.status);
+    case 'fulfilled':
+      return isOrder && (row.status === 'shipped' || row.status === 'delivered');
     case 'orders':
       return isOrder;
     case 'unpaid':
