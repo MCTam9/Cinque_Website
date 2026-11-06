@@ -32,11 +32,11 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: 'createdAt', direction: 'asc' }])
         ),
       S.listItem()
-        .title('Shipped')
+        .title('Fulfilled')
         .child(
           S.documentList()
-            .title('Shipped')
-            .filter('_type == "order" && status == "shipped"')
+            .title('Fulfilled')
+            .filter('_type == "order" && status in ["shipped", "delivered"]')
             .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
         ),
       S.documentTypeListItem('order').title('All orders'),

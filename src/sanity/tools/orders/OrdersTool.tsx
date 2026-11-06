@@ -33,6 +33,7 @@ import {
   ORDER_STATUSES,
   TABLE_QUERY,
   TABS,
+  byShipped,
   byUrgency,
   inTab,
   lineExtras,
@@ -204,8 +205,11 @@ export function OrdersTool() {
         (r) => (r.sessionId ? customers[r.sessionId]?.name : undefined) ?? undefined
       );
     }
-    // To fulfil: most urgent first. Elsewhere: newest first, as read.
-    return tab === 'toFulfil' ? [...shown].sort(byUrgency) : shown;
+    // To fulfil: most urgent first. Fulfilled: most recently shipped first.
+    // Elsewhere: newest first, as read.
+    if (tab === 'toFulfil') return [...shown].sort(byUrgency);
+    if (tab === 'fulfilled') return [...shown].sort(byShipped);
+    return shown;
   }, [rows, tab, search, customers, sort]);
 
   // A header click sorts by that column; again flips it; a third time goes
