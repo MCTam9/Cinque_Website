@@ -14,7 +14,7 @@ import {
 } from '@/lib/shop/shipping';
 import {
   CUSTOM_SIZE_MAX,
-  ENGRAVING_MAX,
+  ENGRAVING_ACCEPTED_MAX,
   ENGRAVING_PATTERN,
   ENGRAVING_PRICE_PENCE,
   MADE_TO_ORDER_LEAD_TIME,
@@ -39,7 +39,13 @@ const bodySchema = z.object({
         // Made-to-order lines only: the size the customer typed on the PDP.
         customSize: z.string().trim().min(1).max(CUSTOM_SIZE_MAX).optional(),
         // Made-to-order rings only: a paid engraving and agreed changes.
-        engraving: z.string().trim().max(ENGRAVING_MAX).regex(ENGRAVING_PATTERN).optional(),
+        // The PDP caps new engravings at ENGRAVING_MAX; carts from before keep theirs.
+        engraving: z
+          .string()
+          .trim()
+          .max(ENGRAVING_ACCEPTED_MAX)
+          .regex(ENGRAVING_PATTERN)
+          .optional(),
         notes: z.string().trim().max(NOTES_MAX).optional(),
       })
     )

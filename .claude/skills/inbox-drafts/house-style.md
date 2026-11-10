@@ -157,7 +157,7 @@ fetch it), and put `[Cindy: confirm price]` if you can't confirm it.
   - The shop photos show a UK size M (around US 6¼). The hands are the same size on every
     band size, so at a larger size (e.g. US 10) they look slightly smaller in proportion,
     with a little more band showing. Mention this when someone orders a much larger size.
-- **Engraving:** £30 for up to 16 characters, added in the Engraving field on the product
+- **Engraving:** £30 for up to 10 characters, added in the Engraving field on the product
   page. Only pieces whose page shows it offer engraving (currently the gold Gimmel).
 - **Larger sizes:** the size picker goes up to UK T on every ring. Gold made-to-order rings
   also go from UK U up to Z for a larger-size fee, for the extra gold: on the gold Gimmel,
