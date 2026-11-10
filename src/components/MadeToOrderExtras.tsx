@@ -134,7 +134,7 @@ function OptionPanel({
   );
 }
 
-/** Engraving on a made-to-order ring, where the Admin offers it: £30, 16 characters. */
+/** Engraving on a made-to-order ring, where the Admin offers it: £30, 10 characters. */
 export function EngravingOption({
   value,
   onChange,

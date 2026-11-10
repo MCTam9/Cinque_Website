@@ -105,7 +105,19 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
+    // A cart saved before the engraving limit came down (16 → 10) can hold a
+    // longer one: say so, rather than a bare "Invalid request."
+    const longEngraving = parsed.error.issues.some(
+      (i) => i.path.at(-1) === 'engraving' && i.code === 'too_big'
+    );
+    return NextResponse.json(
+      {
+        error: longEngraving
+          ? `Engraving is up to ${ENGRAVING_MAX} characters. Please remove the ring from your cart and add it again with a shorter engraving.`
+          : 'Invalid request.',
+      },
+      { status: 400 }
+    );
   }
 
   const lineItems: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem[] = [];
