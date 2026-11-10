@@ -40,6 +40,12 @@ export const CUSTOM_SIZE_MAX = 20;
 /** Engraving on a made-to-order ring: price per piece (pence) and length. */
 export const ENGRAVING_PRICE_PENCE = 3000;
 export const ENGRAVING_MAX = 10;
+/**
+ * What checkout still accepts: carts filled while the limit was 16 (31 October
+ * to 10 November 2026) keep their engraving. New ones are capped at
+ * ENGRAVING_MAX by the product page's field.
+ */
+export const ENGRAVING_ACCEPTED_MAX = 16;
 
 /**
  * What can be engraved: letters (accented too), digits, spaces and a few

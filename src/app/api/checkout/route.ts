@@ -14,7 +14,7 @@ import {
 } from '@/lib/shop/shipping';
 import {
   CUSTOM_SIZE_MAX,
-  ENGRAVING_MAX,
+  ENGRAVING_ACCEPTED_MAX,
   ENGRAVING_PATTERN,
   ENGRAVING_PRICE_PENCE,
   MADE_TO_ORDER_LEAD_TIME,
@@ -39,7 +39,13 @@ const bodySchema = z.object({
         // Made-to-order lines only: the size the customer typed on the PDP.
         customSize: z.string().trim().min(1).max(CUSTOM_SIZE_MAX).optional(),
         // Made-to-order rings only: a paid engraving and agreed changes.
-        engraving: z.string().trim().max(ENGRAVING_MAX).regex(ENGRAVING_PATTERN).optional(),
+        // The PDP caps new engravings at ENGRAVING_MAX; carts from before keep theirs.
+        engraving: z
+          .string()
+          .trim()
+          .max(ENGRAVING_ACCEPTED_MAX)
+          .regex(ENGRAVING_PATTERN)
+          .optional(),
         notes: z.string().trim().max(NOTES_MAX).optional(),
       })
     )
@@ -105,19 +111,7 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
-    // A cart saved before the engraving limit came down (16 → 10) can hold a
-    // longer one: say so, rather than a bare "Invalid request."
-    const longEngraving = parsed.error.issues.some(
-      (i) => i.path.at(-1) === 'engraving' && i.code === 'too_big'
-    );
-    return NextResponse.json(
-      {
-        error: longEngraving
-          ? `Engraving is up to ${ENGRAVING_MAX} characters. Please remove the ring from your cart and add it again with a shorter engraving.`
-          : 'Invalid request.',
-      },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 
   const lineItems: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem[] = [];
