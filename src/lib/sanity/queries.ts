@@ -250,12 +250,14 @@ export const merchantFeedQuery = groq`
     "slug": slug.current,
     status,
     category,
+    edition,
     ringOccasions,
+    offerEngraving,
     description,
     "images": images[]{ alt, asset, crop, hotspot },
     variants[]{
       _key, sku, metalType, customMaterial, size, priceGBP,
-      stockQuantity, allowBackorder, madeToOrder
+      stockQuantity, allowBackorder, madeToOrder, stone
     }
   }
 `;

@@ -201,9 +201,6 @@ export default async function ProductPage({
   ];
   // Rings tagged in the Studio as engagement rings / wedding bands.
   const occasions = ringOccasionLabels(product).map((o) => o.toLowerCase());
-  const occasionPhrase = occasions
-    .map((o) => `${/^[aeiou]/.test(o) ? 'an' : 'a'} ${o}`)
-    .join(' or ');
   const minPrice = product.variants?.length
     ? Math.min(...product.variants.map((v) => v.priceGBP))
     : 0;
@@ -327,16 +324,6 @@ export default async function ProductPage({
             />
           ) : (
             <SpecList specs={specs} />
-          )}
-
-          {occasions.length > 0 && (
-            <P1 className="text-graphite">
-              Suitable as {occasionPhrase}. Matching bands and bespoke versions can be{' '}
-              <Link href="/studio#bespoke" className="underline underline-offset-4 hover:text-redcurrent">
-                made to commission
-              </Link>
-              .
-            </P1>
           )}
 
           {/* The CMS description. Queried since day one but never rendered,
