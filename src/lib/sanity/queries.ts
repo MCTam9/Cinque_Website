@@ -239,3 +239,23 @@ export const pageSitemapQuery = groq`
     "slug": slug.current, "updatedAt": _updatedAt
   }
 `;
+
+// Google Merchant Center product feed (/merchant-feed.xml): every listed
+// product with what a listing needs — copy, images, occasions and variants.
+// Sold-out pieces are included so Google takes them down as out of stock.
+export const merchantFeedQuery = groq`
+  *[_type == "product" && ${SHOP_STATUSES} && defined(slug.current)] | order(_createdAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    status,
+    category,
+    ringOccasions,
+    description,
+    "images": images[]{ alt, asset, crop, hotspot },
+    variants[]{
+      _key, sku, metalType, customMaterial, size, priceGBP,
+      stockQuantity, allowBackorder, madeToOrder
+    }
+  }
+`;
