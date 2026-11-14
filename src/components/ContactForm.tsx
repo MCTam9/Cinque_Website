@@ -71,7 +71,9 @@ export default function ContactForm() {
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="type-p1 text-graphite">Phone</span>
+        <span className="type-p1 text-graphite">
+          Phone <span className="text-oslo">(optional)</span>
+        </span>
         <input type="tel" name="phone" maxLength={40} className={field} />
       </label>
 
@@ -90,7 +92,7 @@ export default function ContactForm() {
 
       <div className="flex flex-col gap-1">
         <label htmlFor="contact-ring-size" className="type-p1 text-graphite">
-          Ring size(s)
+          Ring size(s) <span className="text-oslo">(optional)</span>
         </label>
         <input
           id="contact-ring-size"
