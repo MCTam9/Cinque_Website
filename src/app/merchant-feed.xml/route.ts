@@ -1,17 +1,18 @@
 import { sanityClient } from '@/lib/sanity/client';
 import { merchantFeedQuery } from '@/lib/sanity/queries';
 import { urlFor } from '@/lib/sanity/image';
-import { formatLabel, materialLabel } from '@/lib/products';
+import { materialLabel } from '@/lib/products';
 import {
   BRAND_NAME,
   absoluteUrl,
   portableTextToPlain,
+  productSearchName,
   productSeoDescription,
   ringOccasionLabels,
   truncate,
+  variantMaterialPhrase,
 } from '@/lib/seo';
 import { categoryBy } from '@/lib/shop/categories';
-import { stoneLabel } from '@/lib/shop/materials';
 import { ENGRAVING_MAX, MADE_TO_ORDER_LEAD_TIME } from '@/lib/shop/madeToOrder';
 import { IN_STOCK_LEAD_TIME } from '@/lib/shop/shipping';
 import type { MetalType, ProductCategory, RingOccasion, SanityImageRef, Variant } from '@/types';
@@ -80,14 +81,8 @@ const FEED_NOUN: Partial<Record<ProductCategory, string>> = {
  * rather than saying it twice.
  */
 function feedTitle(product: FeedProduct, v: Variant, size: string | undefined): string {
-  const metal = materialLabel(v)?.replace(/\s*\+\s*/g, ' & ');
-  let name = formatLabel(product.title).replace(/^\d+\//, '');
-  const inPhrase = name.match(/\s+in\s+(.+)$/i);
-  if (inPhrase && metal?.toLowerCase().includes(inPhrase[1].toLowerCase())) {
-    name = name.slice(0, inPhrase.index);
-  }
-  const stone = stoneLabel(v.stone?.stoneType);
-  const material = [metal, stone].filter(Boolean).join(' & ');
+  const material = variantMaterialPhrase(v);
+  const name = productSearchName(product.title, material);
   const noun =
     ringOccasionLabels(product)[0] ?? (product.category ? FEED_NOUN[product.category] : undefined);
   const what = [material, noun].filter(Boolean).join(' ');

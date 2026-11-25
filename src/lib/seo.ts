@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ProductCategory, RingOccasion, Variant } from '@/types';
 import { materialLabel, formatLabel } from '@/lib/products';
 import { categoryBy } from '@/lib/shop/categories';
+import { stoneLabel } from '@/lib/shop/materials';
 import { HOME_COUNTRY, SHIP_COUNTRY_CODES, shippingQuote } from '@/lib/shop/shipping';
 
 /**
@@ -150,17 +151,42 @@ export function productSeoTitle(product: {
   variants?: Variant[];
   ringOccasions?: RingOccasion[];
 }): string {
-  const name = formatLabel(product.title)
-    // Drop the leading "01/" code — meaningless in a search result.
-    .replace(/^\d+\//, '');
-  const metal = materialLabel(product.variants?.[0]);
+  const material = variantMaterialPhrase(product.variants?.[0]);
+  const name = productSearchName(product.title, material);
   // A ring tagged as a wedding band is titled as one ("… 18ct Gold Wedding
   // Band"); tagged as both, the first tag names it.
   const noun =
     ringOccasionLabels(product)[0] ??
     (product.category ? CATEGORY_SINGULAR[product.category] : undefined);
-  const qualifier = [metal, noun].filter(Boolean).join(' ');
+  const qualifier = [material, noun].filter(Boolean).join(' ');
   return qualifier ? `${name} — ${qualifier}` : name;
+}
+
+/**
+ * What a variant is made of, for search titles: "9ct Yellow Gold & Pearl",
+ * "Sterling Silver & Brass".
+ */
+export function variantMaterialPhrase(
+  v?: Pick<Variant, 'metalType' | 'customMaterial' | 'stone'>
+): string | undefined {
+  const metal = materialLabel(v)?.replace(/\s*\+\s*/g, ' & ');
+  const stone = stoneLabel(v?.stone?.stoneType);
+  return [metal, stone].filter(Boolean).join(' & ') || undefined;
+}
+
+/**
+ * A product's name for search: the display title without its leading "01/"
+ * code, and without a trailing "in Yellow Gold" when the material phrase that
+ * follows it says so anyway — otherwise the title reads "… Ring in Yellow Gold
+ * — 9ct Yellow Gold …" and gets truncated in results.
+ */
+export function productSearchName(title: string, material?: string): string {
+  const name = formatLabel(title).replace(/^\d+\//, '');
+  const inPhrase = name.match(/\s+in\s+(.+)$/i);
+  if (inPhrase && material?.toLowerCase().includes(inPhrase[1].toLowerCase())) {
+    return name.slice(0, inPhrase.index);
+  }
+  return name;
 }
 
 /**
